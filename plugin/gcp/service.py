@@ -121,7 +121,6 @@ def wait_for_operation(config, operation, compute):
             project=config['project'],
             zone=config['zone'],
             operation=operation).execute()
-
         if result['status'] == 'DONE':
             if 'error' in result:
                 raise Exception(result['error'])
@@ -132,3 +131,18 @@ def wait_for_operation(config, operation, compute):
 
 def compute(credentials):
     return build('compute', 'v1', credentials=credentials)
+
+
+def set_ip(config, compute):
+    instances = list_instances(config, compute)
+    item = get_instance_from_list(ctx.node.name, instances)
+    ctx.instance.runtime_properties['ip'] = item['networkInterfaces'][0][
+        'networkIP'] # only with one default network interface
+
+
+def get_instance_from_list(name, instances):
+    for item in instances.get('items'):
+        ctx.logger.info(str(item))
+        if item.get('name') == name:
+            return item
+    return None  #throw an exception

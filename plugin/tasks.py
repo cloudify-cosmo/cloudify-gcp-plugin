@@ -35,6 +35,7 @@ def create_instance(config, **kwargs):
     compute = service.compute(credentials)
     operation = service.create_instance(ctx.node.name, config, compute)
     service.wait_for_operation(config, operation['name'], compute)
+    service.set_ip(config, compute)
 
 
 @operation
