@@ -13,17 +13,32 @@ plugins:
     source: https://github.com/szpotona/cloudify-gcp-plugin/archive/devel.zip
 
 node_types:
-    cloudify.gcp.Server:
-        derived_from: cloudify.nodes.Compute
-        interfaces:
-            cloudify.interfaces.lifecycle:
-                start:
-                    implementation: gcp_plugin.plugin.tasks.create_instance
-                    inputs:
-                        config:
-                            default: {}
-                stop:
-                    implementation: gcp_plugin.plugin.tasks.delete_instance
-                    inputs:
-                        config:
-                            default: {}
+  cloudify.gcp.Server:
+    derived_from: cloudify.nodes.Compute
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: gcp_plugin.plugin.tasks.create_instance
+          inputs:
+            config:
+              default: {}
+        stop:
+          implementation: gcp_plugin.plugin.tasks.delete_instance
+            inputs:
+              config:
+                default: {}
+
+
+  cloudify.gcp.Network:
+    derived_from: cloudify.nodes.Network
+    interfaces:
+      create:
+        implementation: gcp_plugin.plugin.tasks.create_network
+        inputs:
+          config:
+            default: {}
+      delete:
+        implementation: gcp_plugin.plugin.tasks.delete_network
+        inputs:
+          config:
+            default: {}

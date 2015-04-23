@@ -33,9 +33,9 @@ def create_instance(config, **kwargs):
     ctx.logger.info('Create instance')
     credentials = init_auth(config)
     compute = service.compute(credentials)
-    operation = service.create_instance(ctx.node.name, config, compute)
-    service.wait_for_operation(config, operation['name'], compute)
-    service.set_ip(config, compute)
+    response = service.create_instance(compute, config, ctx.node.name)
+    service.wait_for_operation(compute, config, response['name'])
+    service.set_ip(compute, config)
 
 
 @operation
@@ -43,6 +43,27 @@ def delete_instance(config, **kwargs):
     ctx.logger.info('Delete instance')
     credentials = init_auth(config)
     compute = service.compute(credentials)
-    operation = service.delete_instance(ctx.node.name, config, compute)
-    service.wait_for_operation(config, operation['name'], compute)
+    response = service.delete_instance(compute, config, ctx.node.name)
+    service.wait_for_operation(compute, config, response['name'])
 
+
+@operation
+def create_network(config, network, **kwargs):
+    ctx.logger.info('Create instance')
+    credentials = init_auth(config)
+    compute = service.compute(credentials)
+    response = service.create_network(compute,
+                                      config['project'],
+                                      network)
+    service.wait_for_operation(config, response['name'], compute, True)
+
+
+@operation
+def delete_network(config, network, **kwargs):
+    ctx.logger.info('Create instance')
+    credentials = init_auth(config)
+    compute = service.compute(credentials)
+    response = service.delete_network(compute,
+                                      config['project'],
+                                      network)
+    service.wait_for_operation(compute, config, response['name'], True)

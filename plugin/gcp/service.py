@@ -31,7 +31,7 @@ def init_oauth(config):
     return flow
 
 
-def list_instances(config, compute):
+def list_instances(compute, config):
     ctx.logger.info("List instances")
     return compute.instances().list(project=config['project'],
                                     zone=config['zone']).execute()
@@ -50,12 +50,11 @@ def authenticate(flow, storage_path):
     return credentials
 
 
-def create_instance(name, config_input, compute):
+def create_instance(compute, config, name):
     ctx.logger.info("Create instance")
-    source_disk_image = config_input['agent_image']
-    machine_type = "zones/%s/machineTypes/n1-standard-1" % config_input['zone']
+    machine_type = "zones/%s/machineTypes/n1-standard-1" % config['zone']
 
-    config = {
+    body = {
         'name': name,
         'machineType': machine_type,
 
@@ -64,7 +63,7 @@ def create_instance(name, config_input, compute):
                 'boot': True,
                 'autoDelete': True,
                 'initializeParams': {
-                    'sourceImage': source_disk_image,
+                    'sourceImage': config['agent_image']
                 }
             }
         ],
@@ -84,18 +83,18 @@ def create_instance(name, config_input, compute):
         'metadata': {
             'items': [{
                 'key': 'bucket',
-                'value': config_input['project']
+                'value': config['project']
             }]
         }
     }
 
     return compute.instances().insert(
-        project=config_input['project'],
-        zone=config_input['zone'],
-        body=config).execute()
+        project=config['project'],
+        zone=config['zone'],
+        body=body).execute()
 
 
-def delete_instance(name, config, compute):
+def delete_instance(compute, config, name):
     ctx.logger.info("Delete instance")
     return compute.instances().delete(
         project=config['project'],
@@ -103,16 +102,22 @@ def delete_instance(name, config, compute):
         instance=name).execute()
 
 
-def wait_for_operation(config, operation, compute):
+def wait_for_operation(compute, config, operation, global_operation=False):
     ctx.logger.info("Wait for operation")
     while True:
-        result = compute.zoneOperations().get(
-            project=config['project'],
-            zone=config['zone'],
-            operation=operation).execute()
+        if global_operation:
+            result = compute.globalOperations().get(
+                project=config['project'],
+                operation=operation).execute()
+        else:
+            result = compute.zoneOperations().get(
+                project=config['project'],
+                zone=config['zone'],
+                operation=operation).execute()
         if result['status'] == 'DONE':
             if 'error' in result:
-                raise Exception(result['error'])
+                raise Exception(result['error'])  # throw cloudify exception
+            ctx.logger.info("Done")
             return result
         else:
             time.sleep(1)
@@ -122,16 +127,33 @@ def compute(credentials):
     return build('compute', 'v1', credentials=credentials)
 
 
-def set_ip(config, compute):
-    instances = list_instances(config, compute)
-    item = get_instance_from_list(ctx.node.name, instances)
-    ctx.instance.runtime_properties['ip'] = item['networkInterfaces'][0][
-        'networkIP']  # only with one default network interface
+def set_ip(compute, config):
+    instances = list_instances(compute, config)
+    item = _get_instance_from_list(ctx.node.name, instances)
+    ctx.instance.runtime_properties['ip'] = \
+        item['networkInterfaces'][0]['networkIP']
+        # only with one default network interface
 
 
-def get_instance_from_list(name, instances):
+def _get_instance_from_list(name, instances):
     for item in instances.get('items'):
         ctx.logger.info(str(item))
         if item.get('name') == name:
             return item
     return None  # throw an exception
+
+
+def create_network(compute, project, network):
+    ctx.logger.info('Create network')
+    body = {
+        "description": "Cloudify generated network",
+        "name": network
+    }
+    return compute.networks().insert(project=project,
+                                     body=body).execute()
+
+
+def delete_network(compute, project, network):
+    ctx.logger.info('Delete network')
+    return compute.networks().delete(project=project,
+                                     network=network).execute()
