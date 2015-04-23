@@ -31,12 +31,6 @@ def init_oauth(config):
     return flow
 
 
-def list_instances(compute, config):
-    ctx.logger.info("List instances")
-    return compute.instances().list(project=config['project'],
-                                    zone=config['zone']).execute()
-
-
 def authenticate(flow, storage_path):
     ctx.logger.info("Get credentials")
     global storage
@@ -102,6 +96,12 @@ def delete_instance(compute, config, name):
         instance=name).execute()
 
 
+def list_instances(compute, config):
+    ctx.logger.info("List instances")
+    return compute.instances().list(project=config['project'],
+                                    zone=config['zone']).execute()
+
+
 def wait_for_operation(compute, config, operation, global_operation=False):
     ctx.logger.info("Wait for operation")
     while True:
@@ -129,18 +129,17 @@ def compute(credentials):
 
 def set_ip(compute, config):
     instances = list_instances(compute, config)
-    item = _get_instance_from_list(ctx.node.name, instances)
+    item = _get_item_from_list(ctx.node.name, instances)
     ctx.instance.runtime_properties['ip'] = \
         item['networkInterfaces'][0]['networkIP']
         # only with one default network interface
 
 
-def _get_instance_from_list(name, instances):
-    for item in instances.get('items'):
-        ctx.logger.info(str(item))
+def _get_item_from_list(name, items):
+    for item in items.get('items'):
         if item.get('name') == name:
             return item
-    return None  # throw an exception
+    return None
 
 
 def create_network(compute, project, network):
@@ -157,3 +156,8 @@ def delete_network(compute, project, network):
     ctx.logger.info('Delete network')
     return compute.networks().delete(project=project,
                                      network=network).execute()
+
+
+def list_networks(compute, project):
+    ctx.logger.info('List networks')
+    return compute.networks().list(project=project).execute()

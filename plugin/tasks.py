@@ -55,7 +55,7 @@ def create_network(config, network, **kwargs):
     response = service.create_network(compute,
                                       config['project'],
                                       network)
-    service.wait_for_operation(config, response['name'], compute, True)
+    service.wait_for_operation(compute, config, response['name'], True)
 
 
 @operation

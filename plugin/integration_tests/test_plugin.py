@@ -23,6 +23,7 @@ from cloudify import ctx
 
 from plugin import gcp
 
+
 class TestPlugin(unittest.TestCase):
     inputs = None
 
@@ -42,7 +43,7 @@ class TestPlugin(unittest.TestCase):
                                'gcp_scope': 'https://www.googleapis.com/auth/compute',
                                'agent_image': '/projects/ubuntu-os-cloud/global/images/ubuntu-1204-precise-v20150316',
                                'storage': '/tmp/blueprint_resources/oauth.dat',  #put absolute path to oauth.dat
-                               'project': 'ruckuseurope',
+                               'project': '',
                                'zone': 'us-central1-f'
                            }}
 
@@ -51,29 +52,31 @@ class TestPlugin(unittest.TestCase):
                                   name=self._testMethodName,
                                   inputs=self.inputs)
 
-    def test_my_task(self):
-        ctx.logger.info("Check initial instance number")
-
+    def test_create_instance(self):
         flow = gcp.service.init_oauth(self.inputs['config'])
         credentials = gcp.service.authenticate(
             flow, self.inputs['config']['storage'])
         compute = gcp.service.compute(credentials)
 
-        instances = gcp.service.list_instances(self.inputs['config'], compute)
-        initial = len(instances['items']) if instances.get('items') else 0
+        instances = gcp.service.list_instances(compute, self.inputs['config'])
+        item = gcp.service._get_item_from_list('testnode', instances)
+        self.assertIsNone(item)
 
         ctx.logger.info("Install workflow")
         # execute install workflow
         self.env.execute('install', task_retries=0)
 
         ctx.logger.info("Check instance number")
-        instances = gcp.service.list_instances(self.inputs['config'], compute)
-        self.assertEqual(len(instances['items']), initial + 1)
+        instances = gcp.service.list_instances(compute, self.inputs['config'])
+        item = gcp.service._get_item_from_list('testnode', instances)
+        self.assertIsNotNone(item)
 
         ctx.logger.info("Uninstall workflow")
         self.env.execute('uninstall', task_retries=0)
 
         ctx.logger.info("Check instance number")
-        instances = gcp.service.list_instances(self.inputs['config'], compute)
-        size = len(instances['items']) if instances.get('items') else 0
-        self.assertEqual(size, initial)
+        instances = gcp.service.list_instances(compute, self.inputs['config'])
+        item = gcp.service._get_item_from_list('testnode', instances)
+        self.assertIsNone(item)
+
+
