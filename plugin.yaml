@@ -11,3 +11,19 @@ plugins:
     # the plugin if it is included in the the blueprint directory under the
     # "plugins" directory.
     source: https://github.com/szpotona/cloudify-gcp-plugin/archive/devel.zip
+
+node_types:
+    cloudify.gcp.Server:
+        derived_from: cloudify.nodes.Compute
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                start:
+                    implementation: gcp_plugin.plugin.tasks.create_instance
+                    inputs:
+                        config:
+                            default: {}
+                stop:
+                    implementation: gcp_plugin.plugin.tasks.delete_instance
+                    inputs:
+                        config:
+                            default: {}

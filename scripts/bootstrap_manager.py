@@ -66,15 +66,21 @@ def create_instance(compute, config_input):
         body=config).execute()
 
 
-def wait_for_operation(compute, config, operation):
-    sys.stdout.write('Waiting for operation to finish')
+def wait_for_operation(compute, config, operation, global_operation=False):
+    print 'Waiting for operation to finish'
     while True:
-        result = compute.zoneOperations().get(
-            project=config['project'],
-            zone=config['zone'],
-            operation=operation).execute()
+        if global_operation:
+            result = compute.globalOperations().get(
+                project=config['project'],
+                operation=operation).execute()
+        else:
+            result = compute.zoneOperations().get(
+                project=config['project'],
+                zone=config['zone'],
+                operation=operation).execute()
 
         if result['status'] == 'DONE':
+            print "Done"
             if 'error' in result:
                 raise Exception(result['error'])
             return result
@@ -83,9 +89,10 @@ def wait_for_operation(compute, config, operation):
 
 
 def allow_http(compute, config):
+    print 'Add firewall rule'
     body = {
         "sourceRanges": [config['http_cidr_enabled']],
-        "name": "allow-http",
+        "name": "{0}-allow-http".format(config['network']),
         "allowed": [
             {
                 "IPProtocol": "tcp",
@@ -94,15 +101,19 @@ def allow_http(compute, config):
         ],
         "network": "global/networks/{0}".format(config['network'])
     }
-    compute.firewalls().insert(project=config['project'], body=body).execute()
+    operation = compute.firewalls().insert(project=config['project'],
+                                           body=body).execute()
+    wait_for_operation(compute, config, operation['name'], True)
 
 
 def create_network(compute, config):
+    print 'Create network'
     body = {
         "description": "Cloudify network",
         "name": config['network']
     }
-    compute.networks().insert(project=config['project'], body=body).execute()
+    operation = compute.networks().insert(project=config['project'], body=body).execute()
+    wait_for_operation(compute, config, operation['name'], True)
 
 
 def run(config):
@@ -116,8 +127,7 @@ def run(config):
     compute = build('compute', 'v1', credentials=credentials)
     upload_agent_key(compute, config)
     create_network(compute, config)
-    #allow_http(compute, config)
-    exit()
+    allow_http(compute, config)
     print 'Creating cloudify manager instance.'
 
     operation = create_instance(compute, config)
@@ -165,7 +175,7 @@ def upload_agent_key(compute, config):
 def main():
     with open(CONFIG) as f:
         config = yaml.safe_load(f).get('config')
-        #prepare_startup_script(config)
+        prepare_startup_script(config)
         run(config)
 
 
