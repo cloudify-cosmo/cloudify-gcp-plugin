@@ -59,7 +59,6 @@ def create_instance(name, config_input, compute):
         'name': name,
         'machineType': machine_type,
 
-        # Specify the boot disk and the image to use as a source.
         'disks': [
             {
                 'boot': True,
@@ -69,17 +68,12 @@ def create_instance(name, config_input, compute):
                 }
             }
         ],
-
-        # Specify a network interface with NAT to access the public
-        # internet.
         'networkInterfaces': [{
             'network': 'global/networks/default',
             'accessConfigs': [
                 {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
             ]
         }],
-
-        # Allow the instance to access cloud storage and logging.
         'serviceAccounts': [{
             'email': 'default',
             'scopes': [
@@ -87,13 +81,8 @@ def create_instance(name, config_input, compute):
                 'https://www.googleapis.com/auth/logging.write'
             ]
         }],
-
-        # Metadata is readable from the instance and allows you to
-        # pass configuration from deployment scripts to instances.
         'metadata': {
             'items': [{
-                # Every project has a default Cloud Storage bucket that's
-                # the same name as the project.
                 'key': 'bucket',
                 'value': config_input['project']
             }]
@@ -137,7 +126,7 @@ def set_ip(config, compute):
     instances = list_instances(config, compute)
     item = get_instance_from_list(ctx.node.name, instances)
     ctx.instance.runtime_properties['ip'] = item['networkInterfaces'][0][
-        'networkIP'] # only with one default network interface
+        'networkIP']  # only with one default network interface
 
 
 def get_instance_from_list(name, instances):
@@ -145,4 +134,4 @@ def get_instance_from_list(name, instances):
         ctx.logger.info(str(item))
         if item.get('name') == name:
             return item
-    return None  #throw an exception
+    return None  # throw an exception
