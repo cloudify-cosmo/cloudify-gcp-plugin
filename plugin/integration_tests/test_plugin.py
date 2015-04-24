@@ -37,15 +37,17 @@ class TestPlugin(unittest.TestCase):
                                       'blueprint', 'blueprint.yaml')
 
         # inject input from test
-        self.inputs = {'config':
-                           {
-                               'client_secret': '/tmp/blueprint_resources/client_secret.json',  #put absolute path to client_secret.json
-                               'gcp_scope': 'https://www.googleapis.com/auth/compute',
-                               'agent_image': '/projects/ubuntu-os-cloud/global/images/ubuntu-1204-precise-v20150316',
-                               'storage': '/tmp/blueprint_resources/oauth.dat',  #put absolute path to oauth.dat
-                               'project': '',
-                               'zone': 'us-central1-f'
-                           }}
+        self.inputs = {'config': {
+            'client_secret': '/tmp/blueprint_resources/client_secret.json',
+            # put absolute path to client_secret.json
+            'gcp_scope': 'https://www.googleapis.com/auth/compute',
+            'agent_image':
+                '/projects/ubuntu-os-cloud/global/images/ubuntu-1204-precise-v20150316',
+            'storage': '/tmp/blueprint_resources/oauth.dat',
+            #put absolute path to oauth.dat
+            'project': '',  # put project name
+            'zone': 'us-central1-f'
+        }}
 
         # setup local workflow execution environment
         self.env = local.init_env(blueprint_path,
@@ -78,5 +80,3 @@ class TestPlugin(unittest.TestCase):
         instances = gcp.service.list_instances(compute, self.inputs['config'])
         item = gcp.service._get_item_from_list('testnode', instances)
         self.assertIsNone(item)
-
-

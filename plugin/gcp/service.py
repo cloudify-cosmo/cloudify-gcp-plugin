@@ -21,8 +21,6 @@ from oauth2client.tools import run_flow, argparser
 from googleapiclient.discovery import build
 from cloudify import ctx
 
-storage = None
-
 
 def init_oauth(config):
     ctx.logger.info("Init OAuth")
@@ -33,7 +31,6 @@ def init_oauth(config):
 
 def authenticate(flow, storage_path):
     ctx.logger.info("Get credentials")
-    global storage
     storage = Storage(storage_path)
     credentials = storage.get()
     flags = argparser.parse_args(args=[])
@@ -103,7 +100,7 @@ def list_instances(compute, config):
 
 
 def wait_for_operation(compute, config, operation, global_operation=False):
-    ctx.logger.info("Wait for operation")
+    ctx.logger.info("Wait for operation.")
     while True:
         if global_operation:
             result = compute.globalOperations().get(
@@ -116,7 +113,9 @@ def wait_for_operation(compute, config, operation, global_operation=False):
                 operation=operation).execute()
         if result['status'] == 'DONE':
             if 'error' in result:
-                raise Exception(result['error'])  # throw cloudify exception
+                raise Exception(result['error'])
+                # throw cloudify exception - Which one
+                # should it be - NonRecoverable or Recoverable?
             ctx.logger.info("Done")
             return result
         else:
@@ -129,35 +128,55 @@ def compute(credentials):
 
 def set_ip(compute, config):
     instances = list_instances(compute, config)
-    item = _get_item_from_list(ctx.node.name, instances)
+    item = _get_item_from_gcp_response(ctx.node.name, instances)
     ctx.instance.runtime_properties['ip'] = \
         item['networkInterfaces'][0]['networkIP']
         # only with one default network interface
 
 
-def _get_item_from_list(name, items):
+def _get_item_from_gcp_response(name, items):
     for item in items.get('items'):
         if item.get('name') == name:
             return item
     return None
 
 
-def create_network(compute, project, network):
+def create_network(compute, config):
     ctx.logger.info('Create network')
     body = {
         "description": "Cloudify generated network",
-        "name": network
+        "name": config['network']
     }
-    return compute.networks().insert(project=project,
+    return compute.networks().insert(project=config['project'],
                                      body=body).execute()
 
 
-def delete_network(compute, project, network):
+def delete_network(compute, config):
     ctx.logger.info('Delete network')
-    return compute.networks().delete(project=project,
-                                     network=network).execute()
+    return compute.networks().delete(project=config['project'],
+                                     network=config['network']).execute()
 
 
-def list_networks(compute, project):
+def list_networks(compute, config):
     ctx.logger.info('List networks')
-    return compute.networks().list(project=project).execute()
+    return compute.networks().list(project=config['project']).execute()
+
+
+def create_firewall_rule(compute, config):
+    ctx.logger.info('Create firewall rule')
+    config['firewall']['network'] = \
+        'global/networks/{0}'.format(config['network'])
+    return compute.firewalls().insert(project=config['project'],
+                                      body=config['firewall']).execute()
+
+
+def delete_firewall_rule(compute, config):
+    ctx.logger.info('Delete firewall rule')
+    return compute.firewalls().delete(
+        project=config['project'],
+        firewall=config['firewall']['name']).execute()
+
+
+def list_firewall_rules(compute, config):
+    ctx.logger.info('List firewall rules in project')
+    return compute.firewalls().list(project=config['project']).execute()

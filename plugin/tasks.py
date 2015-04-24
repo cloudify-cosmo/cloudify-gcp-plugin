@@ -48,22 +48,18 @@ def delete_instance(config, **kwargs):
 
 
 @operation
-def create_network(config, network, **kwargs):
+def create_network(config, **kwargs):
     ctx.logger.info('Create instance')
     credentials = init_auth(config)
     compute = service.compute(credentials)
-    response = service.create_network(compute,
-                                      config['project'],
-                                      network)
+    response = service.create_network(compute, config)
     service.wait_for_operation(compute, config, response['name'], True)
 
 
 @operation
-def delete_network(config, network, **kwargs):
+def delete_network(config, **kwargs):
     ctx.logger.info('Create instance')
     credentials = init_auth(config)
     compute = service.compute(credentials)
-    response = service.delete_network(compute,
-                                      config['project'],
-                                      network)
+    response = service.delete_network(compute, config['project'])
     service.wait_for_operation(compute, config, response['name'], True)

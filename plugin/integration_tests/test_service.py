@@ -9,7 +9,7 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
@@ -25,13 +25,21 @@ class TestService(unittest.TestCase):
     # inject input from test
     config = {
         'client_secret': '/tmp/blueprint_resources/client_secret.json',
-        #put absolute path to client_secret.json
+        # put absolute path to client_secret.json
         'gcp_scope': 'https://www.googleapis.com/auth/compute',
         'storage': '/tmp/blueprint_resources/oauth.dat',
-        #put absolute path to oauth.dat
-        'project': '',
+        # put absolute path to oauth.dat
+        'project': '',  # put project name
         'zone': 'us-central1-f',
-        'network': 'test-network'
+        'network': 'testnetwork',
+        'firewall': {
+            'name': 'testfirewall',
+            'allowed': [
+                {"IPProtocol": "tcp",
+                 "ports": ["80"]
+                }],
+            'sourceRanges': ["0.0.0.0/0"]
+        }
     }
 
     def setUp(self):
@@ -40,42 +48,95 @@ class TestService(unittest.TestCase):
 
     def test_create_network(self):
         flow = service.init_oauth(self.config)
-        credentials = service.authenticate(
-            flow, self.config['storage'])
+        credentials = service.authenticate(flow, self.config['storage'])
         compute = service.compute(credentials)
-        networks = service.list_networks(compute,
-                                         self.config['project'])
-        item = service._get_item_from_list(
+        networks = service.list_networks(compute, self.config)
+        item = service._get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNone(item)
 
-        response = service.create_network(compute,
-                                          self.config['project'],
-                                          self.config['network'])
+        response = service.create_network(compute, self.config)
         service.wait_for_operation(compute,
                                    self.config,
                                    response['name'],
                                    True)
 
-        networks = service.list_networks(compute,
-                                         self.config['project'])
-        item = service._get_item_from_list(
+        networks = service.list_networks(compute, self.config)
+        item = service._get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNotNone(item)
 
-        response = service.delete_network(
-            compute,
-            self.config['project'],
-            self.config['network'])
+        response = service.delete_network(compute, self.config)
         service.wait_for_operation(compute,
                                    self.config,
                                    response['name'],
                                    True)
-        networks = service.list_networks(compute,
-                                         self.config['project'])
-        item = service._get_item_from_list(
+        networks = service.list_networks(compute, self.config)
+        item = service._get_item_from_gcp_response(
             self.config['network'],
             networks)
+        self.assertIsNone(item)
+
+    def test_create_firewall_rule(self):
+        flow = service.init_oauth(self.config)
+        credentials = service.authenticate(
+            flow, self.config['storage'])
+        compute = service.compute(credentials)
+        networks = service.list_networks(compute, self.config)
+        item = service._get_item_from_gcp_response(
+            self.config['network'],
+            networks)
+        self.assertIsNone(item)
+
+        firewall_rules = service.list_firewall_rules(compute, self.config)
+        item = service._get_item_from_gcp_response(
+            self.config['firewall']['name'],
+            firewall_rules)
+        self.assertIsNone(item)
+
+
+        response = service.create_network(compute, self.config)
+        service.wait_for_operation(compute,
+                                   self.config,
+                                   response['name'],
+                                   True)
+
+        networks = service.list_networks(compute, self.config)
+        item = service._get_item_from_gcp_response(
+            self.config['network'],
+            networks)
+        self.assertIsNotNone(item)
+
+        response = service.create_firewall_rule(compute, self.config)
+        service.wait_for_operation(compute,
+                                   self.config,
+                                   response['name'],
+                                   True)
+
+        firewall_rules = service.list_firewall_rules(compute, self.config)
+        item = service._get_item_from_gcp_response(
+            self.config['firewall']['name'],
+            firewall_rules)
+        self.assertIsNotNone(item)
+
+        response = service.delete_firewall_rule(compute, self.config)
+        service.wait_for_operation(compute,
+                                   self.config,
+                                   response['name'],
+                                   True)
+        firewall_rules = service.list_firewall_rules(compute, self.config)
+        item = service._get_item_from_gcp_response(
+            self.config['firewall']['name'],
+            firewall_rules)
+        self.assertIsNone(item)
+
+        response = service.delete_network(compute, self.config)
+        service.wait_for_operation(compute,
+                                   self.config,
+                                   response['name'],
+                                   True)
+        networks = service.list_networks(compute, self.config)
+        item = service._get_item_from_gcp_response(self.config,  networks)
         self.assertIsNone(item)
