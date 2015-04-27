@@ -14,12 +14,13 @@
 #    * limitations under the License.
 
 import os
-import unittest
 
+import unittest
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
 from cloudify.workflows import local
 from cloudify import ctx
+import yaml
 
 from plugin import gcp
 
@@ -27,27 +28,16 @@ from plugin import gcp
 class TestPlugin(unittest.TestCase):
     inputs = None
 
-    def setUp(self):
+    def setUp(self):  # noqa
         ctx = MockCloudifyContext()
         current_ctx.set(ctx)
-        ctx.logger.info("Setting environment")
+        ctx.logger.info('Setting environment')
 
         # build blueprint path
         blueprint_path = os.path.join(os.path.dirname(__file__),
                                       'blueprint', 'blueprint.yaml')
-
-        # inject input from test
-        self.inputs = {'config': {
-            'client_secret': '/tmp/blueprint_resources/client_secret.json',
-            # put absolute path to client_secret.json
-            'gcp_scope': 'https://www.googleapis.com/auth/compute',
-            'agent_image':
-                '/projects/ubuntu-os-cloud/global/images/ubuntu-1204-precise-v20150316',
-            'storage': '/tmp/blueprint_resources/oauth.dat',
-            #put absolute path to oauth.dat
-            'project': '',  # put project name
-            'zone': 'us-central1-f'
-        }}
+        with open('inputs.yaml') as f:
+            self.inputs = yaml.safe_load(f)
 
         # setup local workflow execution environment
         self.env = local.init_env(blueprint_path,
@@ -61,7 +51,7 @@ class TestPlugin(unittest.TestCase):
         compute = gcp.service.compute(credentials)
 
         instances = gcp.service.list_instances(compute, self.inputs['config'])
-        item = gcp.service._get_item_from_list('testnode', instances)
+        item = gcp.service._get_item_from_gcp_response('testnode', instances)
         self.assertIsNone(item)
 
         ctx.logger.info("Install workflow")
@@ -70,7 +60,7 @@ class TestPlugin(unittest.TestCase):
 
         ctx.logger.info("Check instance number")
         instances = gcp.service.list_instances(compute, self.inputs['config'])
-        item = gcp.service._get_item_from_list('testnode', instances)
+        item = gcp.service._get_item_from_gcp_response('testnode', instances)
         self.assertIsNotNone(item)
 
         ctx.logger.info("Uninstall workflow")
@@ -78,5 +68,5 @@ class TestPlugin(unittest.TestCase):
 
         ctx.logger.info("Check instance number")
         instances = gcp.service.list_instances(compute, self.inputs['config'])
-        item = gcp.service._get_item_from_list('testnode', instances)
+        item = gcp.service._get_item_from_gcp_response('testnode', instances)
         self.assertIsNone(item)

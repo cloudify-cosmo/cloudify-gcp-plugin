@@ -1,11 +1,24 @@
+########
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    * See the License for the specific language governing permissions and
+#    * limitations under the License.
 
-import sys
 import time
 
+from googleapiclient.discovery import build
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import run_flow, argparser
-from googleapiclient.discovery import build
 import yaml
 
 
@@ -20,7 +33,7 @@ def list_instances(compute, config):
 
 def create_instance(compute, config_input):
     source_disk_image = config_input['manager_image']
-    machine_type = "zones/%s/machineTypes/n1-standard-1" % config_input['zone']
+    machine_type = 'zones/%s/machineTypes/n1-standard-1' % config_input['zone']
     startup_script = open('startup-script.sh', 'r').read()
 
     config = {
@@ -80,7 +93,7 @@ def wait_for_operation(compute, config, operation, global_operation=False):
                 operation=operation).execute()
 
         if result['status'] == 'DONE':
-            print "Done"
+            print 'Done'
             if 'error' in result:
                 raise Exception(result['error'])
             return result
@@ -91,15 +104,15 @@ def wait_for_operation(compute, config, operation, global_operation=False):
 def allow_http(compute, config):
     print 'Add firewall rule'
     body = {
-        "sourceRanges": [config['http_cidr_enabled']],
-        "name": "{0}-allow-http".format(config['network']),
-        "allowed": [
+        'sourceRanges': [config['http_cidr_enabled']],
+        'name': '{0}-allow-http'.format(config['network']),
+        'allowed': [
             {
-                "IPProtocol": "tcp",
-                "ports": ["80"]
+                'IPProtocol': 'tcp',
+                'ports': ['80']
             }
         ],
-        "network": "global/networks/{0}".format(config['network'])
+        'network': 'global/networks/{0}'.format(config['network'])
     }
     operation = compute.firewalls().insert(project=config['project'],
                                            body=body).execute()
@@ -109,10 +122,11 @@ def allow_http(compute, config):
 def create_network(compute, config):
     print 'Create network'
     body = {
-        "description": "Cloudify network",
-        "name": config['network']
+        'description': 'Cloudify network',
+        'name': config['network']
     }
-    operation = compute.networks().insert(project=config['project'], body=body).execute()
+    operation = compute.networks().insert(project=config['project'],
+                                          body=body).execute()
     wait_for_operation(compute, config, operation['name'], True)
 
 
@@ -132,10 +146,8 @@ def run(config):
 
     operation = create_instance(compute, config)
     wait_for_operation(compute, config, operation['name'])
-    print """
-Instance created.
-It will take a minute or two for the instance to complete work.
-"""
+    print ' Instance created. \n ' \
+          'It will take a minute or two for the instance to complete work.'
 
 
 def find_and_replace(file_name, replace):
@@ -164,10 +176,10 @@ def prepare_startup_script(config):
 def upload_agent_key(compute, config):
     with open(config['ssh_key_public'], 'r') as f:
         ssh_public = f.read()
-    metadata = {"items": [
-        {"key": "sshKeys",
-         "value": "{0}: {1}".format(config['agent_user'], ssh_public)}
-    ], "kind": "compute#metadata"}
+    metadata = {'items': [
+        {'key': 'sshKeys',
+         'value': '{0}: {1}'.format(config['agent_user'], ssh_public)}
+    ], 'kind': 'compute#metadata'}
     compute.projects().setCommonInstanceMetadata(project=config['project'],
                                                  body=metadata).execute()
 
@@ -181,5 +193,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

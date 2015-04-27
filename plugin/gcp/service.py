@@ -20,30 +20,31 @@ from oauth2client.file import Storage
 from oauth2client.tools import run_flow, argparser
 from googleapiclient.discovery import build
 from cloudify import ctx
+from cloudify.exceptions import NonRecoverableError
 
 
 def init_oauth(config):
-    ctx.logger.info("Init OAuth")
+    ctx.logger.info('Init OAuth')
     flow = flow_from_clientsecrets(config['client_secret'],
                                    scope=config['gcp_scope'])
     return flow
 
 
 def authenticate(flow, storage_path):
-    ctx.logger.info("Get credentials")
+    ctx.logger.info('Get credentials')
     storage = Storage(storage_path)
     credentials = storage.get()
     flags = argparser.parse_args(args=[])
     if credentials is None or credentials.invalid:
-        ctx.logger.info("Credentials are invalid or they are missing."
-                        " Trying to generate...")
+        ctx.logger.info('Credentials are invalid or they are missing.'
+                        ' Trying to generate...')
         credentials = run_flow(flow, storage, flags)
     return credentials
 
 
 def create_instance(compute, config, name):
-    ctx.logger.info("Create instance")
-    machine_type = "zones/%s/machineTypes/n1-standard-1" % config['zone']
+    ctx.logger.info('Create instance')
+    machine_type = 'zones/%s/machineTypes/n1-standard-1' % config['zone']
 
     body = {
         'name': name,
@@ -86,7 +87,7 @@ def create_instance(compute, config, name):
 
 
 def delete_instance(compute, config, name):
-    ctx.logger.info("Delete instance")
+    ctx.logger.info('Delete instance')
     return compute.instances().delete(
         project=config['project'],
         zone=config['zone'],
@@ -100,7 +101,7 @@ def list_instances(compute, config):
 
 
 def wait_for_operation(compute, config, operation, global_operation=False):
-    ctx.logger.info("Wait for operation.")
+    ctx.logger.info('Wait for operation: {0}.'.format(operation))
     while True:
         if global_operation:
             result = compute.globalOperations().get(
@@ -113,10 +114,8 @@ def wait_for_operation(compute, config, operation, global_operation=False):
                 operation=operation).execute()
         if result['status'] == 'DONE':
             if 'error' in result:
-                raise Exception(result['error'])
-                # throw cloudify exception - Which one
-                # should it be - NonRecoverable or Recoverable?
-            ctx.logger.info("Done")
+                raise NonRecoverableError(result['error'])
+            ctx.logger.info('Done')
             return result
         else:
             time.sleep(1)
@@ -131,7 +130,7 @@ def set_ip(compute, config):
     item = _get_item_from_gcp_response(ctx.node.name, instances)
     ctx.instance.runtime_properties['ip'] = \
         item['networkInterfaces'][0]['networkIP']
-        # only with one default network interface
+    # only with one default network interface
 
 
 def _get_item_from_gcp_response(name, items):
