@@ -45,12 +45,14 @@ class TestPlugin(unittest.TestCase):
                                   inputs=self.inputs)
 
     def test_create_instance(self):
-        flow = gcp.service.init_oauth(self.inputs['config'])
-        credentials = gcp.service.authenticate(
-            flow, self.inputs['config']['storage'])
+        config = self.inputs['config']
+        flow = gcp.service.init_oauth(config)
+        credentials = gcp.service.authenticate(flow, config['storage'])
         compute = gcp.service.compute(credentials)
 
-        instances = gcp.service.list_instances(compute, self.inputs['config'])
+        instances = gcp.service.list_instances(compute,
+                                               config['project'],
+                                               config['zone'])
         item = gcp.service._get_item_from_gcp_response('testnode', instances)
         self.assertIsNone(item)
 
@@ -59,7 +61,9 @@ class TestPlugin(unittest.TestCase):
         self.env.execute('install', task_retries=0)
 
         ctx.logger.info("Check instance number")
-        instances = gcp.service.list_instances(compute, self.inputs['config'])
+        instances = gcp.service.list_instances(compute,
+                                               config['project'],
+                                               config['zone'])
         item = gcp.service._get_item_from_gcp_response('testnode', instances)
         self.assertIsNotNone(item)
 
@@ -67,6 +71,8 @@ class TestPlugin(unittest.TestCase):
         self.env.execute('uninstall', task_retries=0)
 
         ctx.logger.info("Check instance number")
-        instances = gcp.service.list_instances(compute, self.inputs['config'])
+        instances = gcp.service.list_instances(compute,
+                                               config['project'],
+                                               config['zone'])
         item = gcp.service._get_item_from_gcp_response('testnode', instances)
         self.assertIsNone(item)

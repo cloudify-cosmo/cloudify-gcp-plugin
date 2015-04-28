@@ -13,7 +13,7 @@ plugins:
     source: https://github.com/szpotona/cloudify-gcp-plugin/archive/devel.zip
 
 node_types:
-  cloudify.gcp.Server:
+  cloudify.gcp.Instance:
     derived_from: cloudify.nodes.Compute
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -31,6 +31,9 @@ node_types:
 
   cloudify.gcp.Network:
     derived_from: cloudify.nodes.Network
+    properties:
+      network_name: >
+        The name of the network.
     interfaces:
       create:
         implementation: gcp_plugin.plugin.tasks.create_network
@@ -42,3 +45,22 @@ node_types:
         inputs:
           config:
             default: {}
+
+  cloudify.gcp.FirewallRule:
+    derived_from: cloudify.nodes.Root
+    properties:
+      firewall_rule_name: >
+        The name of the firewall rule. Will be prefixed with .
+    interfaces:
+      create:
+        implementation: gcp_plugin.plugin.tasks.create_firewall_rule
+        inputs:
+          config:
+            default: {}
+      delete:
+        implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
+        inputs:
+          config:
+            default: {}
+
+

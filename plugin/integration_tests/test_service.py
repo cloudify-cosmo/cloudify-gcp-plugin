@@ -22,7 +22,6 @@ from plugin.gcp import service
 
 
 class TestService(unittest.TestCase):
-
     def setUp(self):  # noqa
         ctx = MockCloudifyContext()
         current_ctx.set(ctx)
@@ -33,30 +32,36 @@ class TestService(unittest.TestCase):
         flow = service.init_oauth(self.config)
         credentials = service.authenticate(flow, self.config['storage'])
         compute = service.compute(credentials)
-        networks = service.list_networks(compute, self.config)
+        networks = service.list_networks(compute, self.config['project'])
         item = service._get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNone(item)
 
-        response = service.create_network(compute, self.config)
+        response = service.create_network(compute,
+                                          self.config['project'],
+                                          self.config['network'])
         service.wait_for_operation(compute,
-                                   self.config,
+                                   self.config['project'],
+                                   self.config['zone'],
                                    response['name'],
                                    True)
 
-        networks = service.list_networks(compute, self.config)
+        networks = service.list_networks(compute, self.config['project'])
         item = service._get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNotNone(item)
 
-        response = service.delete_network(compute, self.config)
+        response = service.delete_network(compute,
+                                          self.config['project'],
+                                          self.config['network'])
         service.wait_for_operation(compute,
-                                   self.config,
+                                   self.config['project'],
+                                   self.config['zone'],
                                    response['name'],
                                    True)
-        networks = service.list_networks(compute, self.config)
+        networks = service.list_networks(compute, self.config['project'])
         item = service._get_item_from_gcp_response(
             self.config['network'],
             networks)
@@ -67,58 +72,77 @@ class TestService(unittest.TestCase):
         credentials = service.authenticate(
             flow, self.config['storage'])
         compute = service.compute(credentials)
-        networks = service.list_networks(compute, self.config)
+        networks = service.list_networks(compute, self.config['project'])
         item = service._get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNone(item)
 
-        firewall_rules = service.list_firewall_rules(compute, self.config)
+        firewall_rules = service.list_firewall_rules(compute,
+                                                     self.config['project'])
         item = service._get_item_from_gcp_response(
             self.config['firewall']['name'],
             firewall_rules)
         self.assertIsNone(item)
 
-        response = service.create_network(compute, self.config)
+        response = service.create_network(compute,
+                                          self.config['project'],
+                                          self.config['network'])
         service.wait_for_operation(compute,
-                                   self.config,
+                                   self.config['project'],
+                                   self.config['zone'],
                                    response['name'],
                                    True)
 
-        networks = service.list_networks(compute, self.config)
+        networks = service.list_networks(compute, self.config['project'])
         item = service._get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNotNone(item)
 
-        response = service.create_firewall_rule(compute, self.config)
+        response = service.create_firewall_rule(compute,
+                                                self.config['project'],
+                                                self.config['network'],
+                                                self.config['firewall'])
         service.wait_for_operation(compute,
-                                   self.config,
+                                   self.config['project'],
+                                   self.config['zone'],
                                    response['name'],
                                    True)
 
-        firewall_rules = service.list_firewall_rules(compute, self.config)
+        firewall_rules = service.list_firewall_rules(compute,
+                                                     self.config['project'])
         item = service._get_item_from_gcp_response(
             self.config['firewall']['name'],
             firewall_rules)
         self.assertIsNotNone(item)
 
-        response = service.delete_firewall_rule(compute, self.config)
+        response = service.delete_firewall_rule(
+            compute,
+            self.config['project'],
+            self.config['firewall']['name'])
+
         service.wait_for_operation(compute,
-                                   self.config,
+                                   self.config['project'],
+                                   self.config['zone'],
                                    response['name'],
                                    True)
-        firewall_rules = service.list_firewall_rules(compute, self.config)
+        firewall_rules = service.list_firewall_rules(compute,
+                                                     self.config['project'])
         item = service._get_item_from_gcp_response(
             self.config['firewall']['name'],
             firewall_rules)
         self.assertIsNone(item)
 
-        response = service.delete_network(compute, self.config)
+        response = service.delete_network(compute,
+                                          self.config['project'],
+                                          self.config['network'])
         service.wait_for_operation(compute,
-                                   self.config,
+                                   self.config['project'],
+                                   self.config['zone'],
                                    response['name'],
                                    True)
-        networks = service.list_networks(compute, self.config)
-        item = service._get_item_from_gcp_response(self.config, networks)
+        networks = service.list_networks(compute, self.config['project'])
+        item = service._get_item_from_gcp_response(self.config['network'],
+                                                   networks)
         self.assertIsNone(item)

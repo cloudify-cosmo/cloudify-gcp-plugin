@@ -33,8 +33,15 @@ def create_instance(config, **kwargs):
     ctx.logger.info('Create instance')
     credentials = init_auth(config)
     compute = service.compute(credentials)
-    response = service.create_instance(compute, config, ctx.node.name)
-    service.wait_for_operation(compute, config, response['name'])
+    response = service.create_instance(compute,
+                                       config['project'],
+                                       config['zone'],
+                                       ctx.node.name,
+                                       config['agent_image'])
+    service.wait_for_operation(compute,
+                               config['project'],
+                               config['zone'],
+                               response['name'])
     service.set_ip(compute, config)
 
 
@@ -43,23 +50,72 @@ def delete_instance(config, **kwargs):
     ctx.logger.info('Delete instance')
     credentials = init_auth(config)
     compute = service.compute(credentials)
-    response = service.delete_instance(compute, config, ctx.node.name)
-    service.wait_for_operation(compute, config, response['name'])
+    response = service.delete_instance(compute,
+                                       config['project'],
+                                       config['zone'],
+                                       ctx.node.name)
+    service.wait_for_operation(compute,
+                               config['project'],
+                               config['zone'],
+                               response['name'])
 
 
 @operation
 def create_network(config, **kwargs):
-    ctx.logger.info('Create instance')
+    ctx.logger.info('Create network')
     credentials = init_auth(config)
     compute = service.compute(credentials)
-    response = service.create_network(compute, config)
-    service.wait_for_operation(compute, config, response['name'], True)
+    response = service.create_network(compute,
+                                      config['project'],
+                                      config['network'])
+    service.wait_for_operation(compute,
+                               config['project'],
+                               config['zone'],
+                               response['name'],
+                               True)
 
 
 @operation
 def delete_network(config, **kwargs):
+    ctx.logger.info('Delete network')
+    credentials = init_auth(config)
+    compute = service.compute(credentials)
+    response = service.delete_network(compute,
+                                      config['project'],
+                                      config['network'])
+    service.wait_for_operation(compute,
+                               config['project'],
+                               config['zone'],
+                               response['name'],
+                               True)
+
+@operation
+def create_firewall_rule(config, **kwargs):
     ctx.logger.info('Create instance')
     credentials = init_auth(config)
     compute = service.compute(credentials)
-    response = service.delete_network(compute, config['project'])
-    service.wait_for_operation(compute, config, response['name'], True)
+    response = service.create_firewall_rule(compute,
+                                            config['project'],
+                                            config['network'],
+                                            config['firewall'])
+    service.wait_for_operation(compute,
+                               config['project'],
+                               config['zone'],
+                               response['name'],
+                               True)
+
+
+@operation
+def delete_firewall_rule(config, **kwargs):
+    # config should be taken from node runtime properties
+    ctx.logger.info('Create instance')
+    credentials = init_auth(config)
+    compute = service.compute(credentials)
+    response = service.delete_firewall_rule(compute,
+                                            config['project'],
+                                            config['firewall']['name'])
+    service.wait_for_operation(compute,
+                               config['project'],
+                               config['zone'],
+                               response['name'],
+                               True)

@@ -42,12 +42,12 @@ def authenticate(flow, storage_path):
     return credentials
 
 
-def create_instance(compute, config, name):
+def create_instance(compute, project, zone, instance_name, agent_image):
     ctx.logger.info('Create instance')
-    machine_type = 'zones/%s/machineTypes/n1-standard-1' % config['zone']
+    machine_type = 'zones/{0}/machineTypes/n1-standard-1'.format(zone)
 
     body = {
-        'name': name,
+        'name': instance_name,
         'machineType': machine_type,
 
         'disks': [
@@ -55,7 +55,7 @@ def create_instance(compute, config, name):
                 'boot': True,
                 'autoDelete': True,
                 'initializeParams': {
-                    'sourceImage': config['agent_image']
+                    'sourceImage': agent_image
                 }
             }
         ],
@@ -75,42 +75,46 @@ def create_instance(compute, config, name):
         'metadata': {
             'items': [{
                 'key': 'bucket',
-                'value': config['project']
+                'value': project
             }]
         }
     }
 
     return compute.instances().insert(
-        project=config['project'],
-        zone=config['zone'],
+        project=project,
+        zone=zone,
         body=body).execute()
 
 
-def delete_instance(compute, config, name):
+def delete_instance(compute, project, zone, instance_name):
     ctx.logger.info('Delete instance')
     return compute.instances().delete(
-        project=config['project'],
-        zone=config['zone'],
-        instance=name).execute()
+        project=project,
+        zone=zone,
+        instance=instance_name).execute()
 
 
-def list_instances(compute, config):
+def list_instances(compute, project, zone):
     ctx.logger.info("List instances")
-    return compute.instances().list(project=config['project'],
-                                    zone=config['zone']).execute()
+    return compute.instances().list(project=project,
+                                    zone=zone).execute()
 
 
-def wait_for_operation(compute, config, operation, global_operation=False):
+def wait_for_operation(compute,
+                       project,
+                       zone,
+                       operation,
+                       global_operation=False):
     ctx.logger.info('Wait for operation: {0}.'.format(operation))
     while True:
         if global_operation:
             result = compute.globalOperations().get(
-                project=config['project'],
+                project=project,
                 operation=operation).execute()
         else:
             result = compute.zoneOperations().get(
-                project=config['project'],
-                zone=config['zone'],
+                project=project,
+                zone=zone,
                 operation=operation).execute()
         if result['status'] == 'DONE':
             if 'error' in result:
@@ -126,7 +130,7 @@ def compute(credentials):
 
 
 def set_ip(compute, config):
-    instances = list_instances(compute, config)
+    instances = list_instances(compute, config['project'], config['zone'])
     item = _get_item_from_gcp_response(ctx.node.name, instances)
     ctx.instance.runtime_properties['ip'] = \
         item['networkInterfaces'][0]['networkIP']
@@ -140,42 +144,44 @@ def _get_item_from_gcp_response(name, items):
     return None
 
 
-def create_network(compute, config):
+def create_network(compute, project, network):
     ctx.logger.info('Create network')
     body = {
         "description": "Cloudify generated network",
-        "name": config['network']
+        "name": network
     }
-    return compute.networks().insert(project=config['project'],
+    return compute.networks().insert(project=project,
                                      body=body).execute()
 
 
-def delete_network(compute, config):
+def delete_network(compute, project, network):
     ctx.logger.info('Delete network')
-    return compute.networks().delete(project=config['project'],
-                                     network=config['network']).execute()
+    return compute.networks().delete(project=project,
+                                     network=network).execute()
 
 
-def list_networks(compute, config):
+def list_networks(compute, project):
     ctx.logger.info('List networks')
-    return compute.networks().list(project=config['project']).execute()
+    return compute.networks().list(project=project).execute()
 
 
-def create_firewall_rule(compute, config):
+def create_firewall_rule(compute, project, network, firewall):
     ctx.logger.info('Create firewall rule')
-    config['firewall']['network'] = \
-        'global/networks/{0}'.format(config['network'])
-    return compute.firewalls().insert(project=config['project'],
-                                      body=config['firewall']).execute()
+    firewall['network'] = \
+        'global/networks/{0}'.format(network)
+    firewall['name'] = '{0}-{1}'.format(network, firewall['name'])
+    # should be changed in node runtime properties
+    return compute.firewalls().insert(project=project,
+                                      body=firewall).execute()
 
 
-def delete_firewall_rule(compute, config):
+def delete_firewall_rule(compute, project, firewall_name):
     ctx.logger.info('Delete firewall rule')
     return compute.firewalls().delete(
-        project=config['project'],
-        firewall=config['firewall']['name']).execute()
+        project=project,
+        firewall=firewall_name).execute()
 
 
-def list_firewall_rules(compute, config):
+def list_firewall_rules(compute, project):
     ctx.logger.info('List firewall rules in project')
-    return compute.firewalls().list(project=config['project']).execute()
+    return compute.firewalls().list(project=project).execute()
