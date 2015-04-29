@@ -1,8 +1,7 @@
 config:
-  client_secret: /tmp/blueprint_resources/client_secret.json # put absolute path to client_secret.json
+  service_account_file: # put absolute path to client_secret.json
   agent_image: /projects/ubuntu-os-cloud/global/images/ubuntu-1204-precise-v20150316
-  gcp_scope: https://www.googleapis.com/auth/compute,
-  storage: /tmp/blueprint_resources/oauth.dat # put absolute path to oauth.dat
+  scope: https://www.googleapis.com/auth/compute
   project: # put project name
   zone: us-central1-f
   network: testnetwork

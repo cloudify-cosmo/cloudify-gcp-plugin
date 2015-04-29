@@ -20,19 +20,11 @@ from cloudify.decorators import operation
 from gcp import service
 
 
-def init_auth(config, **kwargs):
-    flow = None
-    if not ctx.instance.runtime_properties.get('credentials'):
-        flow = service.init_oauth(config)
-        ctx.instance.runtime_properties['credentials'] = True
-    return service.authenticate(flow, config['storage'])
-
-
 @operation
 def create_instance(config, **kwargs):
     ctx.logger.info('Create instance')
-    credentials = init_auth(config)
-    compute = service.compute(credentials)
+    compute = service.compute(config['service_account'],
+                              config['scope'])
     response = service.create_instance(compute,
                                        config['project'],
                                        config['zone'],
@@ -48,8 +40,8 @@ def create_instance(config, **kwargs):
 @operation
 def delete_instance(config, **kwargs):
     ctx.logger.info('Delete instance')
-    credentials = init_auth(config)
-    compute = service.compute(credentials)
+    compute = service.compute(config['service_account'],
+                              config['scope'])
     response = service.delete_instance(compute,
                                        config['project'],
                                        config['zone'],
@@ -63,8 +55,8 @@ def delete_instance(config, **kwargs):
 @operation
 def create_network(config, **kwargs):
     ctx.logger.info('Create network')
-    credentials = init_auth(config)
-    compute = service.compute(credentials)
+    compute = service.compute(config['service_account'],
+                              config['scope'])
     response = service.create_network(compute,
                                       config['project'],
                                       config['network'])
@@ -78,8 +70,8 @@ def create_network(config, **kwargs):
 @operation
 def delete_network(config, **kwargs):
     ctx.logger.info('Delete network')
-    credentials = init_auth(config)
-    compute = service.compute(credentials)
+    compute = service.compute(config['service_account'],
+                              config['scope'])
     response = service.delete_network(compute,
                                       config['project'],
                                       config['network'])
@@ -92,8 +84,8 @@ def delete_network(config, **kwargs):
 @operation
 def create_firewall_rule(config, **kwargs):
     ctx.logger.info('Create instance')
-    credentials = init_auth(config)
-    compute = service.compute(credentials)
+    compute = service.compute(config['service_account'],
+                              config['scope'])
     response = service.create_firewall_rule(compute,
                                             config['project'],
                                             config['network'],
@@ -109,8 +101,8 @@ def create_firewall_rule(config, **kwargs):
 def delete_firewall_rule(config, **kwargs):
     # config should be taken from node runtime properties
     ctx.logger.info('Create instance')
-    credentials = init_auth(config)
-    compute = service.compute(credentials)
+    compute = service.compute(config['service_account'],
+                              config['scope'])
     response = service.delete_firewall_rule(compute,
                                             config['project'],
                                             config['firewall']['name'])

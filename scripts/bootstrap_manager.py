@@ -12,13 +12,12 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-
+import json
+import httplib2
 import time
 
 from googleapiclient.discovery import build
-from oauth2client.client import flow_from_clientsecrets
-from oauth2client.file import Storage
-from oauth2client.tools import run_flow, argparser
+from oauth2client.client import SignedJwtAssertionCredentials
 import yaml
 
 
@@ -131,14 +130,14 @@ def create_network(compute, config):
 
 
 def run(config):
-    flow = flow_from_clientsecrets(config['client_secret'],
-                                   scope=config['gcp_scope'])
-    storage = Storage(config.get('storage'))
-    credentials = storage.get()
-    flags = argparser.parse_args(args=[])
-    if credentials is None or credentials.invalid:
-        credentials = run_flow(flow, storage, flags)
-    compute = build('compute', 'v1', credentials=credentials)
+    with open(config['service_account']) as f:
+        account_data = json.load(f)
+    credentials = SignedJwtAssertionCredentials(account_data['client_email'],
+                                                account_data['private_key'],
+                                                scope=config['scope'])
+    http = httplib2.Http()
+    credentials.authorize(http)
+    compute = build('compute', 'v1', http=http)
     upload_agent_key(compute, config)
     create_network(compute, config)
     allow_http(compute, config)

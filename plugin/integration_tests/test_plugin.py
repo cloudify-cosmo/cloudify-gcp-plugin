@@ -14,8 +14,8 @@
 #    * limitations under the License.
 
 import os
-
 import unittest
+
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
 from cloudify.workflows import local
@@ -46,9 +46,8 @@ class TestPlugin(unittest.TestCase):
 
     def test_create_instance(self):
         config = self.inputs['config']
-        flow = gcp.service.init_oauth(config)
-        credentials = gcp.service.authenticate(flow, config['storage'])
-        compute = gcp.service.compute(credentials)
+        compute = gcp.service.compute(config['service_account'],
+                                      config['scope'])
 
         instances = gcp.service.list_instances(compute,
                                                config['project'],

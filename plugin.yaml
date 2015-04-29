@@ -24,43 +24,42 @@ node_types:
               default: {}
         stop:
           implementation: gcp_plugin.plugin.tasks.delete_instance
-            inputs:
-              config:
-                default: {}
-
+          inputs:
+            config:
+              default: {}
 
   cloudify.gcp.Network:
     derived_from: cloudify.nodes.Network
     properties:
-      network_name: >
-        The name of the network.
+      network_name: 
+        description: The name of the network.
+        default: ''
     interfaces:
-      create:
-        implementation: gcp_plugin.plugin.tasks.create_network
-        inputs:
-          config:
-            default: {}
-      delete:
-        implementation: gcp_plugin.plugin.tasks.delete_network
-        inputs:
-          config:
-            default: {}
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.plugin.tasks.create_network
+          inputs:
+            config:
+              default: {}
+        delete:
+          implementation: gcp_plugin.plugin.tasks.delete_network
+          inputs:
+            config:
+              default: {}
 
   cloudify.gcp.FirewallRule:
     derived_from: cloudify.nodes.Root
-    properties:
-      firewall_rule_name: >
-        The name of the firewall rule. Will be prefixed with .
     interfaces:
-      create:
-        implementation: gcp_plugin.plugin.tasks.create_firewall_rule
-        inputs:
-          config:
-            default: {}
-      delete:
-        implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
-        inputs:
-          config:
-            default: {}
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.plugin.tasks.create_firewall_rule
+          inputs:
+            config:
+              default: {}
+        delete:
+          implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
+          inputs:
+            config:
+              default: {}
 
 

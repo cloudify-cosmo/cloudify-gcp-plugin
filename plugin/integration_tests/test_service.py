@@ -29,9 +29,8 @@ class TestService(unittest.TestCase):
             self.config = yaml.safe_load(f).get('config')
 
     def test_create_network(self):
-        flow = service.init_oauth(self.config)
-        credentials = service.authenticate(flow, self.config['storage'])
-        compute = service.compute(credentials)
+        compute = service.compute(self.config['service_account'],
+                                  self.config['scope'])
         networks = service.list_networks(compute, self.config['project'])
         item = service._get_item_from_gcp_response(
             self.config['network'],
@@ -68,10 +67,8 @@ class TestService(unittest.TestCase):
         self.assertIsNone(item)
 
     def test_create_firewall_rule(self):
-        flow = service.init_oauth(self.config)
-        credentials = service.authenticate(
-            flow, self.config['storage'])
-        compute = service.compute(credentials)
+        compute = service.compute(self.config['service_account'],
+                                  self.config['scope'])
         networks = service.list_networks(compute, self.config['project'])
         item = service._get_item_from_gcp_response(
             self.config['network'],

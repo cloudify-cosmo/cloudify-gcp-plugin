@@ -14,32 +14,13 @@
 #    * limitations under the License.
 
 import time
+import json
 
-from oauth2client.client import flow_from_clientsecrets
-from oauth2client.file import Storage
-from oauth2client.tools import run_flow, argparser
-from googleapiclient.discovery import build
+import httplib2
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
-
-
-def init_oauth(config):
-    ctx.logger.info('Init OAuth')
-    flow = flow_from_clientsecrets(config['client_secret'],
-                                   scope=config['gcp_scope'])
-    return flow
-
-
-def authenticate(flow, storage_path):
-    ctx.logger.info('Get credentials')
-    storage = Storage(storage_path)
-    credentials = storage.get()
-    flags = argparser.parse_args(args=[])
-    if credentials is None or credentials.invalid:
-        ctx.logger.info('Credentials are invalid or they are missing.'
-                        ' Trying to generate...')
-        credentials = run_flow(flow, storage, flags)
-    return credentials
+from googleapiclient.discovery import build
+from oauth2client.client import SignedJwtAssertionCredentials
 
 
 def create_instance(compute, project, zone, instance_name, agent_image):
@@ -125,8 +106,15 @@ def wait_for_operation(compute,
             time.sleep(1)
 
 
-def compute(credentials):
-    return build('compute', 'v1', credentials=credentials)
+def compute(service_account, scope):
+    with open(service_account) as f:
+        account_data = json.load(f)
+    credentials = SignedJwtAssertionCredentials(account_data['client_email'],
+                                                account_data['private_key'],
+                                                scope=scope)
+    http = httplib2.Http()
+    credentials.authorize(http)
+    return build('compute', 'v1', http=http)
 
 
 def set_ip(compute, config):
