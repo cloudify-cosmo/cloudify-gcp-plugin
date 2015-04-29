@@ -23,9 +23,15 @@ from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
 
-def create_instance(compute, project, zone, instance_name, agent_image):
+def create_instance(compute,
+                    project,
+                    zone,
+                    instance_name,
+                    agent_image,
+                    machine_type='n1-standard-1',
+                    network='default'):
     ctx.logger.info('Create instance')
-    machine_type = 'zones/{0}/machineTypes/n1-standard-1'.format(zone)
+    machine_type = 'zones/{0}/machineTypes/{1}'.format(zone, machine_type)
 
     body = {
         'name': instance_name,
@@ -41,7 +47,7 @@ def create_instance(compute, project, zone, instance_name, agent_image):
             }
         ],
         'networkInterfaces': [{
-            'network': 'global/networks/default',
+            'network': 'global/networks/{0}'.format(network),
             'accessConfigs': [
                 {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
             ]
