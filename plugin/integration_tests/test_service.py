@@ -18,7 +18,8 @@ from cloudify.state import current_ctx
 import unittest
 import yaml
 
-from plugin.gcp import service
+from plugin.gcp.service import GoogleCloudPlatform
+from plugin.gcp import utils
 
 
 class TestService(unittest.TestCase):
@@ -29,118 +30,82 @@ class TestService(unittest.TestCase):
             self.config = yaml.safe_load(f).get('config')
 
     def test_create_network(self):
-        compute = service.compute(self.config['service_account'],
+        gcp = GoogleCloudPlatform(self.config['auth'],
+                                  self.config['project'],
                                   self.config['scope'])
-        networks = service.list_networks(compute, self.config['project'])
-        item = service._get_item_from_gcp_response(
+        networks = gcp.list_networks()
+        item = utils.get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNone(item)
 
-        response = service.create_network(compute,
-                                          self.config['project'],
-                                          self.config['network'])
-        service.wait_for_operation(compute,
-                                   self.config['project'],
-                                   self.config['zone'],
-                                   response['name'],
-                                   True)
+        response = gcp.create_network(self.config['network'])
+        gcp.wait_for_operation(response['name'], True)
 
-        networks = service.list_networks(compute, self.config['project'])
-        item = service._get_item_from_gcp_response(
+        networks = gcp.list_networks()
+        item = utils.get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNotNone(item)
 
-        response = service.delete_network(compute,
-                                          self.config['project'],
-                                          self.config['network'])
-        service.wait_for_operation(compute,
-                                   self.config['project'],
-                                   self.config['zone'],
-                                   response['name'],
-                                   True)
-        networks = service.list_networks(compute, self.config['project'])
-        item = service._get_item_from_gcp_response(
+        response = gcp.delete_network(self.config['network'])
+        gcp.wait_for_operation(response['name'], True)
+        networks = gcp.list_networks()
+        item = utils.get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNone(item)
 
     def test_create_firewall_rule(self):
-        compute = service.compute(self.config['service_account'],
+        gcp = GoogleCloudPlatform(self.config['auth'],
+                                  self.config['project'],
                                   self.config['scope'])
-        networks = service.list_networks(compute, self.config['project'])
-        item = service._get_item_from_gcp_response(
+        networks = gcp.list_networks()
+        item = utils.get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNone(item)
 
-        firewall_rules = service.list_firewall_rules(compute,
-                                                     self.config['project'])
-        item = service._get_item_from_gcp_response(
+        firewall_rules = gcp.list_firewall_rules()
+        item = utils.get_item_from_gcp_response(
             self.config['firewall']['name'],
             firewall_rules)
         self.assertIsNone(item)
 
-        response = service.create_network(compute,
-                                          self.config['project'],
-                                          self.config['network'])
-        service.wait_for_operation(compute,
-                                   self.config['project'],
-                                   self.config['zone'],
-                                   response['name'],
-                                   True)
+        response = gcp.create_network(self.config['network'])
+        gcp.wait_for_operation(response['name'], True)
 
-        networks = service.list_networks(compute, self.config['project'])
-        item = service._get_item_from_gcp_response(
+        networks = gcp.list_networks()
+        item = utils.get_item_from_gcp_response(
             self.config['network'],
             networks)
         self.assertIsNotNone(item)
 
-        response = service.create_firewall_rule(compute,
-                                                self.config['project'],
-                                                self.config['network'],
-                                                self.config['firewall'])
-        service.wait_for_operation(compute,
-                                   self.config['project'],
-                                   self.config['zone'],
-                                   response['name'],
-                                   True)
+        response = gcp.create_firewall_rule(self.config['network'],
+                                            self.config['firewall'])
+        gcp.wait_for_operation(response['name'], True)
 
-        firewall_rules = service.list_firewall_rules(compute,
-                                                     self.config['project'])
-        item = service._get_item_from_gcp_response(
-            self.config['firewall']['name'],
+        firewall_rules = gcp.list_firewall_rules()
+        item = utils.get_item_from_gcp_response(
+            utils.get_firewall_rule_name(
+                self.config['network'],
+                self.config['firewall']),
             firewall_rules)
         self.assertIsNotNone(item)
 
-        response = service.delete_firewall_rule(
-            compute,
-            self.config['project'],
-            self.config['network'],
-            self.config['firewall'])
+        response = gcp.delete_firewall_rule(self.config['network'],
+                                            self.config['firewall'])
 
-        service.wait_for_operation(compute,
-                                   self.config['project'],
-                                   self.config['zone'],
-                                   response['name'],
-                                   True)
-        firewall_rules = service.list_firewall_rules(compute,
-                                                     self.config['project'])
-        item = service._get_item_from_gcp_response(
+        gcp.wait_for_operation(response['name'], True)
+        firewall_rules = gcp.list_firewall_rules()
+        item = utils.get_item_from_gcp_response(
             self.config['firewall']['name'],
             firewall_rules)
         self.assertIsNone(item)
 
-        response = service.delete_network(compute,
-                                          self.config['project'],
-                                          self.config['network'])
-        service.wait_for_operation(compute,
-                                   self.config['project'],
-                                   self.config['zone'],
-                                   response['name'],
-                                   True)
-        networks = service.list_networks(compute, self.config['project'])
-        item = service._get_item_from_gcp_response(self.config['network'],
-                                                   networks)
+        response = gcp.delete_network(self.config['network'])
+        gcp.wait_for_operation(response['name'], True)
+        networks = gcp.list_networks()
+        item = utils.get_item_from_gcp_response(self.config['network'],
+                                                networks)
         self.assertIsNone(item)

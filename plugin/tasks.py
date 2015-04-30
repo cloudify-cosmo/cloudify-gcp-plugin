@@ -17,98 +17,66 @@
 from cloudify import ctx
 from cloudify.decorators import operation
 
-from gcp import service
+from plugin.gcp.service import GoogleCloudPlatform
 
 
 @operation
 def create_instance(config, **kwargs):
     ctx.logger.info('Create instance')
-    compute = service.compute(config['service_account'],
+    gcp = GoogleCloudPlatform(config['auth'],
+                              config['project'],
                               config['scope'])
-    response = service.create_instance(compute,
-                                       config['project'],
-                                       config['zone'],
-                                       ctx.node.name,
-                                       config['agent_image'])
-    service.wait_for_operation(compute,
-                               config['project'],
-                               config['zone'],
-                               response['name'])
-    service.set_ip(compute, config)
+    response = gcp.create_instance(ctx.node.name,
+                                   config['agent_image'])
+    gcp.wait_for_operation(response['name'])
+    gcp.set_ip()
 
 
 @operation
 def delete_instance(config, **kwargs):
     ctx.logger.info('Delete instance')
-    compute = service.compute(config['service_account'],
+    gcp = GoogleCloudPlatform(config['auth'],
+                              config['project'],
                               config['scope'])
-    response = service.delete_instance(compute,
-                                       config['project'],
-                                       config['zone'],
-                                       ctx.node.name)
-    service.wait_for_operation(compute,
-                               config['project'],
-                               config['zone'],
-                               response['name'])
+    response = gcp.delete_instance(ctx.node.name)
+    gcp.wait_for_operation(response['name'])
 
 
 @operation
 def create_network(config, **kwargs):
     ctx.logger.info('Create network')
-    compute = service.compute(config['service_account'],
+    gcp = GoogleCloudPlatform(config['auth'],
+                              config['project'],
                               config['scope'])
-    response = service.create_network(compute,
-                                      config['project'],
-                                      config['network'])
-    service.wait_for_operation(compute,
-                               config['project'],
-                               config['zone'],
-                               response['name'],
-                               True)
+    response = gcp.create_network(config['network'])
+    gcp.wait_for_operation(response['name'], True)
 
 
 @operation
 def delete_network(config, **kwargs):
     ctx.logger.info('Delete network')
-    compute = service.compute(config['service_account'],
+    gcp = GoogleCloudPlatform(config['auth'],
+                              config['project'],
                               config['scope'])
-    response = service.delete_network(compute,
-                                      config['project'],
-                                      config['network'])
-    service.wait_for_operation(compute,
-                               config['project'],
-                               config['zone'],
-                               response['name'],
-                               True)
+    response = gcp.delete_network(config['network'])
+    gcp.wait_for_operation(response['name'], True)
 
 
 @operation
 def create_firewall_rule(config, **kwargs):
     ctx.logger.info('Create instance')
-    compute = service.compute(config['service_account'],
+    gcp = GoogleCloudPlatform(config['auth'],
+                              config['project'],
                               config['scope'])
-    response = service.create_firewall_rule(compute,
-                                            config['project'],
-                                            config['network'],
-                                            config['firewall'])
-    service.wait_for_operation(compute,
-                               config['project'],
-                               config['zone'],
-                               response['name'],
-                               True)
+    response = gcp.create_firewall_rule(config['network'], config['firewall'])
+    gcp.wait_for_operation(response['name'], True)
 
 
 @operation
 def delete_firewall_rule(config, **kwargs):
     ctx.logger.info('Create instance')
-    compute = service.compute(config['service_account'],
+    gcp = GoogleCloudPlatform(config['auth'],
+                              config['project'],
                               config['scope'])
-    response = service.delete_firewall_rule(compute,
-                                            config['project'],
-                                            config['network'],
-                                            config['firewall'])
-    service.wait_for_operation(compute,
-                               config['project'],
-                               config['zone'],
-                               response['name'],
-                               True)
+    response = gcp.delete_firewall_rule(config['network'], config['firewall'])
+    gcp.wait_for_operation(response['name'], True)

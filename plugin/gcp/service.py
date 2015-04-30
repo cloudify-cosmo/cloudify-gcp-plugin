@@ -24,168 +24,157 @@ from cloudify.exceptions import RecoverableError
 from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
+from plugin.gcp import utils
 
-def create_instance(compute,
-                    project,
-                    zone,
-                    instance_name,
-                    agent_image,
-                    machine_type='n1-standard-1',
-                    network='default'):
-    ctx.logger.info('Create instance')
-    machine_type = 'zones/{0}/machineTypes/{1}'.format(zone, machine_type)
 
-    body = {
-        'name': instance_name,
-        'machineType': machine_type,
+class GoogleCloudPlatform(object):
+    def __init__(self, auth, project, scope):
+        self.auth = auth
+        self.project = project
+        self.scope = scope
+        self.compute = self.create_compute()
 
-        'disks': [
-            {
-                'boot': True,
-                'autoDelete': True,
-                'initializeParams': {
-                    'sourceImage': agent_image
+    def create_compute(self):
+        Crypto.Random.atfork()
+        try:
+            with open(self.auth) as f:
+                account_data = json.load(f)
+            credentials = SignedJwtAssertionCredentials(
+                account_data['client_email'],
+                account_data['private_key'],
+                scope=self.scope)
+            http = httplib2.Http()
+            credentials.authorize(http)
+            return build('compute', 'v1', http=http)
+        except IOError as e:
+            raise RecoverableError(e.message)
+
+    def create_instance(self,
+                        instance_name,
+                        agent_image,
+                        machine_type='n1-standard-1',
+                        network='default'):
+        ctx.logger.info('Create instance')
+        machine_type = 'zones/{0}/machineTypes/{1}'.format(
+            self.project['zone'],
+            machine_type)
+
+        body = {
+            'name': instance_name,
+            'machineType': machine_type,
+
+            'disks': [
+                {
+                    'boot': True,
+                    'autoDelete': True,
+                    'initializeParams': {
+                        'sourceImage': agent_image
+                    }
                 }
+            ],
+            'networkInterfaces': [{
+                'network': 'global/networks/{0}'.format(network),
+                'accessConfigs': [
+                    {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
+                ]
+            }],
+            'serviceAccounts': [{
+                'email': 'default',
+                'scopes': [
+                    'https://www.googleapis.com/auth/devstorage.read_write',
+                    'https://www.googleapis.com/auth/logging.write'
+                ]
+            }],
+            'metadata': {
+                'items': [{
+                    'key': 'bucket',
+                    'value': self.project['name']
+                }]
             }
-        ],
-        'networkInterfaces': [{
-            'network': 'global/networks/{0}'.format(network),
-            'accessConfigs': [
-                {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
-            ]
-        }],
-        'serviceAccounts': [{
-            'email': 'default',
-            'scopes': [
-                'https://www.googleapis.com/auth/devstorage.read_write',
-                'https://www.googleapis.com/auth/logging.write'
-            ]
-        }],
-        'metadata': {
-            'items': [{
-                'key': 'bucket',
-                'value': project
-            }]
         }
-    }
 
-    return compute.instances().insert(
-        project=project,
-        zone=zone,
-        body=body).execute()
+        return self.compute.instances().insert(
+            project=self.project['name'],
+            zone=self.project['zone'],
+            body=body).execute()
 
+    def delete_instance(self, instance_name):
+        ctx.logger.info('Delete instance')
+        return self.compute.instances().delete(
+            project=self.project['name'],
+            zone=self.project['zone'],
+            instance=instance_name).execute()
 
-def delete_instance(compute, project, zone, instance_name):
-    ctx.logger.info('Delete instance')
-    return compute.instances().delete(
-        project=project,
-        zone=zone,
-        instance=instance_name).execute()
+    def list_instances(self):
+        ctx.logger.info("List instances")
+        return self.compute.instances().list(
+            project=self.project['name'],
+            zone=self.project['zone']).execute()
 
+    def wait_for_operation(self,
+                           operation,
+                           global_operation=False):
+        ctx.logger.info('Wait for operation: {0}.'.format(operation))
+        while True:
+            if global_operation:
+                result = self.compute.globalOperations().get(
+                    project=self.project['name'],
+                    operation=operation).execute()
+            else:
+                result = self.compute.zoneOperations().get(
+                    project=self.project['name'],
+                    zone=self.project['zone'],
+                    operation=operation).execute()
+            if result['status'] == 'DONE':
+                if 'error' in result:
+                    raise NonRecoverableError(result['error'])
+                ctx.logger.info('Done')
+                return result
+            else:
+                time.sleep(1)
 
-def list_instances(compute, project, zone):
-    ctx.logger.info("List instances")
-    return compute.instances().list(project=project,
-                                    zone=zone).execute()
+    def set_ip(self):
+        instances = self.list_instances()
+        item = utils.get_item_from_gcp_response(ctx.node.name, instances)
+        ctx.instance.runtime_properties['ip'] = \
+            item['networkInterfaces'][0]['networkIP']
+        # only with one default network interface
 
+    def create_network(self, network):
+        ctx.logger.info('Create network')
+        body = {
+            "description": "Cloudify generated network",
+            "name": network
+        }
+        return self.compute.networks().insert(project=self.project['name'],
+                                              body=body).execute()
 
-def wait_for_operation(compute,
-                       project,
-                       zone,
-                       operation,
-                       global_operation=False):
-    ctx.logger.info('Wait for operation: {0}.'.format(operation))
-    while True:
-        if global_operation:
-            result = compute.globalOperations().get(
-                project=project,
-                operation=operation).execute()
-        else:
-            result = compute.zoneOperations().get(
-                project=project,
-                zone=zone,
-                operation=operation).execute()
-        if result['status'] == 'DONE':
-            if 'error' in result:
-                raise NonRecoverableError(result['error'])
-            ctx.logger.info('Done')
-            return result
-        else:
-            time.sleep(1)
+    def delete_network(self, network):
+        ctx.logger.info('Delete network')
+        return self.compute.networks().delete(project=self.project['name'],
+                                              network=network).execute()
 
+    def list_networks(self):
+        ctx.logger.info('List networks')
+        return self.compute.networks().list(
+            project=self.project['name']).execute()
 
-def compute(service_account, scope):
-    Crypto.Random.atfork()
-    try:
-        with open(service_account) as f:
-            account_data = json.load(f)
-        credentials = SignedJwtAssertionCredentials(
-            account_data['client_email'],
-            account_data['private_key'],
-            scope=scope)
-        http = httplib2.Http()
-        credentials.authorize(http)
-        return build('compute', 'v1', http=http)
-    except IOError as e:
-        raise RecoverableError(e.message)
+    def create_firewall_rule(self, network, firewall):
+        ctx.logger.info('Create firewall rule')
+        firewall = dict(firewall)
+        firewall['network'] = \
+            'global/networks/{0}'.format(network)
+        firewall['name'] = utils.get_firewall_rule_name(network, firewall)
+        return self.compute.firewalls().insert(project=self.project['name'],
+                                               body=firewall).execute()
 
+    def delete_firewall_rule(self, network, firewall):
+        ctx.logger.info('Delete firewall rule')
+        return self.compute.firewalls().delete(
+            project=self.project['name'],
+            firewall=utils.get_firewall_rule_name(network, firewall)).execute()
 
-def set_ip(compute, config):
-    instances = list_instances(compute, config['project'], config['zone'])
-    item = _get_item_from_gcp_response(ctx.node.name, instances)
-    ctx.instance.runtime_properties['ip'] = \
-        item['networkInterfaces'][0]['networkIP']
-    # only with one default network interface
-
-
-def _get_item_from_gcp_response(name, items):
-    for item in items.get('items'):
-        if item.get('name') == name:
-            return item
-    return None
-
-
-def create_network(compute, project, network):
-    ctx.logger.info('Create network')
-    body = {
-        "description": "Cloudify generated network",
-        "name": network
-    }
-    return compute.networks().insert(project=project,
-                                     body=body).execute()
-
-
-def delete_network(compute, project, network):
-    ctx.logger.info('Delete network')
-    return compute.networks().delete(project=project,
-                                     network=network).execute()
-
-
-def list_networks(compute, project):
-    ctx.logger.info('List networks')
-    return compute.networks().list(project=project).execute()
-
-
-def create_firewall_rule(compute, project, network, firewall):
-    ctx.logger.info('Create firewall rule')
-    firewall['network'] = \
-        'global/networks/{0}'.format(network)
-    firewall['name'] = _get_firewall_rule_name(network, firewall)
-    return compute.firewalls().insert(project=project,
-                                      body=firewall).execute()
-
-
-def delete_firewall_rule(compute, project, network, firewall):
-    ctx.logger.info('Delete firewall rule')
-    return compute.firewalls().delete(
-        project=project,
-        firewall=_get_firewall_rule_name(network, firewall)).execute()
-
-
-def list_firewall_rules(compute, project):
-    ctx.logger.info('List firewall rules in project')
-    return compute.firewalls().list(project=project).execute()
-
-
-def _get_firewall_rule_name(network, firewall):
-    return '{0}-{1}'.format(network, firewall['name'])
+    def list_firewall_rules(self):
+        ctx.logger.info('List firewall rules in project')
+        return self.compute.firewalls().list(
+            project=self.project['name']).execute()

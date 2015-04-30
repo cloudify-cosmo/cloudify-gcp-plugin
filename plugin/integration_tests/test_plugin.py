@@ -22,7 +22,8 @@ from cloudify.workflows import local
 from cloudify import ctx
 import yaml
 
-from plugin import gcp
+from plugin.gcp.service import GoogleCloudPlatform
+from plugin.gcp import utils
 
 
 class TestPlugin(unittest.TestCase):
@@ -46,13 +47,11 @@ class TestPlugin(unittest.TestCase):
 
     def test_create_instance(self):
         config = self.inputs['config']
-        compute = gcp.service.compute(config['service_account'],
-                                      config['scope'])
-
-        instances = gcp.service.list_instances(compute,
-                                               config['project'],
-                                               config['zone'])
-        item = gcp.service._get_item_from_gcp_response('testnode', instances)
+        gcp = GoogleCloudPlatform(config['auth'],
+                                  config['project'],
+                                  config['scope'])
+        instances = gcp.list_instances()
+        item = utils.get_item_from_gcp_response('testnode', instances)
         self.assertIsNone(item)
 
         ctx.logger.info("Install workflow")
@@ -60,18 +59,14 @@ class TestPlugin(unittest.TestCase):
         self.env.execute('install', task_retries=0)
 
         ctx.logger.info("Check instance number")
-        instances = gcp.service.list_instances(compute,
-                                               config['project'],
-                                               config['zone'])
-        item = gcp.service._get_item_from_gcp_response('testnode', instances)
+        instances = gcp.list_instances()
+        item = utils.get_item_from_gcp_response('testnode', instances)
         self.assertIsNotNone(item)
 
         ctx.logger.info("Uninstall workflow")
         self.env.execute('uninstall', task_retries=0)
 
         ctx.logger.info("Check instance number")
-        instances = gcp.service.list_instances(compute,
-                                               config['project'],
-                                               config['zone'])
-        item = gcp.service._get_item_from_gcp_response('testnode', instances)
+        instances = gcp.list_instances()
+        item = utils.get_item_from_gcp_response('testnode', instances)
         self.assertIsNone(item)
