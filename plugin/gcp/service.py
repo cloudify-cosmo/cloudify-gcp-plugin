@@ -16,6 +16,7 @@
 import time
 import json
 
+import Crypto
 import httplib2
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
@@ -113,6 +114,7 @@ def wait_for_operation(compute,
 
 
 def compute(service_account, scope):
+    Crypto.Random.atfork()
     with open(service_account) as f:
         account_data = json.load(f)
     credentials = SignedJwtAssertionCredentials(account_data['client_email'],
