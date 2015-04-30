@@ -1,0 +1,37 @@
+tosca_definitions_version: cloudify_dsl_1_0
+
+imports:
+    - http://www.getcloudify.org/spec/cloudify/3.2rc1/types.yaml
+    - test_plugin.yaml
+
+inputs:
+    config:
+        description: config data
+        default: {}
+
+node_types:
+    cloudify.gcp.Root:
+        derived_from: cloudify.nodes.Root
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                start:
+                    implementation: gcp_plugin.plugin.tasks.create_instance
+                    inputs:
+                        config:
+                            default: {}
+                stop:
+                    implementation: gcp_plugin.plugin.tasks.delete_instance
+                    inputs:
+                        config:
+                            default: {}
+node_templates:
+    testnode:
+        type: cloudify.gcp.Root
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                start:
+                    inputs:
+                        config: { get_input: config }
+                stop:
+                    inputs:
+                        config: { get_input: config }

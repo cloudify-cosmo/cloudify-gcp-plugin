@@ -1,0 +1,12 @@
+config:
+    service_account: absolute path to service_account_file.json
+    scope: https://www.googleapis.com/auth/compute
+    manager_image: /projects/ubuntu-os-cloud/global/images/ubuntu-1204-precise-v20150316
+    project: name of the project
+    zone: e.g. us-central1-f
+    ssh_key_public: public key to use to connect to manager and agents
+    ssh_key_private: private key to use to connect to manager and agents
+    agent_user: e.g. ubuntu
+    name: cloudify-manager1
+    network: cloudify
+    http_cidr_enabled: cidr address family to enable connection to

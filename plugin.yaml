@@ -1,0 +1,71 @@
+plugins:
+  # Name could be anything, this name is what appears on the beginning of operation
+  # mappings.
+  gcp_plugin:
+    # Could be 'central_deployment_agent' or 'host_agent'.
+    # If 'central_deployment_agent', this plugin will be executed on the
+    # deployment dedicated agent, other wise it will be executed on the host agent.
+    executor: central_deployment_agent
+
+    # URL to archive containing the plugin or name of directory containing
+    # the plugin if it is included in the the blueprint directory under the
+    # "plugins" directory.
+    source: https://github.com/szpotona/cloudify-gcp-plugin/archive/devel.zip
+
+node_types:
+  cloudify.gcp.nodes.Instance:
+    derived_from: cloudify.nodes.Compute
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: gcp_plugin.plugin.tasks.create_instance
+          inputs:
+            config:
+              default: {}
+        stop:
+          implementation: gcp_plugin.plugin.tasks.delete_instance
+          inputs:
+            config:
+              default: {}
+
+  cloudify.gcp.nodes.Network:
+    derived_from: cloudify.nodes.Network
+    properties:
+      network_name: 
+        description: The name of the network.
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.plugin.tasks.create_network
+          inputs:
+            config:
+              default: {}
+        delete:
+          implementation: gcp_plugin.plugin.tasks.delete_network
+          inputs:
+            config:
+              default: {}
+
+  cloudify.gcp.nodes.FirewallRule:
+    derived_from: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.plugin.tasks.create_firewall_rule
+          inputs:
+            config:
+              default: {}
+        delete:
+          implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
+          inputs:
+            config:
+              default: {}
+
+relationships:
+  cloudify.gcp.relationships.connected_to:
+    derived_from: cloudify.relationships.connected_to
+
+  cloudify.gcp.relationships.contained_in:
+    derived_from: cloudify.relationships.contained_in
+
