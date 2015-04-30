@@ -10,22 +10,22 @@ sudo pip install -U pip
 sudo pip install virtualenv
 
 MANAGER_IP=$(ip -4 addr show dev eth0 | grep -E '^[[:space:]]*inet' | xargs | awk '{print $2}' | cut -d/ -f1)
-SSH_KEY=/home/ubuntu/.ssh/key
-INPUTS=/home/ubuntu/inputs.yaml
-BLUEPRINT=/home/ubuntu/simple-manager-blueprint.yaml
+SSH_KEY=$HOME/.ssh/key
+INPUTS=$HOME/inputs.yaml
+BLUEPRINT=$HOME/simple-manager-blueprint.yaml
 USER=default
 
 cat << EOF > $SSH_KEY
 SSH_PRIVATE_KEY
 EOF
 
-cat << EOF >> /home/ubuntu/.ssh/authorized_keys
+cat << EOF >> $HOME/.ssh/authorized_keys
 SSH_PUBLIC_KEY
 
 EOF
 
-virtualenv /home/ubuntu/env
-source /home/ubuntu/env/bin/activate
+virtualenv $HOME/env
+source $HOME/env/bin/activate
 
 pip install https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/3.2m6.zip
 pip install https://github.com/cloudify-cosmo/cloudify-rest-client/archive/3.2m6.zip
