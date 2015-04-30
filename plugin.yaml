@@ -13,7 +13,7 @@ plugins:
     source: https://github.com/szpotona/cloudify-gcp-plugin/archive/devel.zip
 
 node_types:
-  cloudify.gcp.Instance:
+  cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.Compute
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -28,7 +28,7 @@ node_types:
             config:
               default: {}
 
-  cloudify.gcp.Network:
+  cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.Network
     properties:
       network_name: 
@@ -47,7 +47,7 @@ node_types:
             config:
               default: {}
 
-  cloudify.gcp.FirewallRule:
+  cloudify.gcp.nodes.FirewallRule:
     derived_from: cloudify.nodes.Root
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -62,4 +62,10 @@ node_types:
             config:
               default: {}
 
+relationships:
+  cloudify.gcp.relationships.connected_to:
+    derived_from: cloudify.relationships.connected_to
+
+  cloudify.gcp.relationships.contained_in:
+    derived_from: cloudify.relationships.contained_in
 
