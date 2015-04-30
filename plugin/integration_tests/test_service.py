@@ -117,7 +117,8 @@ class TestService(unittest.TestCase):
         response = service.delete_firewall_rule(
             compute,
             self.config['project'],
-            self.config['firewall']['name'])
+            self.config['network'],
+            self.config['firewall'])
 
         service.wait_for_operation(compute,
                                    self.config['project'],

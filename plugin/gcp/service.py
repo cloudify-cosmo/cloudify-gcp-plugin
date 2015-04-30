@@ -20,6 +20,7 @@ import Crypto
 import httplib2
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import RecoverableError
 from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
@@ -115,14 +116,18 @@ def wait_for_operation(compute,
 
 def compute(service_account, scope):
     Crypto.Random.atfork()
-    with open(service_account) as f:
-        account_data = json.load(f)
-    credentials = SignedJwtAssertionCredentials(account_data['client_email'],
-                                                account_data['private_key'],
-                                                scope=scope)
-    http = httplib2.Http()
-    credentials.authorize(http)
-    return build('compute', 'v1', http=http)
+    try:
+        with open(service_account) as f:
+            account_data = json.load(f)
+        credentials = SignedJwtAssertionCredentials(
+            account_data['client_email'],
+            account_data['private_key'],
+            scope=scope)
+        http = httplib2.Http()
+        credentials.authorize(http)
+        return build('compute', 'v1', http=http)
+    except IOError as e:
+        raise RecoverableError(e.message)
 
 
 def set_ip(compute, config):
@@ -165,19 +170,22 @@ def create_firewall_rule(compute, project, network, firewall):
     ctx.logger.info('Create firewall rule')
     firewall['network'] = \
         'global/networks/{0}'.format(network)
-    firewall['name'] = '{0}-{1}'.format(network, firewall['name'])
-    # should be changed in node runtime properties
+    firewall['name'] = _get_firewall_rule_name(network, firewall)
     return compute.firewalls().insert(project=project,
                                       body=firewall).execute()
 
 
-def delete_firewall_rule(compute, project, firewall_name):
+def delete_firewall_rule(compute, project, network, firewall):
     ctx.logger.info('Delete firewall rule')
     return compute.firewalls().delete(
         project=project,
-        firewall=firewall_name).execute()
+        firewall=_get_firewall_rule_name(network, firewall)).execute()
 
 
 def list_firewall_rules(compute, project):
     ctx.logger.info('List firewall rules in project')
     return compute.firewalls().list(project=project).execute()
+
+
+def _get_firewall_rule_name(network, firewall):
+    return '{0}-{1}'.format(network, firewall['name'])

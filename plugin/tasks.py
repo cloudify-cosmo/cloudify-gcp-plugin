@@ -81,6 +81,7 @@ def delete_network(config, **kwargs):
                                response['name'],
                                True)
 
+
 @operation
 def create_firewall_rule(config, **kwargs):
     ctx.logger.info('Create instance')
@@ -99,13 +100,13 @@ def create_firewall_rule(config, **kwargs):
 
 @operation
 def delete_firewall_rule(config, **kwargs):
-    # config should be taken from node runtime properties
     ctx.logger.info('Create instance')
     compute = service.compute(config['service_account'],
                               config['scope'])
     response = service.delete_firewall_rule(compute,
                                             config['project'],
-                                            config['firewall']['name'])
+                                            config['network'],
+                                            config['firewall'])
     service.wait_for_operation(compute,
                                config['project'],
                                config['zone'],
