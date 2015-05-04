@@ -14,9 +14,9 @@
 #    * limitations under the License.
 
 
-def get_item_from_gcp_response(name, items):
-    for item in items.get('items'):
-        if item.get('name') == name:
+def get_item_from_gcp_response(key, value, items):
+    for item in items.get('items') or []:
+        if item.get(key) == value:
             return item
     return None
 

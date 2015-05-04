@@ -49,9 +49,10 @@ class TestPlugin(unittest.TestCase):
         config = self.inputs['config']
         gcp = GoogleCloudPlatform(config['auth'],
                                   config['project'],
-                                  config['scope'])
+                                  config['scope'],
+                                  ctx.logger)
         instances = gcp.list_instances()
-        item = utils.get_item_from_gcp_response('testnode', instances)
+        item = utils.get_item_from_gcp_response('name', 'testnode', instances)
         self.assertIsNone(item)
 
         ctx.logger.info("Install workflow")
@@ -60,7 +61,7 @@ class TestPlugin(unittest.TestCase):
 
         ctx.logger.info("Check instance number")
         instances = gcp.list_instances()
-        item = utils.get_item_from_gcp_response('testnode', instances)
+        item = utils.get_item_from_gcp_response('name', 'testnode', instances)
         self.assertIsNotNone(item)
 
         ctx.logger.info("Uninstall workflow")
@@ -68,5 +69,5 @@ class TestPlugin(unittest.TestCase):
 
         ctx.logger.info("Check instance number")
         instances = gcp.list_instances()
-        item = utils.get_item_from_gcp_response('testnode', instances)
+        item = utils.get_item_from_gcp_response('name', 'testnode', instances)
         self.assertIsNone(item)

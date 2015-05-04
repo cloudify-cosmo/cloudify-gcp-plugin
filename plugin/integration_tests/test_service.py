@@ -24,19 +24,19 @@ from plugin.gcp import utils
 
 class TestService(unittest.TestCase):
     def setUp(self):  # noqa
-        ctx = MockCloudifyContext()
-        current_ctx.set(ctx)
+        self.ctx = MockCloudifyContext()
+        current_ctx.set(self.ctx)
         with open('inputs.yaml') as f:
             self.config = yaml.safe_load(f).get('config')
 
     def test_create_network(self):
         gcp = GoogleCloudPlatform(self.config['auth'],
                                   self.config['project'],
-                                  self.config['scope'])
+                                  self.config['scope'],
+                                  self.ctx.logger)
         networks = gcp.list_networks()
         item = utils.get_item_from_gcp_response(
-            self.config['network'],
-            networks)
+            'name', self.config['network'], networks)
         self.assertIsNone(item)
 
         response = gcp.create_network(self.config['network'])
@@ -44,32 +44,29 @@ class TestService(unittest.TestCase):
 
         networks = gcp.list_networks()
         item = utils.get_item_from_gcp_response(
-            self.config['network'],
-            networks)
+            'name', self.config['network'], networks)
         self.assertIsNotNone(item)
 
         response = gcp.delete_network(self.config['network'])
         gcp.wait_for_operation(response['name'], True)
         networks = gcp.list_networks()
         item = utils.get_item_from_gcp_response(
-            self.config['network'],
-            networks)
+            'name', self.config['network'], networks)
         self.assertIsNone(item)
 
     def test_create_firewall_rule(self):
         gcp = GoogleCloudPlatform(self.config['auth'],
                                   self.config['project'],
-                                  self.config['scope'])
+                                  self.config['scope'],
+                                  self.ctx.logger)
         networks = gcp.list_networks()
         item = utils.get_item_from_gcp_response(
-            self.config['network'],
-            networks)
+            'name', self.config['network'], networks)
         self.assertIsNone(item)
 
         firewall_rules = gcp.list_firewall_rules()
         item = utils.get_item_from_gcp_response(
-            self.config['firewall']['name'],
-            firewall_rules)
+            'name', self.config['firewall']['name'], firewall_rules)
         self.assertIsNone(item)
 
         response = gcp.create_network(self.config['network'])
@@ -77,8 +74,7 @@ class TestService(unittest.TestCase):
 
         networks = gcp.list_networks()
         item = utils.get_item_from_gcp_response(
-            self.config['network'],
-            networks)
+            'name', self.config['network'], networks)
         self.assertIsNotNone(item)
 
         response = gcp.create_firewall_rule(self.config['network'],
@@ -87,6 +83,7 @@ class TestService(unittest.TestCase):
 
         firewall_rules = gcp.list_firewall_rules()
         item = utils.get_item_from_gcp_response(
+            'name',
             utils.get_firewall_rule_name(
                 self.config['network'],
                 self.config['firewall']),
@@ -99,6 +96,7 @@ class TestService(unittest.TestCase):
         gcp.wait_for_operation(response['name'], True)
         firewall_rules = gcp.list_firewall_rules()
         item = utils.get_item_from_gcp_response(
+            'name',
             self.config['firewall']['name'],
             firewall_rules)
         self.assertIsNone(item)
@@ -106,6 +104,6 @@ class TestService(unittest.TestCase):
         response = gcp.delete_network(self.config['network'])
         gcp.wait_for_operation(response['name'], True)
         networks = gcp.list_networks()
-        item = utils.get_item_from_gcp_response(self.config['network'],
-                                                networks)
+        item = utils.get_item_from_gcp_response(
+            'name', self.config['network'], networks)
         self.assertIsNone(item)
