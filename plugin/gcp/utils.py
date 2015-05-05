@@ -12,17 +12,22 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+import re
+
+MAX_GCP_INSTANCE_NAME = 63
 
 
-def get_item_from_gcp_response(name, items):
+def get_item_from_gcp_response(key_field, key_name, items):
     """
-    Get item from GCP REST response JSON list by name
-    :param name: item name
+    Get item from GCP REST response JSON list by name.
+    items = [{ 'key_field': 'key_name', 'key_field_value': 'value'}]
+    :param key_field: item dictionary key
+    :param key_value: item dictionary value
     :param items: list of items(dictionaries)
     :return: item if found in collection, None otherwise
     """
     for item in items.get('items', []):
-        if item.get('name') == name:
+        if item.get(key_field) == key_name:
             return item
     return None
 
@@ -58,7 +63,9 @@ def get_gcp_resource_name(name):
         final_name = '{0}{1}'.format('a', final_name)
     # trim to the length limit
     if len(final_name) > MAX_GCP_INSTANCE_NAME:
+        ID_HASH_CONST = 6
         remain_len = MAX_GCP_INSTANCE_NAME - len(final_name)
-        final_name = final_name[:remain_len]
+        final_name = '{0}{1}'.format(final_name[:remain_len - ID_HASH_CONST],
+                                     final_name[-ID_HASH_CONST:])
     # convert string to lowercase
     return final_name.lower()
