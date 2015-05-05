@@ -42,7 +42,7 @@ def run(config):
 
     response = gcp.create_instance(config['name'], config['manager_image'])
     gcp.wait_for_operation(response['name'])
-    logger.info(' Instance created. \n '
+    logger.info('Instance created. \n '
                 'It will take a minute or two for the instance '
                 'to complete work.')
 
@@ -80,8 +80,8 @@ def upload_agent_key(gcp, config):
 def main():
     with open(CONFIG) as f:
         config = yaml.safe_load(f).get('config')
-        prepare_startup_script(config)
-        run(config)
+    prepare_startup_script(config)
+    run(config)
 
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ class GoogleCloudPlatform(object):
         self.project = project
         self.scope = scope
         self.compute = self.create_compute()
-        self.logger = logger
+        self.logger = logger.getChild('GCP')
 
     def create_compute(self):
         Crypto.Random.atfork()
@@ -45,8 +45,8 @@ class GoogleCloudPlatform(object):
             credentials.authorize(http)
             return build('compute', 'v1', http=http)
         except IOError as e:
-            self.logger.error(e.message)
-            raise GCPAuthError(e.message)
+            self.logger.error(str(e))
+            raise GCPError(str(e))
 
     def create_instance(self,
                         instance_name,
@@ -94,12 +94,16 @@ class GoogleCloudPlatform(object):
         }
 
         if startup_script is not None:
-            script = open(startup_script, 'r').read()
-            item = {
-                'key': 'startup-script',
-                'value': script
-            }
-            body['metadata']['items'].append(item)
+            try:
+                with open(startup_script, 'r') as script:
+                    item = {
+                        'key': 'startup-script',
+                        'value': script
+                    }
+                    body['metadata']['items'].append(item)
+            except IOError as e:
+                self.logger.error(str(e))
+                raise GCPError(str(e))
 
         return self.compute.instances().insert(
             project=self.project['name'],
@@ -136,8 +140,8 @@ class GoogleCloudPlatform(object):
             if result['status'] == 'DONE':
                 if 'error' in result:
                     self.logger.error('Response with error')
-                    raise GCPResponseError(result['error'])
-                self.logger.info('Done')
+                    raise GCPError(result['error'])
+                self.logger.info('Operation finished: {0}'.format(operation))
                 return result
             else:
                 time.sleep(1)
@@ -145,8 +149,8 @@ class GoogleCloudPlatform(object):
     def create_network(self, network):
         self.logger.info('Create network')
         body = {
-            "description": "Cloudify generated network",
-            "name": network
+            'description': 'Cloudify generated network',
+            'name': network
         }
         return self.compute.networks().insert(project=self.project['name'],
                                               body=body).execute()
@@ -187,10 +191,9 @@ class GoogleCloudPlatform(object):
         key_value = 'sshKeys'
         commonInstanceMetadata = self.get_common_instance_metadata()
         if commonInstanceMetadata.get('items') is None:
-            commonInstanceMetadata['items'] = []
-            item = {key_name: key_value,
-                    'value': '{0}:{1}'.format(user, ssh_key)}
-            commonInstanceMetadata['items'].append(item)
+            item = [{key_name: key_value,
+                    'value': '{0}:{1}'.format(user, ssh_key)}]
+            commonInstanceMetadata['items'] = item
         else:
             item = utils.get_item_from_gcp_response(
                 key_name, key_value, commonInstanceMetadata)
@@ -206,11 +209,6 @@ class GoogleCloudPlatform(object):
         return metadata['commonInstanceMetadata']
 
 
-class GCPAuthError(Exception):
+class GCPError(Exception):
     def __init__(self, message):
-        super(GCPAuthError, self).__init__(message)
-
-
-class GCPResponseError(Exception):
-    def __init__(self, message):
-        super(GCPResponseError, self).__init__(message)
+        super(GCPError, self).__init__(message)

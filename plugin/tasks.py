@@ -18,11 +18,9 @@ from functools import wraps
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
-from cloudify.exceptions import RecoverableError
 
 from plugin.gcp.service import GoogleCloudPlatform
-from plugin.gcp.service import GCPResponseError
-from plugin.gcp.service import GCPAuthError
+from plugin.gcp.service import GCPError
 from plugin.gcp import utils
 
 
@@ -30,15 +28,13 @@ def throw_cloudify_exceptions(func):
     def _decorator(*args, **kwargs):
         try:
             func(*args, **kwargs)
-        except GCPAuthError as e:
-            raise RecoverableError(e.message)
-        except GCPResponseError as e:
+        except GCPError as e:
             raise NonRecoverableError(e.message)
     return wraps(func)(_decorator)
 
 
-@throw_cloudify_exceptions
 @operation
+@throw_cloudify_exceptions
 def create_instance(config, **kwargs):
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
@@ -51,8 +47,8 @@ def create_instance(config, **kwargs):
     set_ip(gcp)
 
 
-@throw_cloudify_exceptions
 @operation
+@throw_cloudify_exceptions
 def delete_instance(config, **kwargs):
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
@@ -62,8 +58,8 @@ def delete_instance(config, **kwargs):
     gcp.wait_for_operation(response['name'])
 
 
-@throw_cloudify_exceptions
 @operation
+@throw_cloudify_exceptions
 def create_network(config, **kwargs):
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
@@ -73,8 +69,8 @@ def create_network(config, **kwargs):
     gcp.wait_for_operation(response['name'], True)
 
 
-@throw_cloudify_exceptions
 @operation
+@throw_cloudify_exceptions
 def delete_network(config, **kwargs):
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
@@ -84,8 +80,8 @@ def delete_network(config, **kwargs):
     gcp.wait_for_operation(response['name'], True)
 
 
-@throw_cloudify_exceptions
 @operation
+@throw_cloudify_exceptions
 def create_firewall_rule(config, **kwargs):
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
@@ -95,8 +91,8 @@ def create_firewall_rule(config, **kwargs):
     gcp.wait_for_operation(response['name'], True)
 
 
-@throw_cloudify_exceptions
 @operation
+@throw_cloudify_exceptions
 def delete_firewall_rule(config, **kwargs):
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],

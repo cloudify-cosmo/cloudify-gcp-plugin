@@ -55,19 +55,19 @@ class TestPlugin(unittest.TestCase):
         item = utils.get_item_from_gcp_response('name', 'testnode', instances)
         self.assertIsNone(item)
 
-        ctx.logger.info("Install workflow")
+        ctx.logger.info('Install workflow')
         # execute install workflow
         self.env.execute('install', task_retries=0)
 
-        ctx.logger.info("Check instance number")
+        ctx.logger.info('Check instance number')
         instances = gcp.list_instances()
         item = utils.get_item_from_gcp_response('name', 'testnode', instances)
         self.assertIsNotNone(item)
 
-        ctx.logger.info("Uninstall workflow")
+        ctx.logger.info('Uninstall workflow')
         self.env.execute('uninstall', task_retries=0)
 
-        ctx.logger.info("Check instance number")
+        ctx.logger.info('Check instance number')
         instances = gcp.list_instances()
         item = utils.get_item_from_gcp_response('name', 'testnode', instances)
         self.assertIsNone(item)
