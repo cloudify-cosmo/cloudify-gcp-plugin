@@ -34,18 +34,28 @@ def get_firewall_rule_name(network, firewall):
     :param firewall: the firewall rule name
     :return: network prefixed firewall rule name
     """
-    return '{0}-{1}'.format(network, firewall['name'])
+    name = '{0}-{1}'.format(network, firewall['name'])
+    return get_gcp_resource_name(name)
 
 
-def get_instance_name(node_name):
+def get_gcp_resource_name(name):
     """
-    Create GCP accepted instance name. From GCP specification:
+    Create GCP accepted name of resource. From GCP specification:
     "Specifically, the name must be 1-63 characters long and match the regular
     expression [a-z]([-a-z0-9]*[a-z0-9])? which means the first character must
     be a lowercase letter, and all following characters must be a dash,
     lowercase letter, or digit, except the last character,
     which cannot be a dash."
-    :param node_name: name given in blueprint(could have underscore)
+    :param name: name of resource to be given
     :return: GCP accepted instance name
     """
-    return node_name.replace('_', '-')
+    # replace underscores with hyphens
+    final_name = name.replace('_', '-')
+    # remove all non-alphanumeric characters except hyphens
+    final_name = re.sub(r'[^a-zA-Z0-9-]+', '', final_name)
+    # trim to the length limit
+    if len(final_name) > MAX_GCP_INSTANCE_NAME:
+        remain_len = MAX_GCP_INSTANCE_NAME - len(final_name)
+        final_name = final_name[:remain_len]
+    # convert string to lowercase
+    return final_name.lower()

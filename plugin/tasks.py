@@ -36,6 +36,7 @@ def throw_cloudify_exceptions(func):
 @operation
 @throw_cloudify_exceptions
 def create_instance(config, **kwargs):
+    ctx.logger.info('Create instance')
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
                               config['scope'],
@@ -51,6 +52,7 @@ def create_instance(config, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def delete_instance(config, **kwargs):
+    ctx.logger.info('Delete instance')
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
                               config['scope'],
@@ -62,6 +64,7 @@ def delete_instance(config, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def create_network(config, **kwargs):
+    ctx.logger.info('Create network')
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
                               config['scope'],
@@ -73,6 +76,7 @@ def create_network(config, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def delete_network(config, **kwargs):
+    ctx.logger.info('Delete network')
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
                               config['scope'],
@@ -84,6 +88,7 @@ def delete_network(config, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def create_firewall_rule(config, **kwargs):
+    ctx.logger.info('Create instance')
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
                               config['scope'],
@@ -95,6 +100,7 @@ def create_firewall_rule(config, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def delete_firewall_rule(config, **kwargs):
+    ctx.logger.info('Create instance')
     gcp = GoogleCloudPlatform(config['auth'],
                               config['project'],
                               config['scope'],
