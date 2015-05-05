@@ -73,7 +73,8 @@ def prepare_startup_script(config):
 def upload_agent_key(gcp, config):
     with open(config['ssh_key_public'], 'r') as f:
         ssh_public = f.read()
-    gcp.update_project_ssh_keypair(config['agent_user'], ssh_public)
+    response = gcp.update_project_ssh_keypair(config['agent_user'], ssh_public)
+    gcp.wait_for_operation(response['name'], True)
 
 
 def main():

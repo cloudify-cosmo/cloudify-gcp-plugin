@@ -95,7 +95,6 @@ def create_firewall_rule(config, **kwargs):
     gcp.wait_for_operation(response['name'], True)
 
 
-
 @throw_cloudify_exceptions
 @operation
 def delete_firewall_rule(config, **kwargs):

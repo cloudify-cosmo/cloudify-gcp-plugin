@@ -183,11 +183,9 @@ class GoogleCloudPlatform(object):
 
     def update_project_ssh_keypair(self, user, ssh_key):
         self.logger.info('Update project sshKeys metadata')
-        metadata = self.compute.projects().get(
-            project=self.project['name']).execute()
         key_name = 'key'
         key_value = 'sshKeys'
-        commonInstanceMetadata = metadata['commonInstanceMetadata']
+        commonInstanceMetadata = self.get_common_instance_metadata()
         if commonInstanceMetadata.get('items') is None:
             commonInstanceMetadata['items'] = []
             item = {key_name: key_value,
@@ -196,10 +194,16 @@ class GoogleCloudPlatform(object):
         else:
             item = utils.get_item_from_gcp_response(
                 key_name, key_value, commonInstanceMetadata)
-            item['value'] = '{0}{1}:{2}'.format(item['value'], user, ssh_key)
-        self.compute.projects().setCommonInstanceMetadata(
+            item['value'] = '{0}\n{1}:{2}'.format(item['value'], user, ssh_key)
+        return self.compute.projects().setCommonInstanceMetadata(
             project=self.project['name'],
             body=commonInstanceMetadata).execute()
+
+    def get_common_instance_metadata(self):
+        self.logger.info('Get commonInstanceMetadata')
+        metadata = self.compute.projects().get(
+            project=self.project['name']).execute()
+        return metadata['commonInstanceMetadata']
 
 
 class GCPAuthError(Exception):
