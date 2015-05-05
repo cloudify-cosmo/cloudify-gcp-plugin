@@ -53,6 +53,9 @@ def get_gcp_resource_name(name):
     final_name = name.replace('_', '-')
     # remove all non-alphanumeric characters except hyphens
     final_name = re.sub(r'[^a-zA-Z0-9-]+', '', final_name)
+    # assure the first character is alpha
+    if not final_name[0].isalpha():
+        final_name = '{0}{1}'.format('a', final_name)
     # trim to the length limit
     if len(final_name) > MAX_GCP_INSTANCE_NAME:
         remain_len = MAX_GCP_INSTANCE_NAME - len(final_name)
