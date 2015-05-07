@@ -42,7 +42,8 @@ def create_instance(config, **kwargs):
                               ctx.logger)
 
     response = gcp.create_instance(ctx.node.name,
-                                   config['agent_image'])
+                                   network=config['network'],
+                                   agent_image=config['agent_image'])
     gcp.wait_for_operation(response['name'])
     set_ip(gcp)
 
