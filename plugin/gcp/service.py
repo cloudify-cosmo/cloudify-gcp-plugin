@@ -93,13 +93,12 @@ class GoogleCloudPlatform(object):
         e.g. the file is not under the given path or it has wrong permissions
         """
         self.logger.info('Create instance')
-        network = utils.get_gcp_resource_name(network)
         machine_type = 'zones/{0}/machineTypes/{1}'.format(
             self.project['zone'],
             machine_type)
 
         body = {
-            'name': utils.get_gcp_resource_name(instance_name),
+            'name': instance_name,
             'machineType': machine_type,
 
             'disks': [
@@ -162,7 +161,7 @@ class GoogleCloudPlatform(object):
         return self.compute.instances().delete(
             project=self.project['name'],
             zone=self.project['zone'],
-            instance=utils.get_gcp_resource_name(instance_name)).execute()
+            instance=instance_name).execute()
 
     def list_instances(self):
         """
@@ -238,7 +237,7 @@ class GoogleCloudPlatform(object):
         self.logger.info('Delete network')
         return self.compute.networks().delete(
             project=self.project['name'],
-            network=utils.get_gcp_resource_name(network)).execute()
+            network=network).execute()
 
     def list_networks(self):
         """
@@ -271,7 +270,6 @@ class GoogleCloudPlatform(object):
         firewall = dict(firewall)
         firewall['network'] = \
             'global/networks/{0}'.format(network)
-        firewall['name'] = utils.get_firewall_rule_name(network, firewall)
         return self.compute.firewalls().insert(project=self.project['name'],
                                                body=firewall).execute()
 

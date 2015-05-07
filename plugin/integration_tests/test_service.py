@@ -26,7 +26,7 @@ class TestService(unittest.TestCase):
     def setUp(self):  # noqa
         self.ctx = MockCloudifyContext()
         current_ctx.set(self.ctx)
-        with open('inputs.yaml') as f:
+        with open('inputs2.yaml') as f:
             self.config = yaml.safe_load(f).get('config')
 
     def test_create_network(self):

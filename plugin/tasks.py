@@ -42,10 +42,13 @@ def create_instance(config, **kwargs):
                               config['scope'],
                               ctx.logger)
 
-    response = gcp.create_instance(ctx.node.name,
-                                   network=config['network'],
+    hostname = utils.get_gcp_resource_name(ctx.instance.id)
+    network = utils.get_gcp_resource_name(config['network'])
+    response = gcp.create_instance(hostname,
+                                   network=network,
                                    agent_image=config['agent_image'])
     gcp.wait_for_operation(response['name'])
+    ctx.instance.runtime_properties['hostname'] = hostname
     set_ip(gcp)
 
 
@@ -57,7 +60,7 @@ def delete_instance(config, **kwargs):
                               config['project'],
                               config['scope'],
                               ctx.logger)
-    response = gcp.delete_instance(ctx.node.name)
+    response = gcp.delete_instance(ctx.instance.runtime_properties['hostname'])
     gcp.wait_for_operation(response['name'])
 
 
@@ -69,7 +72,8 @@ def create_network(config, **kwargs):
                               config['project'],
                               config['scope'],
                               ctx.logger)
-    response = gcp.create_network(config['network'])
+    network_name = utils.get_gcp_resource_name(config['network'])
+    response = gcp.create_network(network_name)
     gcp.wait_for_operation(response['name'], True)
 
 
@@ -81,7 +85,8 @@ def delete_network(config, **kwargs):
                               config['project'],
                               config['scope'],
                               ctx.logger)
-    response = gcp.delete_network(config['network'])
+    network_name = utils.get_gcp_resource_name(config['network'])
+    response = gcp.delete_network(network_name)
     gcp.wait_for_operation(response['name'], True)
 
 
@@ -93,7 +98,10 @@ def create_firewall_rule(config, **kwargs):
                               config['project'],
                               config['scope'],
                               ctx.logger)
-    response = gcp.create_firewall_rule(config['network'], config['firewall'])
+    firewall_rule_name = utils.get_gcp_resource_name(
+        config['firewall']['name'])
+    network_name = utils.get_gcp_resource_name(config['network'])
+    response = gcp.create_firewall_rule(network_name, firewall_rule_name)
     gcp.wait_for_operation(response['name'], True)
 
 
@@ -105,13 +113,19 @@ def delete_firewall_rule(config, **kwargs):
                               config['project'],
                               config['scope'],
                               ctx.logger)
-    response = gcp.delete_firewall_rule(config['network'], config['firewall'])
+    firewall_rule_name = utils.get_gcp_resource_name(
+        config['firewall']['name'])
+    network_name = utils.get_gcp_resource_name(config['network'])
+    response = gcp.delete_firewall_rule(network_name, firewall_rule_name)
     gcp.wait_for_operation(response['name'], True)
 
 
 def set_ip(gcp):
     instances = gcp.list_instances()
-    item = utils.get_item_from_gcp_response('name', ctx.node.name, instances)
+    item = utils.get_item_from_gcp_response(
+        'name',
+        ctx.instance.runtime_properties['hostname'],
+        instances)
     ctx.instance.runtime_properties['ip'] = \
         item['networkInterfaces'][0]['networkIP']
     # only with one default network interface
