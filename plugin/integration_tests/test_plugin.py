@@ -23,7 +23,6 @@ from cloudify import ctx
 import yaml
 
 from plugin.gcp.service import GoogleCloudPlatform
-from plugin.gcp import utils
 
 
 class TestPlugin(unittest.TestCase):

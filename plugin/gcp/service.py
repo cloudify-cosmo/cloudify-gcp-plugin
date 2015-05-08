@@ -136,7 +136,7 @@ class GoogleCloudPlatform(object):
                 with open(startup_script, 'r') as script:
                     item = {
                         'key': 'startup-script',
-                        'value': script
+                        'value': script.read()
                     }
                     body['metadata']['items'].append(item)
             except IOError as e:
