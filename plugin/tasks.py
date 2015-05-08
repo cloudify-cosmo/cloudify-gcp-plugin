@@ -98,10 +98,12 @@ def create_firewall_rule(config, **kwargs):
                               config['project'],
                               config['scope'],
                               ctx.logger)
-    firewall_rule_name = utils.get_gcp_resource_name(
-        config['firewall']['name'])
+    firewall = dict(config['firewall'])
+    firewall_name = utils.get_firewall_rule_name(config['network'],
+                                                 config['firewall'])
+    firewall['name'] = utils.get_gcp_resource_name(firewall_name)
     network_name = utils.get_gcp_resource_name(config['network'])
-    response = gcp.create_firewall_rule(network_name, firewall_rule_name)
+    response = gcp.create_firewall_rule(network_name, firewall)
     gcp.wait_for_operation(response['name'], True)
 
 

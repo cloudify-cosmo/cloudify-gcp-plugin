@@ -267,7 +267,6 @@ class GoogleCloudPlatform(object):
         creation process and its status
         """
         self.logger.info('Create firewall rule')
-        firewall = dict(firewall)
         firewall['network'] = \
             'global/networks/{0}'.format(network)
         return self.compute.firewalls().insert(project=self.project['name'],
