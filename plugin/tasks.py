@@ -115,10 +115,10 @@ def delete_firewall_rule(config, **kwargs):
                               config['project'],
                               config['scope'],
                               ctx.logger)
-    firewall_rule_name = utils.get_gcp_resource_name(
-        config['firewall']['name'])
+    firewall = config['firewall']
+    firewall['name'] = utils.get_gcp_resource_name(firewall['name'])
     network_name = utils.get_gcp_resource_name(config['network'])
-    response = gcp.delete_firewall_rule(network_name, firewall_rule_name)
+    response = gcp.delete_firewall_rule(network_name, firewall)
     gcp.wait_for_operation(response['name'], True)
 
 
