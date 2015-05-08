@@ -26,69 +26,41 @@ logger = logging.getLogger()
 
 
 def run(config):
-    resource_register = {}
-    gcp = None
-    try:
-        gcp = GoogleCloudPlatform(config['auth'],
-                                  config['project'],
-                                  config['scope'],
-                                  logger)
+    gcp = GoogleCloudPlatform(config['auth'],
+                              config['project'],
+                              config['scope'],
+                              logger)
 
-        upload_agent_key(gcp, config)
-        network = utils.get_gcp_resource_name(config['network'])
-        response = gcp.create_network(network)
-        gcp.wait_for_operation(response['name'], True)
-        resource_register['network'] = network
-        firewall = config['firewall']
-        firewall['name'] = utils.get_firewall_rule_name(network, firewall)
-        firewall['name'] = utils.get_gcp_resource_name(firewall['name'])
-        response = gcp.create_firewall_rule(network, firewall)
-        gcp.wait_for_operation(response['name'], True)
-        resource_register['firewall'] = firewall['name']
-        logger.info('Creating cloudify manager instance.')
-        instance_name = utils.get_gcp_resource_name(config['name'])
-        response = gcp.create_instance(
-            instance_name=instance_name,
-            agent_image=config['manager_image'],
-            network=network,
-            startup_script=config['startup_script'])
-        gcp.wait_for_operation(response['name'])
-        resource_register['instance'] = instance_name
-        logger.info('Instance created. \n '
-                    'It will take a minute or two for the instance '
-                    'to complete work.')
-    except Exception as e:
-        logger.error(str(e))
-        cleanup(resource_register, gcp)
+    upload_agent_key(gcp, config)
 
+    network = utils.get_gcp_resource_name(config['network'])
+    response = gcp.create_network(network)
+    gcp.wait_for_operation(response['name'], True)
+    firewall = config['firewall']
+    firewall['name'] = utils.get_gcp_resource_name(firewall['name'])
+    firewall['name'] = utils.get_firewall_rule_name(network, firewall)
+    response = gcp.create_firewall_rule(network, firewall)
+    gcp.wait_for_operation(response['name'], True)
+    logger.info('Creating cloudify manager instance.')
 
-def cleanup(resource_register, gcp):
-    logger.info("Cleanup")
-    if not resource_register:
-        return
-    firewall = resource_register.get('firewall_rule')
-    network = resource_register.get('network')
-    instance = resource_register.get('instance')
-    if firewall:
-        response = gcp.delete_firewall_rule(network, firewall)
-        gcp.wait_for_operation(response['name'], True)
-    if network:
-        response = gcp.delete_network(network)
-        gcp.wait_for_operation(response['name'], True)
-    if instance:
-        response = gcp.delete_instance(instance)
-        gcp.wait_for_operation(response['name'])
+    response = gcp.create_instance(utils.get_gcp_resource_name(config['name']),
+                                   agent_image=config['manager_image'],
+                                   network=network,
+                                   startup_script=config['startup_script'])
+    gcp.wait_for_operation(response['name'])
+    logger.info('Instance created. \n '
+                'It will take a minute or two for the instance '
+                'to complete work.')
 
 
 def find_and_replace(file_name, replace):
-    f = open(file_name, 'r+')
-    script = f.read()
-    for item in replace:
-        script = script.replace(item, replace[item])
-    f.seek(0)
-    f.write(script)
-    f.truncate()
-    f.close()
+    with open(file_name, 'r+') as f:
+        script = f.read()
+        for item in replace:
+            script = script.replace(item, replace[item])
+        f.seek(0)
+        f.write(script)
+        f.truncate()
 
 
 def prepare_startup_script(config):
@@ -107,10 +79,10 @@ def prepare_startup_script(config):
     }
     auth_file_location = config.get('auth_file_location')
     if auth_file_location:
-        replace['AUTH_LOCATION=/home/$USER/auth'] = \
+        replace['AUTH_LOCATION=$HOME/auth'] = \
             'AUTH_LOCATION={0}'.format(auth_file_location)
 
-    find_and_replace(config['startup_script'], replace)
+    find_and_replace('startup-script.sh', replace)
 
 
 def upload_agent_key(gcp, config):
@@ -124,8 +96,6 @@ def main():
     with open(CONFIG) as f:
         config = yaml.safe_load(f).get('config')
     prepare_startup_script(config)
-    with open(config['startup_script']) as f:
-        print f.read()
     run(config)
 
 
