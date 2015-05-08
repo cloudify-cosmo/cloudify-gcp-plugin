@@ -18,7 +18,7 @@ import logging
 import yaml
 
 from plugin.gcp.service import GoogleCloudPlatform
-
+from plugin.gcp import utils
 
 CONFIG = 'inputs_gcp.yaml'
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -33,16 +33,20 @@ def run(config):
 
     upload_agent_key(gcp, config)
 
-    response = gcp.create_network(config['network'])
+    network = utils.get_gcp_resource_name(config['network'])
+    response = gcp.create_network(network)
     gcp.wait_for_operation(response['name'], True)
-
-    response = gcp.create_firewall_rule(config['network'], config['firewall'])
+    firewall = config['firewall']
+    firewall['name'] = utils.get_gcp_resource_name(firewall['name'])
+    firewall['name'] = utils.get_firewall_rule_name(network, firewall)
+    response = gcp.create_firewall_rule(network, firewall)
     gcp.wait_for_operation(response['name'], True)
     logger.info('Creating cloudify manager instance.')
 
-    response = gcp.create_instance(config['name'],
+    response = gcp.create_instance(utils.get_gcp_resource_name(config['name']),
                                    agent_image=config['manager_image'],
-                                   network=config['network'])
+                                   network=network,
+                                   startup_script=config['startup_script'])
     gcp.wait_for_operation(response['name'])
     logger.info('Instance created. \n '
                 'It will take a minute or two for the instance '
@@ -64,11 +68,20 @@ def prepare_startup_script(config):
         ssh_private = f.read()
     with open(config['ssh_key_public'], 'r') as f:
         ssh_public = f.read()
+    with open(config['auth'], 'r') as f:
+        auth_file = f.read()
+
     replace = {
         'USER=default': "USER={0}".format(config['agent_user']),
         'SSH_PRIVATE_KEY': ssh_private,
-        'SSH_PUBLIC_KEY': ssh_public
+        'SSH_PUBLIC_KEY': ssh_public,
+        'AUTH_FILE': auth_file
     }
+    auth_file_location = config.get('auth_file_location')
+    if auth_file_location:
+        replace['AUTH_LOCATION=$HOME/auth'] = \
+            'AUTH_LOCATION={0}'.format(auth_file_location)
+
     find_and_replace('startup-script.sh', replace)
 
 
