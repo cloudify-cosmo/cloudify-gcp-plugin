@@ -48,7 +48,6 @@ def create_instance(config, **kwargs):
                                    network=network,
                                    agent_image=config['agent_image'])
     gcp.wait_for_operation(response['name'])
-    ctx.instance.runtime_properties['hostname'] = hostname
     set_ip(gcp)
 
 
@@ -60,7 +59,8 @@ def delete_instance(config, **kwargs):
                               config['project'],
                               config['scope'],
                               ctx.logger)
-    response = gcp.delete_instance(ctx.instance.runtime_properties['hostname'])
+    hostname = utils.get_gcp_resource_name(ctx.instance.id)
+    response = gcp.delete_instance(hostname)
     gcp.wait_for_operation(response['name'])
 
 

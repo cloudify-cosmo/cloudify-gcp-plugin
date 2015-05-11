@@ -26,31 +26,58 @@ logger = logging.getLogger()
 
 
 def run(config):
-    gcp = GoogleCloudPlatform(config['auth'],
-                              config['project'],
-                              config['scope'],
-                              logger)
+    resource_register = {}
+    gcp = None
+    try:
+        gcp = GoogleCloudPlatform(config['auth'],
+                                  config['project'],
+                                  config['scope'],
+                                  logger)
 
-    upload_agent_key(gcp, config)
+        upload_agent_key(gcp, config)
+        network = utils.get_gcp_resource_name(config['network'])
+        response = gcp.create_network(network)
+        gcp.wait_for_operation(response['name'], True)
+        resource_register['network'] = network
+        firewall = config['firewall']
+        firewall['name'] = utils.get_firewall_rule_name(network, firewall)
+        firewall['name'] = utils.get_gcp_resource_name(firewall['name'])
+        response = gcp.create_firewall_rule(network, firewall)
+        gcp.wait_for_operation(response['name'], True)
+        resource_register['firewall'] = firewall['name']
+        logger.info('Creating cloudify manager instance.')
+        instance_name = utils.get_gcp_resource_name(config['name'])
+        response = gcp.create_instance(
+            instance_name=instance_name,
+            agent_image=config['manager_image'],
+            network=network,
+            startup_script=config['startup_script'])
+        gcp.wait_for_operation(response['name'])
+        resource_register['instance'] = instance_name
+        logger.info('Instance created. \n '
+                    'It will take a minute or two for the instance '
+                    'to complete work.')
+    except Exception as e:
+        logger.error(str(e))
+        cleanup(resource_register, gcp)
 
-    network = utils.get_gcp_resource_name(config['network'])
-    response = gcp.create_network(network)
-    gcp.wait_for_operation(response['name'], True)
-    firewall = config['firewall']
-    firewall['name'] = utils.get_gcp_resource_name(firewall['name'])
-    firewall['name'] = utils.get_firewall_rule_name(network, firewall)
-    response = gcp.create_firewall_rule(network, firewall)
-    gcp.wait_for_operation(response['name'], True)
-    logger.info('Creating cloudify manager instance.')
 
-    response = gcp.create_instance(utils.get_gcp_resource_name(config['name']),
-                                   agent_image=config['manager_image'],
-                                   network=network,
-                                   startup_script=config['startup_script'])
-    gcp.wait_for_operation(response['name'])
-    logger.info('Instance created. \n '
-                'It will take a minute or two for the instance '
-                'to complete work.')
+def cleanup(resource_register, gcp):
+    logger.info("Cleanup")
+    if not resource_register:
+        return
+    firewall = resource_register.get('firewall_rule')
+    network = resource_register.get('network')
+    instance = resource_register.get('instance')
+    if firewall:
+        response = gcp.delete_firewall_rule(network, firewall)
+        gcp.wait_for_operation(response['name'], True)
+    if network:
+        response = gcp.delete_network(network)
+        gcp.wait_for_operation(response['name'], True)
+    if instance:
+        response = gcp.delete_instance(instance)
+        gcp.wait_for_operation(response['name'])
 
 
 def find_and_replace(file_name, replace):

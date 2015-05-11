@@ -36,7 +36,7 @@ class TestPlugin(unittest.TestCase):
         # build blueprint path
         blueprint_path = os.path.join(os.path.dirname(__file__),
                                       'blueprint', 'blueprint.yaml')
-        with open('inputs.yaml') as f:
+        with open('inputs_plugin.yaml') as f:
             self.inputs = yaml.safe_load(f)
 
         # setup local workflow execution environment
