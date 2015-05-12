@@ -81,13 +81,14 @@ def cleanup(resource_register, gcp):
 
 
 def find_and_replace(file_name, replace):
-    with open(file_name, 'r+') as f:
-        script = f.read()
-        for item in replace:
-            script = script.replace(item, replace[item])
-        f.seek(0)
-        f.write(script)
-        f.truncate()
+    f = open(file_name, 'r+')
+    script = f.read()
+    for item in replace:
+        script = script.replace(item, replace[item])
+    f.seek(0)
+    f.write(script)
+    f.truncate()
+    f.close()
 
 
 def prepare_startup_script(config):
@@ -106,10 +107,10 @@ def prepare_startup_script(config):
     }
     auth_file_location = config.get('auth_file_location')
     if auth_file_location:
-        replace['AUTH_LOCATION=$HOME/auth'] = \
+        replace['AUTH_LOCATION=/home/$USER/auth'] = \
             'AUTH_LOCATION={0}'.format(auth_file_location)
 
-    find_and_replace('startup-script.sh', replace)
+    find_and_replace(config['startup_script'], replace)
 
 
 def upload_agent_key(gcp, config):
@@ -123,6 +124,8 @@ def main():
     with open(CONFIG) as f:
         config = yaml.safe_load(f).get('config')
     prepare_startup_script(config)
+    with open(config['startup_script']) as f:
+        print f.read()
     run(config)
 
 
