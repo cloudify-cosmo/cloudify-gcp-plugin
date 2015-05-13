@@ -29,7 +29,9 @@ class GoogleCloudPlatform(object):
     Class using google-python-api-client library to connect to Google Cloud
     Platform.
     """
-    def __init__(self, auth, project, scope, logger):
+    COMPUTE_SCOPE = 'https://www.googleapis.com/auth/compute'
+
+    def __init__(self, auth, project, logger):
         """
         GoogleCloudPlatform class constructor.
         Create compute object that will be making
@@ -43,7 +45,7 @@ class GoogleCloudPlatform(object):
         """
         self.auth = auth
         self.project = project
-        self.scope = scope
+        self.scope = self.COMPUTE_SCOPE
         self.compute = self.create_compute()
         self.logger = logger.getChild('GCP')
 
@@ -70,114 +72,10 @@ class GoogleCloudPlatform(object):
             self.logger.error(str(e))
             raise GCPError(str(e))
 
-    def create_instance(self,
-                        instance_name,
-                        agent_image,
-                        machine_type='n1-standard-1',
-                        network='default',
-                        startup_script=None):
-        """
-        Create GCP VM instance with given parameters.
-        Zone operation.
-
-        :param instance_name: name of the instance
-        :param agent_image: id of the image to create instance from
-        :param machine_type: GCP machine type, default 'n1-standard-1',
-        ref. https://cloud.google.com/compute/docs/machine-types
-        :param network: network name, default 'default'
-        :param startup_script: shell script to be run on instance startup,
-        default None
-        :return: REST response with operation responsible for the instance
-        creation process and its status
-        :raise: GCPError if there is any problem with startup script file:
-        e.g. the file is not under the given path or it has wrong permissions
-        """
-        self.logger.info('Create instance')
-        machine_type = 'zones/{0}/machineTypes/{1}'.format(
-            self.project['zone'],
-            machine_type)
-
-        body = {
-            'name': instance_name,
-            'machineType': machine_type,
-
-            'disks': [
-                {
-                    'boot': True,
-                    'autoDelete': True,
-                    'initializeParams': {
-                        'sourceImage': agent_image
-                    }
-                }
-            ],
-            'networkInterfaces': [{
-                'network': 'global/networks/{0}'.format(network),
-                'accessConfigs': [
-                    {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
-                ]
-            }],
-            'serviceAccounts': [{
-                'email': 'default',
-                'scopes': [
-                    'https://www.googleapis.com/auth/devstorage.read_write',
-                    'https://www.googleapis.com/auth/logging.write'
-                ]
-            }],
-            'metadata': {
-                'items': [{
-                    'key': 'bucket',
-                    'value': self.project['name']
-                }]
-            }
-        }
-
-        if startup_script is not None:
-            try:
-                with open(startup_script, 'r') as script:
-                    item = {
-                        'key': 'startup-script',
-                        'value': script.read()
-                    }
-                    body['metadata']['items'].append(item)
-            except IOError as e:
-                self.logger.error(str(e))
-                raise GCPError(str(e))
-
-        return self.compute.instances().insert(
-            project=self.project['name'],
-            zone=self.project['zone'],
-            body=body).execute()
-
-    def delete_instance(self, instance_name):
-        """
-        Delete GCP instance.
-        Zone operation.
-
-        :param instance_name: name of the instance to be deleted
-        :return: REST response with operation responsible for the instance
-        deletion process and its status
-        """
-        self.logger.info('Delete instance')
-        return self.compute.instances().delete(
-            project=self.project['name'],
-            zone=self.project['zone'],
-            instance=instance_name).execute()
-
-    def list_instances(self):
-        """
-        List GCP instances.
-        Zone operation.
-
-        :return: REST response with a list of instances and its details
-        """
-        self.logger.info("List instances")
-        return self.compute.instances().list(
-            project=self.project['name'],
-            zone=self.project['zone']).execute()
 
     def wait_for_operation(self,
                            operation,
-                           global_operation=False):
+                           global_operation=True):
         """
         Method waiting with active polling (sleep(1)) until the given operation
         finishes (changes status to DONE).
@@ -272,11 +170,12 @@ class GoogleCloudPlatform(object):
         return self.compute.firewalls().insert(project=self.project['name'],
                                                body=firewall).execute()
 
-    def delete_firewall_rule(self, firewall):
+    def delete_firewall_rule(self, network, firewall):
         """
         Delete GCP firewall rule from GCP network.
         Global operation.
 
+        :param network: network name the firewall rule is connected to
         :param firewall: firewall dictionary
         :return: REST response with operation responsible for the firewall rule
         deletion process and its status
@@ -284,7 +183,7 @@ class GoogleCloudPlatform(object):
         self.logger.info('Delete firewall rule')
         return self.compute.firewalls().delete(
             project=self.project['name'],
-            firewall=firewall['name']).execute()
+            firewall=utils.get_firewall_rule_name(network, firewall)).execute()
 
     def list_firewall_rules(self):
         """

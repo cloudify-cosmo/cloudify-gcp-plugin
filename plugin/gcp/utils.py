@@ -32,17 +32,6 @@ def get_item_from_gcp_response(key_field, key_name, items):
     return None
 
 
-def get_firewall_rule_name(network, firewall):
-    """
-    Prefix firewall rule name with network name
-    :param network: name of the network the firewall rule is connected to
-    :param firewall: the firewall rule name
-    :return: network prefixed firewall rule name
-    """
-    name = '{0}-{1}'.format(network, firewall['name'])
-    return get_gcp_resource_name(name)
-
-
 def get_gcp_resource_name(name):
     """
     Create GCP accepted name of resource. From GCP specification:
