@@ -34,6 +34,7 @@ def throw_cloudify_exceptions(func):
             raise NonRecoverableError(e.message)
     return wraps(func)(_decorator)
 
+
 @operation
 @throw_cloudify_exceptions
 def create_instance(config, **kwargs):
@@ -89,6 +90,7 @@ def delete_network(config, **kwargs):
 
     network.delete()
     ctx.instance.runtime_properties.pop(NAME)
+
 
 @operation
 @throw_cloudify_exceptions

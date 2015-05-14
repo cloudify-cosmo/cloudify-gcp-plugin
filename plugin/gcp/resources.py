@@ -1,4 +1,4 @@
-########
+# #######
 # Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,18 +26,11 @@ def if_blocking(func):
             self.wait_for_operation(response['name'])
         else:
             return response
+
     return wraps(func)(_decorator)
 
 
 class FirewallRule(GoogleCloudPlatform):
-    SOURCE_TAGS = 'sourceTags'
-    SOURCE_RANGES = 'sourceRanges'
-    TARGET_TAGS = 'targetTags'
-    ALLOWED = 'allowed'
-    IPPROTOCOL = 'IPProtocol'
-    PORTS = 'ports'
-    NAME = 'name'
-
     def __init__(self,
                  auth,
                  project,
@@ -65,31 +58,6 @@ class FirewallRule(GoogleCloudPlatform):
         self.network = network
         self.firewall['name'] = self.get_name()
         self.name = self.firewall['name']
-
-    def add_source_tag(self, tag):
-        source_tags = self.firewall.get(self.SOURCE_TAGS, [])
-        self.firewall[self.SOURCE_TAGS] = source_tags.append(tag)
-
-    def remove_source_tag(self, tag):
-        source_tags = self.firewall.get(self.SOURCE_TAGS, [])
-        source_tags.remove(tag)  # error if not there
-
-    def add_target_tag(self, tag):
-        target_tags = self.firewall.get(self.TARGET_TAGS, [])
-        target_tags.append(tag)
-
-    def remove_target_tag(self, tag):
-        target_tags = self.firewall.get(self.TARGET_TAGS, [])
-        target_tags.remove(tag)  # error if not there
-
-    def add_source_ranges(self, cidr_family):
-        source_ranges = self.firewall.get(self.SOURCE_RANGES, [])
-        source_ranges.append(cidr_family)
-
-    def add_allowed(self, protocol, ports):
-        allowed = self.firewall.get(self.ALLOWED, [])
-        allowed.append({self.IPPROTOCOL: protocol, self.PORTS: ports})
-        self.firewall[self.ALLOWED] = allowed.append(allowed)
 
     def get_name(self):
         """
@@ -128,6 +96,14 @@ class FirewallRule(GoogleCloudPlatform):
         return self.compute.firewalls().delete(
             project=self.project['name'],
             firewall=self.firewall['name']).execute()
+
+    @if_blocking
+    def update(self, blocking=True):
+        self.logger.info('Update firewall rule')
+        return self.compute.firewalls().update(
+            project=self.project['name'],
+            firewall=self.firewall['name'],
+            body=self.firewall).execute()
 
     def list(self):
         """
@@ -312,7 +288,6 @@ class Instance(GoogleCloudPlatform):
             'machineType': 'zones/{0}/machineTypes/{1}'.format(
                 self.project['zone'],
                 self.machine_type),
-
             'disks': [
                 {
                     'boot': True,
@@ -322,24 +297,18 @@ class Instance(GoogleCloudPlatform):
                     }
                 }
             ],
-            'networkInterfaces': [{
-                'network': 'global/networks/{0}'.format(self.network),
-                'accessConfigs': [
-                    {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
-                ]
-            }],
-            'serviceAccounts': [{
-                'email': 'default',
-                'scopes': [
-                    'https://www.googleapis.com/auth/devstorage.read_write',
-                    'https://www.googleapis.com/auth/logging.write'
-                ]
-            }],
+            'networkInterfaces': [
+                {'network': 'global/networks/{0}'.format(self.network),
+                 'accessConfigs': [{'type': 'ONE_TO_ONE_NAT',
+                                    'name': 'External NAT'}]}],
+            'serviceAccounts': [
+                {'email': 'default',
+                 'scopes': [
+                     'https://www.googleapis.com/auth/devstorage.read_write',
+                     'https://www.googleapis.com/auth/logging.write']}],
             'metadata': {
-                'items': [{
-                    'key': 'bucket',
-                    'value': self.project['name']
-                }]
+                'items': [
+                    {'key': 'bucket', 'value': self.project['name']}]
             }
         }
         if self.tags:

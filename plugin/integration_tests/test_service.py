@@ -140,6 +140,58 @@ class TestService(unittest.TestCase):
 
         instance.delete()
 
+    def test_tag_firewall(self):
+        network = resources.Network(self.config['auth'],
+                                    self.config['project'],
+                                    self.ctx.logger,
+                                    self.config['network'])
+        network.create()
+
+        firewall_rule = dict(self.config['firewall'])
+        source_tag = 'source-tag'
+        target_tag = 'target-tag'
+        firewall_rule['sourceTags'] = [source_tag]
+        firewall_rule['targetTags'] = [target_tag]
+        firewall = resources.FirewallRule(self.config['auth'],
+                                          self.config['project'],
+                                          self.ctx.logger,
+                                          firewall_rule,
+                                          self.config['network'])
+        firewall.create()
+        firewall_name = firewall.name
+        firewalls = firewall.list()
+        item = utils.get_item_from_gcp_response('name',
+                                                firewall_name,
+                                                firewalls)
+        self.assertEqual(source_tag, find_in_list(source_tag,
+                                                  item['sourceTags']))
+        self.assertEqual(target_tag, find_in_list(target_tag,
+                                                  item['targetTags']))
+
+        firewall.firewall = self.config['firewall']
+        firewall.firewall['name'] = firewall_name
+        firewall.update()
+        firewalls = firewall.list()
+        item = utils.get_item_from_gcp_response('name',
+                                                firewall_rule['name'],
+                                                firewalls)
+        self.assertIsNone(find_in_list(source_tag, item.get('sourceTags', [])))
+        self.assertIsNone(find_in_list(target_tag, item.get('targetTags', [])))
+
+        firewall.firewall = firewall_rule
+        firewall.firewall['name'] = firewall_name
+        firewall.update()
+        firewalls = firewall.list()
+        item = utils.get_item_from_gcp_response('name',
+                                                firewall_rule['name'],
+                                                firewalls)
+        self.assertEqual(source_tag, find_in_list(source_tag,
+                                                  item['sourceTags']))
+        self.assertEqual(target_tag, find_in_list(target_tag,
+                                                  item['targetTags']))
+        firewall.delete()
+        network.delete()
+
 
 def find_in_list(what, list):
     for item in list:
