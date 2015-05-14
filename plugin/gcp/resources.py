@@ -212,7 +212,8 @@ class Instance(GoogleCloudPlatform):
                  image=None,
                  machine_type=None,
                  network=None,
-                 startup_script=None):
+                 startup_script=None,
+                 tags=[]):
         super(Instance, self).__init__(auth, project, logger)
         self.project = project
         self.name = utils.get_gcp_resource_name(instance_name)
@@ -220,7 +221,7 @@ class Instance(GoogleCloudPlatform):
         self.machine_type = machine_type if machine_type else 'n1-standard-1'
         self.network = network if network else 'default'
         self.startup_script = startup_script
-        self.tags = []
+        self.tags = tags
 
     @if_blocking
     def create(self, startup_script=None, blocking=True):
@@ -274,14 +275,21 @@ class Instance(GoogleCloudPlatform):
     def set_tags(self, tags, blocking=True):
         # each tag should be RFC1035 compliant
         self.logger.info('Set tags')
-        self.tags.append(tags)
+        self.tags.extend(tags)
         self.tags = list(set(self.tags))
+        fingerprint = self.get()["tags"]["fingerprint"]
         return self.compute.instances().setTags(
             project=self.project['name'],
             zone=self.project['zone'],
             instance=self.name,
-            body={"items": self.tags}
-        )
+            body={"items": self.tags, "fingerprint": fingerprint}).execute()
+
+    def get(self):
+        self.logger.info("Get instance details")
+        return self.compute.instances().get(
+            instance=self.name,
+            project=self.project['name'],
+            zone=self.project['zone']).execute()
 
     def list(self):
         """
@@ -335,5 +343,5 @@ class Instance(GoogleCloudPlatform):
             }
         }
         if self.tags:
-            body['tags'] = self.tags
+            body['tags'] = {"items": self.tags}
         return body
