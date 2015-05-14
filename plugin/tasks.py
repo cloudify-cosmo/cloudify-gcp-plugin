@@ -91,6 +91,7 @@ def delete_network(config, **kwargs):
     network.delete()
     ctx.instance.runtime_properties.pop(NAME)
 
+
 @operation
 @throw_cloudify_exceptions
 def create_firewall_rule(config, **kwargs):
