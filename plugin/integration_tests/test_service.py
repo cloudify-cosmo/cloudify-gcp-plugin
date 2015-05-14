@@ -105,3 +105,44 @@ class TestService(unittest.TestCase):
         item = utils.get_item_from_gcp_response(
             'name', self.config['network'], networks)
         self.assertIsNone(item)
+
+    def test_tag_instance(self):
+        test_tag = 'agent-123'
+        name = 'name'
+        instance = resources.Instance(self.config['auth'],
+                                      self.config['project'],
+                                      self.ctx.logger,
+                                      instance_name=name,
+                                      image=self.config['agent_image'],
+                                      tags=[test_tag])
+
+        instance.create()
+        instances = instance.list()
+        item = utils.get_item_from_gcp_response('name', name, instances)
+        tag = find_in_list(test_tag, item['tags'].get('items'))
+        self.assertIsNotNone(tag)
+
+        instance.delete()
+
+        instance.tags = []
+        instance.create()
+        instances = instance.list()
+        item = utils.get_item_from_gcp_response('name', name, instances)
+        tags = item.get('tags', [])
+        tag = find_in_list(test_tag, tags.get('items', []))
+        self.assertIsNone(tag)
+
+        instance.set_tags([test_tag])
+        instances = instance.list()
+        item = utils.get_item_from_gcp_response('name', name, instances)
+        tag = find_in_list(test_tag, item['tags'].get('items'))
+        self.assertIsNotNone(tag)
+
+        instance.delete()
+
+
+def find_in_list(what, list):
+    for item in list:
+        if item == what:
+            return item
+    return None
