@@ -49,8 +49,9 @@ def run(config, network_conf, firewall_conf):
             logger,
             instance_name=instance_name,
             image=config['image'],
+            startup_script=config['startup_script'],
             tags=[tags.MANAGER_TAG])
-        instance.create(startup_script=config['startup_script'])
+        instance.create()
         resource_register.put(instance)
         logger.info('Instance created. \n '
                     'It will take a minute or two for the instance '

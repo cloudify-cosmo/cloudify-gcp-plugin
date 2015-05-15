@@ -173,6 +173,7 @@ class Instance(GoogleCloudPlatform):
                  image=None,
                  machine_type=None,
                  startup_script=None,
+                 externalIP=False,
                  tags=[]):
         super(Instance, self).__init__(config, logger)
         self.project = config['project']
@@ -183,9 +184,10 @@ class Instance(GoogleCloudPlatform):
         self.network = config['network']
         self.startup_script = startup_script
         self.tags = tags
+        self.externalIP = externalIP
 
     @blocking(True)
-    def create(self, startup_script=None):
+    def create(self):
         """
         Create GCP VM instance with given parameters.
         Zone operation.
@@ -200,9 +202,9 @@ class Instance(GoogleCloudPlatform):
         self.logger.info('Create instance')
         body = self.to_dict()
 
-        if startup_script is not None:
+        if self.startup_script is not None:
             try:
-                with open(startup_script, 'r') as script:
+                with open(self.startup_script, 'r') as script:
                     item = {
                         'key': 'startup-script',
                         'value': script.read()
@@ -283,9 +285,7 @@ class Instance(GoogleCloudPlatform):
                 }
             ],
             'networkInterfaces': [
-                {'network': 'global/networks/{0}'.format(self.network),
-                 'accessConfigs': [{'type': 'ONE_TO_ONE_NAT',
-                                    'name': 'External NAT'}]}],
+                {'network': 'global/networks/{0}'.format(self.network)}],
             'serviceAccounts': [
                 {'email': 'default',
                  'scopes': [
@@ -298,4 +298,7 @@ class Instance(GoogleCloudPlatform):
         }
         if self.tags:
             body['tags'] = {"items": self.tags}
+        if self.externalIP:
+            body['networkInterfaces'][0]['accessConfigs'] = \
+                [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
         return body

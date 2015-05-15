@@ -46,7 +46,8 @@ def create_instance(config, instance, **kwargs):
                                   ctx.logger,
                                   instance_name=ctx.instance.id,
                                   image=instance['image'],
-                                  tags=tag_list)
+                                  tags=tag_list,
+                                  externalIP=instance['externalIP'])
     instance.create()
     ctx.instance.runtime_properties[NAME] = instance.name
     set_ip(instance)
