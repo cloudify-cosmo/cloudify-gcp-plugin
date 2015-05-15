@@ -22,6 +22,7 @@ from cloudify.exceptions import NonRecoverableError
 from plugin.gcp.service import GCPError
 from plugin.gcp import utils
 from plugin.gcp import resources
+from plugin import tags
 
 NAME = 'gcp_name'
 
@@ -40,11 +41,12 @@ def throw_cloudify_exceptions(func):
 def create_instance(config, instance, **kwargs):
     ctx.logger.info('Create instance')
     config['network'] = utils.get_gcp_resource_name(config['network'])
+    tag_list = instance.get('tags', []).extend(tags.AGENT_TAG)
     instance = resources.Instance(config,
                                   ctx.logger,
                                   instance_name=ctx.instance.id,
                                   image=instance['image'],
-                                  tags=instance.get('tags', []))
+                                  tags=tag_list)
     instance.create()
     ctx.instance.runtime_properties[NAME] = instance.name
     set_ip(instance)

@@ -12,23 +12,10 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-from functools import wraps
 from plugin.gcp import utils
 from plugin.gcp.service import GoogleCloudPlatform
 from plugin.gcp.service import GCPError
-
-
-def blocking(default):
-    def inner(func):
-        def _decorator(self, *args, **kwargs):
-            blocking = kwargs.get('blocking', default)
-            response = func(self, *args, **kwargs)
-            if blocking:
-                self.wait_for_operation(response['name'])
-            else:
-                return response
-        return wraps(func)(_decorator)
-    return inner
+from plugin.gcp.service import blocking
 
 
 class FirewallRule(GoogleCloudPlatform):

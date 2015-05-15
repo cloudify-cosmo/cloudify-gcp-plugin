@@ -13,8 +13,9 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import time
 import json
+from functools import wraps
+import time
 
 import Crypto
 import httplib2
@@ -22,6 +23,19 @@ from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
 from plugin.gcp import utils
+
+
+def blocking(default):
+    def inner(func):
+        def _decorator(self, *args, **kwargs):
+            blocking = kwargs.get('blocking', default)
+            response = func(self, *args, **kwargs)
+            if blocking:
+                self.wait_for_operation(response['name'])
+            else:
+                return response
+        return wraps(func)(_decorator)
+    return inner
 
 
 class GoogleCloudPlatform(object):
@@ -107,6 +121,7 @@ class GoogleCloudPlatform(object):
             else:
                 time.sleep(1)
 
+    @blocking(True)
     def update_project_ssh_keypair(self, user, ssh_key):
         """
         Update project SSH keypair. Add new keypair to project's

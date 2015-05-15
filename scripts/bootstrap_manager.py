@@ -14,43 +14,56 @@
 #    * limitations under the License.
 import sys
 import logging
+import Queue
 
 import yaml
 
 from plugin.gcp.service import GoogleCloudPlatform
+from plugin.gcp import resources
 from plugin.gcp import utils
+from plugin import tags
 
 CONFIG = 'inputs_gcp.yaml'
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger()
 
 
-def run(config):
-    gcp = GoogleCloudPlatform(config['auth'],
-                              config['project'],
-                              config['scope'],
-                              logger)
+def run(config, network_conf, firewall_conf):
+    resource_register = Queue.LifoQueue()
+    try:
+        upload_agent_key(config)
+        network = resources.Network(config, logger, network_conf)
+        network.create()
+        resource_register.put(network)
+        firewall = resources.FirewallRule(config,
+                                          logger,
+                                          firewall_conf,
+                                          network.name)
+        firewall.create()
+        resource_register.put(firewall)
 
-    upload_agent_key(gcp, config)
+        logger.info('Creating cloudify manager instance.')
+        instance_name = utils.get_gcp_resource_name(config['manager_name'])
+        instance = resources.Instance(
+            config,
+            logger,
+            instance_name=instance_name,
+            image=config['image'],
+            tags=[tags.MANAGER_TAG])
+        instance.create(startup_script=config['startup_script'])
+        resource_register.put(instance)
+        logger.info('Instance created. \n '
+                    'It will take a minute or two for the instance '
+                    'to complete work.')
+    except Exception as e:
+        logger.error(str(e))
+        cleanup(resource_register)
 
-    network = utils.get_gcp_resource_name(config['network'])
-    response = gcp.create_network(network)
-    gcp.wait_for_operation(response['name'], True)
-    firewall = config['firewall']
-    firewall['name'] = utils.get_gcp_resource_name(firewall['name'])
-    firewall['name'] = utils.get_firewall_rule_name(network, firewall)
-    response = gcp.create_firewall_rule(network, firewall)
-    gcp.wait_for_operation(response['name'], True)
-    logger.info('Creating cloudify manager instance.')
 
-    response = gcp.create_instance(utils.get_gcp_resource_name(config['name']),
-                                   agent_image=config['manager_image'],
-                                   network=network,
-                                   startup_script=config['startup_script'])
-    gcp.wait_for_operation(response['name'])
-    logger.info('Instance created. \n '
-                'It will take a minute or two for the instance '
-                'to complete work.')
+def cleanup(resource_register):
+    logger.info("Cleanup")
+    while not resource_register.empty():
+        resource_register.get().delete()
 
 
 def find_and_replace(file_name, replace):
@@ -79,24 +92,25 @@ def prepare_startup_script(config):
     }
     auth_file_location = config.get('auth_file_location')
     if auth_file_location:
-        replace['AUTH_LOCATION=$HOME/auth'] = \
+        replace['AUTH_LOCATION=/home/$USER/auth'] = \
             'AUTH_LOCATION={0}'.format(auth_file_location)
 
-    find_and_replace('startup-script.sh', replace)
+    find_and_replace(config['startup_script'], replace)
 
 
-def upload_agent_key(gcp, config):
+def upload_agent_key(config):
     with open(config['ssh_key_public'], 'r') as f:
         ssh_public = f.read()
-    response = gcp.update_project_ssh_keypair(config['agent_user'], ssh_public)
-    gcp.wait_for_operation(response['name'], True)
+    gcp = GoogleCloudPlatform(config, logger)
+    gcp.update_project_ssh_keypair(config['agent_user'], ssh_public)
 
 
 def main():
     with open(CONFIG) as f:
-        config = yaml.safe_load(f).get('config')
+        inputs = yaml.safe_load(f)
+    config = inputs.get('config')
     prepare_startup_script(config)
-    run(config)
+    run(config, inputs.get('network'), inputs.get('firewall'))
 
 
 if __name__ == '__main__':

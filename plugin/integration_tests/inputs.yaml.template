@@ -1,16 +1,35 @@
 config:
   auth: put absolute path to client_secret.json
-  agent_image: /projects/ubuntu-os-cloud/global/images/ubuntu-1204-precise-v20150316
-  scope: https://www.googleapis.com/auth/compute
-  project:
-    name: put project name
-    zone: put instance zone i.e. us-central1-f
-  network: put network name
-  firewall: 
-    name: put firewall rule name
-    allowed: 
-      - IPProtocol: protocol name i.e. tcp
-        ports:
-          - put firewall rule open ports i.e. 80
-    sourceRanges: 
-      - 0.0.0.0/0
+  project: project name
+  zone: instance zone i.e. us-central1-f
+  network: name of the network to connect to
+instance:
+  image: /projects/ubuntu-os-cloud/global/images/ubuntu-1204-precise-v20150316
+network:
+  name: network name
+firewall:
+  name: firewall rule name
+  allowed:
+    - IPProtocol: protocol name i.e. tcp
+      ports:
+        - firewall rule open ports i.e. 80
+  sourceRanges:
+    - 0.0.0.0/0
+
+config:
+  auth: /home/anna/ruckus_resources/RuckusEurope.json # put absolute path to service_account_file.json
+  project: ruckuseurope  # put project name
+  zone: us-central1-f
+  network: testnetwork
+network:
+  name: testnetwork
+instance:
+  image: /projects/ubuntu-os-cloud/global/images/ubuntu-1204-precise-v20150316
+firewall:
+  name: testfirewall
+  allowed:
+    - IPProtocol: tcp
+      ports:
+        - 80
+  sourceRanges:
+    - 0.0.0.0/0
