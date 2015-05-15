@@ -18,22 +18,22 @@ from plugin.gcp.service import GoogleCloudPlatform
 from plugin.gcp.service import GCPError
 
 
-def if_blocking(func):
-    def _decorator(self, *args, **kwargs):
-        blocking = kwargs.get('blocking', True)
-        response = func(self, *args, **kwargs)
-        if blocking:
-            self.wait_for_operation(response['name'])
-        else:
-            return response
-
-    return wraps(func)(_decorator)
+def blocking(default):
+    def inner(func):
+        def _decorator(self, *args, **kwargs):
+            blocking = kwargs.get('blocking', default)
+            response = func(self, *args, **kwargs)
+            if blocking:
+                self.wait_for_operation(response['name'])
+            else:
+                return response
+        return wraps(func)(_decorator)
+    return inner
 
 
 class FirewallRule(GoogleCloudPlatform):
     def __init__(self,
-                 auth,
-                 project,
+                 config,
                  logger,
                  firewall,
                  network):
@@ -53,7 +53,7 @@ class FirewallRule(GoogleCloudPlatform):
         :param network: network name the firewall rule is connected to
         :return:
         """
-        super(FirewallRule, self).__init__(auth, project, logger)
+        super(FirewallRule, self).__init__(config, logger)
         self.firewall = firewall
         self.network = network
         self.firewall['name'] = self.get_name()
@@ -68,8 +68,8 @@ class FirewallRule(GoogleCloudPlatform):
         name = '{0}-{1}'.format(self.network, self.firewall['name'])
         return utils.get_gcp_resource_name(name)
 
-    @if_blocking
-    def create(self, blocking=True):
+    @blocking(True)
+    def create(self):
         """
         Create GCP firewall rule in a GCP network.
         Global operation.
@@ -80,11 +80,11 @@ class FirewallRule(GoogleCloudPlatform):
         self.logger.info('Create firewall rule')
         self.firewall['network'] = 'global/networks/{0}'.format(self.network)
         return self.compute.firewalls().insert(
-            project=self.project['name'],
+            project=self.project,
             body=self.firewall).execute()
 
-    @if_blocking
-    def delete(self, blocking=True):
+    @blocking(True)
+    def delete(self):
         """
         Delete GCP firewall rule from GCP network.
         Global operation.
@@ -94,14 +94,14 @@ class FirewallRule(GoogleCloudPlatform):
         """
         self.logger.info('Delete firewall rule')
         return self.compute.firewalls().delete(
-            project=self.project['name'],
+            project=self.project,
             firewall=self.firewall['name']).execute()
 
-    @if_blocking
-    def update(self, blocking=True):
+    @blocking(True)
+    def update(self):
         self.logger.info('Update firewall rule')
         return self.compute.firewalls().update(
-            project=self.project['name'],
+            project=self.project,
             firewall=self.firewall['name'],
             body=self.firewall).execute()
 
@@ -113,7 +113,7 @@ class FirewallRule(GoogleCloudPlatform):
         """
         self.logger.info('List firewall rules in project')
         return self.compute.firewalls().list(
-            project=self.project['name']).execute()
+            project=self.project).execute()
 
     def wait_for_operation(self, operation, global_operation=True):
         super(FirewallRule, self).wait_for_operation(operation,
@@ -122,16 +122,15 @@ class FirewallRule(GoogleCloudPlatform):
 
 class Network(GoogleCloudPlatform):
     def __init__(self,
-                 auth,
-                 project,
+                 config,
                  logger,
                  network):
-        super(Network, self).__init__(auth, project, logger)
-        self.network = utils.get_gcp_resource_name(network)
-        self.network_fullname = 'global/networks/{0}'.format(network)
+        super(Network, self).__init__(config, logger)
+        self.network = network
+        self.name = utils.get_gcp_resource_name(network['name'])
 
-    @if_blocking
-    def create(self, blocking=True):
+    @blocking(True)
+    def create(self):
         """
         Create GCP network.
         Global operation.
@@ -140,11 +139,11 @@ class Network(GoogleCloudPlatform):
         creation process and its status
         """
         self.logger.info('Create network')
-        return self.compute.networks().insert(project=self.project['name'],
+        return self.compute.networks().insert(project=self.project,
                                               body=self.to_dict()).execute()
 
-    @if_blocking
-    def delete(self, blocking=True):
+    @blocking(True)
+    def delete(self):
         """
         Delete GCP network.
         Global operation
@@ -155,8 +154,8 @@ class Network(GoogleCloudPlatform):
         """
         self.logger.info('Delete network')
         return self.compute.networks().delete(
-            project=self.project['name'],
-            network=self.network).execute()
+            project=self.project,
+            network=self.name).execute()
 
     def list(self):
         """
@@ -166,7 +165,7 @@ class Network(GoogleCloudPlatform):
         """
         self.logger.info('List networks')
         return self.compute.networks().list(
-            project=self.project['name']).execute()
+            project=self.project).execute()
 
     def wait_for_operation(self, operation, global_operation=True):
         super(Network, self).wait_for_operation(operation, global_operation)
@@ -174,33 +173,32 @@ class Network(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated network',
-            'name': self.network
+            'name': self.name
         }
         return body
 
 
 class Instance(GoogleCloudPlatform):
     def __init__(self,
-                 auth,
-                 project,
+                 config,
                  logger,
                  instance_name,
                  image=None,
                  machine_type=None,
-                 network=None,
                  startup_script=None,
                  tags=[]):
-        super(Instance, self).__init__(auth, project, logger)
-        self.project = project
+        super(Instance, self).__init__(config, logger)
+        self.project = config['project']
+        self.zone = config['zone']
         self.name = utils.get_gcp_resource_name(instance_name)
         self.image = image
         self.machine_type = machine_type if machine_type else 'n1-standard-1'
-        self.network = network if network else 'default'
+        self.network = config['network']
         self.startup_script = startup_script
         self.tags = tags
 
-    @if_blocking
-    def create(self, startup_script=None, blocking=True):
+    @blocking(True)
+    def create(self, startup_script=None):
         """
         Create GCP VM instance with given parameters.
         Zone operation.
@@ -228,12 +226,12 @@ class Instance(GoogleCloudPlatform):
                 raise GCPError(str(e))
 
         return self.compute.instances().insert(
-            project=self.project['name'],
-            zone=self.project['zone'],
+            project=self.project,
+            zone=self.zone,
             body=body).execute()
 
-    @if_blocking
-    def delete(self, blocking=True):
+    @blocking(True)
+    def delete(self):
         """
         Delete GCP instance.
         Zone operation.
@@ -243,20 +241,20 @@ class Instance(GoogleCloudPlatform):
         """
         self.logger.info('Delete instance')
         return self.compute.instances().delete(
-            project=self.project['name'],
-            zone=self.project['zone'],
+            project=self.project,
+            zone=self.zone,
             instance=self.name).execute()
 
-    @if_blocking
-    def set_tags(self, tags, blocking=True):
+    @blocking(True)
+    def set_tags(self, tags):
         # each tag should be RFC1035 compliant
         self.logger.info('Set tags')
         self.tags.extend(tags)
         self.tags = list(set(self.tags))
         fingerprint = self.get()["tags"]["fingerprint"]
         return self.compute.instances().setTags(
-            project=self.project['name'],
-            zone=self.project['zone'],
+            project=self.project,
+            zone=self.zone,
             instance=self.name,
             body={"items": self.tags, "fingerprint": fingerprint}).execute()
 
@@ -264,8 +262,8 @@ class Instance(GoogleCloudPlatform):
         self.logger.info("Get instance details")
         return self.compute.instances().get(
             instance=self.name,
-            project=self.project['name'],
-            zone=self.project['zone']).execute()
+            project=self.project,
+            zone=self.zone).execute()
 
     def list(self):
         """
@@ -276,8 +274,8 @@ class Instance(GoogleCloudPlatform):
         """
         self.logger.info("List instances")
         return self.compute.instances().list(
-            project=self.project['name'],
-            zone=self.project['zone']).execute()
+            project=self.project,
+            zone=self.zone).execute()
 
     def wait_for_operation(self, operation, global_operation=False):
         super(Instance, self).wait_for_operation(operation, global_operation)
@@ -286,7 +284,7 @@ class Instance(GoogleCloudPlatform):
         body = {
             'name': self.name,
             'machineType': 'zones/{0}/machineTypes/{1}'.format(
-                self.project['zone'],
+                self.zone,
                 self.machine_type),
             'disks': [
                 {
@@ -308,7 +306,7 @@ class Instance(GoogleCloudPlatform):
                      'https://www.googleapis.com/auth/logging.write']}],
             'metadata': {
                 'items': [
-                    {'key': 'bucket', 'value': self.project['name']}]
+                    {'key': 'bucket', 'value': self.project}]
             }
         }
         if self.tags:

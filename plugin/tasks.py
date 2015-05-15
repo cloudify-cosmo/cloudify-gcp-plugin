@@ -37,18 +37,16 @@ def throw_cloudify_exceptions(func):
 
 @operation
 @throw_cloudify_exceptions
-def create_instance(config, **kwargs):
+def create_instance(config, instance, **kwargs):
     ctx.logger.info('Create instance')
-    network = utils.get_gcp_resource_name(config['network'])
-    instance = resources.Instance(config['auth'],
-                                  config['project'],
+    config['network'] = utils.get_gcp_resource_name(config['network'])
+    instance = resources.Instance(config,
                                   ctx.logger,
                                   instance_name=ctx.instance.id,
-                                  image=config['agent_image'],
-                                  network=network)
+                                  image=instance['image'],
+                                  tags=instance.get('tags', []))
     instance.create()
     ctx.instance.runtime_properties[NAME] = instance.name
-
     set_ip(instance)
 
 
@@ -57,8 +55,7 @@ def create_instance(config, **kwargs):
 def delete_instance(config, **kwargs):
     ctx.logger.info('Delete instance')
     name = ctx.instance.runtime_properties[NAME]
-    instance = resources.Instance(config['auth'],
-                                  config['project'],
+    instance = resources.Instance(config,
                                   ctx.logger,
                                   instance_name=name)
     instance.delete()
@@ -67,11 +64,10 @@ def delete_instance(config, **kwargs):
 
 @operation
 @throw_cloudify_exceptions
-def create_network(config, **kwargs):
+def create_network(config, network, **kwargs):
     ctx.logger.info('Create network')
-    network_name = utils.get_gcp_resource_name(config['network'])
-    network = resources.Network(config['auth'],
-                                config['project'],
+    network_name = utils.get_gcp_resource_name(network['name'])
+    network = resources.Network(config,
                                 ctx.logger,
                                 network=network_name)
     network.create()
@@ -83,8 +79,7 @@ def create_network(config, **kwargs):
 def delete_network(config, **kwargs):
     ctx.logger.info('Delete network')
     network_name = ctx.instance.runtime_properties[NAME]
-    network = resources.Network(config['auth'],
-                                config['project'],
+    network = resources.Network(config,
                                 ctx.logger,
                                 network=network_name)
 
@@ -94,13 +89,12 @@ def delete_network(config, **kwargs):
 
 @operation
 @throw_cloudify_exceptions
-def create_firewall_rule(config, **kwargs):
+def create_firewall_rule(config, firewall_rule, **kwargs):
     ctx.logger.info('Create instance')
     network_name = utils.get_gcp_resource_name(config['network'])
-    firewall = resources.FirewallRule(config['auth'],
-                                      config['project'],
+    firewall = resources.FirewallRule(config,
                                       ctx.logger,
-                                      firewall=config['firewall'],
+                                      firewall=firewall_rule,
                                       network=network_name)
 
     firewall.create()
@@ -109,13 +103,12 @@ def create_firewall_rule(config, **kwargs):
 
 @operation
 @throw_cloudify_exceptions
-def delete_firewall_rule(config, **kwargs):
+def delete_firewall_rule(config, firewall_rule, **kwargs):
     ctx.logger.info('Create instance')
     network_name = utils.get_gcp_resource_name(config['network'])
-    firewall = resources.FirewallRule(config['auth'],
-                                      config['project'],
+    firewall = resources.FirewallRule(config,
                                       ctx.logger,
-                                      firewall=config['firewall'],
+                                      firewall=firewall_rule,
                                       network=network_name)
     firewall.delete()
     ctx.instance.runtime_properties.pop(NAME)

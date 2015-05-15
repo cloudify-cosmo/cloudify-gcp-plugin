@@ -46,11 +46,11 @@ class TestPlugin(unittest.TestCase):
 
     def test_create_instance(self):
         config = self.inputs['config']
-        instance = Instance(config['auth'],
-                            config['project'],
+        config_instance = self.inputs['instance']
+        instance = Instance(config,
                             ctx.logger,
                             instance_name=ctx.instance.id,
-                            image=config['agent_image'])
+                            image=config_instance['image'])
         instances = instance.list()
         base = len(instances.get('items', []))
         ctx.logger.info('Install workflow')
