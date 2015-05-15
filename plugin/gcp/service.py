@@ -13,8 +13,9 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import time
 import json
+from functools import wraps
+import time
 
 import Crypto
 import httplib2
@@ -22,6 +23,19 @@ from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
 from plugin.gcp import utils
+
+
+def blocking(default):
+    def inner(func):
+        def _decorator(self, *args, **kwargs):
+            blocking = kwargs.get('blocking', default)
+            response = func(self, *args, **kwargs)
+            if blocking:
+                self.wait_for_operation(response['name'])
+            else:
+                return response
+        return wraps(func)(_decorator)
+    return inner
 
 
 class GoogleCloudPlatform(object):
@@ -73,7 +87,6 @@ class GoogleCloudPlatform(object):
             self.logger.error(str(e))
             raise GCPError(str(e))
 
-
     def wait_for_operation(self,
                            operation,
                            global_operation=True):
@@ -107,95 +120,7 @@ class GoogleCloudPlatform(object):
             else:
                 time.sleep(1)
 
-    def create_network(self, network):
-        """
-        Create GCP network.
-        Global operation.
-
-        :param network: name of the network
-        :return: REST response with operation responsible for the network
-        creation process and its status
-        """
-        self.logger.info('Create network')
-        body = {
-            'description': 'Cloudify generated network',
-            'name': network
-        }
-        return self.compute.networks().insert(project=self.project['name'],
-                                              body=body).execute()
-
-    def delete_network(self, network):
-        """
-        Delete GCP network.
-        Global operation
-
-        :param network: network name
-        :return: REST response with operation responsible for the network
-        deletion process and its status
-        """
-        self.logger.info('Delete network')
-        return self.compute.networks().delete(
-            project=self.project['name'],
-            network=network).execute()
-
-    def list_networks(self):
-        """
-        List networks.
-
-        :return: REST response with list of networks in a project
-        """
-        self.logger.info('List networks')
-        return self.compute.networks().list(
-            project=self.project['name']).execute()
-
-    def create_firewall_rule(self, network, firewall):
-        """
-        Create GCP firewall rule in a GCP network.
-        Global operation.
-
-        :param network: network name the firewall rule is connected to
-        :param firewall: firewall dictionary with a following structure:
-        firewall = {'name': 'firewallname',
-                    'allowed: [{ 'IPProtocol': 'tcp', 'ports': ['80']}],
-                    'sourceRanges':['0.0.0.0/0'],
-                    'sourceTags':['tag'], (optional)
-                    'targetTags':['tag2'] (optional)
-                    }
-        ref. https://cloud.google.com/compute/docs/reference/latest/firewalls
-        :return: REST response with operation responsible for the firewall rule
-        creation process and its status
-        """
-        self.logger.info('Create firewall rule')
-        firewall['network'] = \
-            'global/networks/{0}'.format(network)
-        return self.compute.firewalls().insert(project=self.project['name'],
-                                               body=firewall).execute()
-
-    def delete_firewall_rule(self, network, firewall):
-        """
-        Delete GCP firewall rule from GCP network.
-        Global operation.
-
-        :param network: network name the firewall rule is connected to
-        :param firewall: firewall dictionary
-        :return: REST response with operation responsible for the firewall rule
-        deletion process and its status
-        """
-        self.logger.info('Delete firewall rule')
-        return self.compute.firewalls().delete(
-            project=self.project['name'],
-            firewall=utils.get_firewall_rule_name(network, firewall)).execute()
-
-    def list_firewall_rules(self):
-        """
-        List GCP firewall rules in all networks.
-
-        :return: REST response with list of firewall rules in a project
-        """
-        self.logger.info('List firewall rules in project')
-        return self.compute.firewalls().list(
-            project=self.project['name']).execute()
-
+    @blocking(True)
     def update_project_ssh_keypair(self, user, ssh_key):
         """
         Update project SSH keypair. Add new keypair to project's
