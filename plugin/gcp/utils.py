@@ -12,9 +12,20 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+import re
+
+MAX_GCP_INSTANCE_NAME = 63
 
 
 def get_item_from_gcp_response(key_field, key_name, items):
+    """
+    Get item from GCP REST response JSON list by name.
+    items = [{ 'key_field': 'key_name', 'key_field_value': 'value'}]
+    :param key_field: item dictionary key
+    :param key_value: item dictionary value
+    :param items: list of items(dictionaries)
+    :return: item if found in collection, None otherwise
+    """
     for item in items.get('items', []):
         if item.get(key_field) == key_name:
             return item
@@ -22,4 +33,39 @@ def get_item_from_gcp_response(key_field, key_name, items):
 
 
 def get_firewall_rule_name(network, firewall):
-    return '{0}-{1}'.format(network, firewall['name'])
+    """
+    Prefix firewall rule name with network name
+    :param network: name of the network the firewall rule is connected to
+    :param firewall: the firewall rule name
+    :return: network prefixed firewall rule name
+    """
+    name = '{0}-{1}'.format(network, firewall['name'])
+    return get_gcp_resource_name(name)
+
+
+def get_gcp_resource_name(name):
+    """
+    Create GCP accepted name of resource. From GCP specification:
+    "Specifically, the name must be 1-63 characters long and match the regular
+    expression [a-z]([-a-z0-9]*[a-z0-9])? which means the first character must
+    be a lowercase letter, and all following characters must be a dash,
+    lowercase letter, or digit, except the last character,
+    which cannot be a dash."
+    :param name: name of resource to be given
+    :return: GCP accepted instance name
+    """
+    # replace underscores with hyphens
+    final_name = name.replace('_', '-')
+    # remove all non-alphanumeric characters except hyphens
+    final_name = re.sub(r'[^a-zA-Z0-9-]+', '', final_name)
+    # assure the first character is alpha
+    if not final_name[0].isalpha():
+        final_name = '{0}{1}'.format('a', final_name)
+    # trim to the length limit
+    if len(final_name) > MAX_GCP_INSTANCE_NAME:
+        ID_HASH_CONST = 6
+        remain_len = MAX_GCP_INSTANCE_NAME - len(final_name)
+        final_name = '{0}{1}'.format(final_name[:remain_len - ID_HASH_CONST],
+                                     final_name[-ID_HASH_CONST:])
+    # convert string to lowercase
+    return final_name.lower()

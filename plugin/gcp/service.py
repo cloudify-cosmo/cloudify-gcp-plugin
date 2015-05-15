@@ -235,8 +235,9 @@ class GoogleCloudPlatform(object):
         deletion process and its status
         """
         self.logger.info('Delete network')
-        return self.compute.networks().delete(project=self.project['name'],
-                                              network=network).execute()
+        return self.compute.networks().delete(
+            project=self.project['name'],
+            network=network).execute()
 
     def list_networks(self):
         """
@@ -266,10 +267,8 @@ class GoogleCloudPlatform(object):
         creation process and its status
         """
         self.logger.info('Create firewall rule')
-        firewall = dict(firewall)
         firewall['network'] = \
             'global/networks/{0}'.format(network)
-        firewall['name'] = utils.get_firewall_rule_name(network, firewall)
         return self.compute.firewalls().insert(project=self.project['name'],
                                                body=firewall).execute()
 
