@@ -31,7 +31,7 @@ class GoogleCloudPlatform(object):
     """
     COMPUTE_SCOPE = 'https://www.googleapis.com/auth/compute'
 
-    def __init__(self, auth, project, logger):
+    def __init__(self, config, logger):
         """
         GoogleCloudPlatform class constructor.
         Create compute object that will be making
@@ -43,8 +43,9 @@ class GoogleCloudPlatform(object):
         :param logger: logger object that the class methods will be logging to
         :return:
         """
-        self.auth = auth
-        self.project = project
+        self.auth = config['auth']
+        self.project = config['project']
+        self.zone = config['zone']
         self.scope = self.COMPUTE_SCOPE
         self.compute = self.create_compute()
         self.logger = logger.getChild('GCP')
@@ -90,12 +91,12 @@ class GoogleCloudPlatform(object):
         while True:
             if global_operation:
                 result = self.compute.globalOperations().get(
-                    project=self.project['name'],
+                    project=self.project,
                     operation=operation).execute()
             else:
                 result = self.compute.zoneOperations().get(
-                    project=self.project['name'],
-                    zone=self.project['zone'],
+                    project=self.project,
+                    zone=self.zone,
                     operation=operation).execute()
             if result['status'] == 'DONE':
                 if 'error' in result:
@@ -219,7 +220,7 @@ class GoogleCloudPlatform(object):
                 key_name, key_value, commonInstanceMetadata)
             item['value'] = '{0}\n{1}:{2}'.format(item['value'], user, ssh_key)
         return self.compute.projects().setCommonInstanceMetadata(
-            project=self.project['name'],
+            project=self.project,
             body=commonInstanceMetadata).execute()
 
     def get_common_instance_metadata(self):
@@ -230,8 +231,7 @@ class GoogleCloudPlatform(object):
         project metadata.
         """
         self.logger.info('Get commonInstanceMetadata')
-        metadata = self.compute.projects().get(
-            project=self.project['name']).execute()
+        metadata = self.compute.projects().get(project=self.project).execute()
         return metadata['commonInstanceMetadata']
 
 

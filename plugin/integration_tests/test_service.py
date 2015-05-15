@@ -27,47 +27,44 @@ class TestService(unittest.TestCase):
         self.ctx = MockCloudifyContext()
         current_ctx.set(self.ctx)
         with open('inputs_service.yaml') as f:
-            self.config = yaml.safe_load(f).get('config')
+            self.config = yaml.safe_load(f)
 
     def test_create_network(self):
-        network = resources.Network(self.config['auth'],
-                                    self.config['project'],
+        network = resources.Network(self.config['config'],
                                     self.ctx.logger,
                                     self.config['network'])
         networks = network.list()
         item = utils.get_item_from_gcp_response(
-            'name', self.config['network'], networks)
+            'name', self.config['network']['name'], networks)
         self.assertIsNone(item)
 
         network.create()
 
         networks = network.list()
         item = utils.get_item_from_gcp_response(
-            'name', self.config['network'], networks)
+            'name', self.config['network']['name'], networks)
         self.assertIsNotNone(item)
 
         network.delete()
 
         networks = network.list()
         item = utils.get_item_from_gcp_response(
-            'name', self.config['network'], networks)
+            'name', self.config['network']['name'], networks)
         self.assertIsNone(item)
 
     def test_create_firewall_rule(self):
-        network = resources.Network(self.config['auth'],
-                                    self.config['project'],
+        network = resources.Network(self.config['config'],
                                     self.ctx.logger,
                                     self.config['network'])
         networks = network.list()
         item = utils.get_item_from_gcp_response(
-            'name', self.config['network'], networks)
+            'name', self.config['network']['name'], networks)
         self.assertIsNone(item)
 
-        firewall = resources.FirewallRule(self.config['auth'],
-                                          self.config['project'],
+        firewall = resources.FirewallRule(self.config['config'],
                                           self.ctx.logger,
                                           self.config['firewall'],
-                                          self.config['network'])
+                                          self.config['config']['network'])
         firewall_rules = firewall.list()
         item = utils.get_item_from_gcp_response('name',
                                                 firewall.name,
@@ -78,7 +75,7 @@ class TestService(unittest.TestCase):
 
         networks = network.list()
         item = utils.get_item_from_gcp_response(
-            'name', self.config['network'], networks)
+            'name', self.config['network']['name'], networks)
         self.assertIsNotNone(item)
 
         firewall.create()
@@ -103,17 +100,17 @@ class TestService(unittest.TestCase):
 
         networks = network.list()
         item = utils.get_item_from_gcp_response(
-            'name', self.config['network'], networks)
+            'name', self.config['network']['name'], networks)
         self.assertIsNone(item)
 
     def test_tag_instance(self):
         test_tag = 'agent-123'
         name = 'name'
-        instance = resources.Instance(self.config['auth'],
-                                      self.config['project'],
+        self.config['config']['network'] = 'default'
+        instance = resources.Instance(self.config['config'],
                                       self.ctx.logger,
                                       instance_name=name,
-                                      image=self.config['agent_image'],
+                                      image=self.config['instance']['image'],
                                       tags=[test_tag])
 
         instance.create()
@@ -141,8 +138,7 @@ class TestService(unittest.TestCase):
         instance.delete()
 
     def test_tag_firewall(self):
-        network = resources.Network(self.config['auth'],
-                                    self.config['project'],
+        network = resources.Network(self.config['config'],
                                     self.ctx.logger,
                                     self.config['network'])
         network.create()
@@ -152,11 +148,10 @@ class TestService(unittest.TestCase):
         target_tag = 'target-tag'
         firewall_rule['sourceTags'] = [source_tag]
         firewall_rule['targetTags'] = [target_tag]
-        firewall = resources.FirewallRule(self.config['auth'],
-                                          self.config['project'],
+        firewall = resources.FirewallRule(self.config['config'],
                                           self.ctx.logger,
                                           firewall_rule,
-                                          self.config['network'])
+                                          self.config['config']['network'])
         firewall.create()
         firewall_name = firewall.name
         firewalls = firewall.list()
