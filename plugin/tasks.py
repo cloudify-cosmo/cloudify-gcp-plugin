@@ -47,7 +47,7 @@ def create_instance(config, instance, **kwargs):
                                   instance_name=ctx.instance.id,
                                   image=instance['image'],
                                   tags=tag_list,
-                                  externalIP=instance['externalIP'])
+                                  externalIP=instance.get('externalIP', False))
     instance.create()
     ctx.instance.runtime_properties[NAME] = instance.name
     set_ip(instance)
@@ -93,8 +93,10 @@ def delete_network(config, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def create_firewall_rule(config, firewall_rule, **kwargs):
-    ctx.logger.info('Create instance')
+    ctx.logger.info('Create firewall rule')
     network_name = utils.get_gcp_resource_name(config['network'])
+    firewall_rule['name'] = utils.get_firewall_rule_name(network_name,
+                                                         firewall_rule)
     firewall = resources.FirewallRule(config,
                                       ctx.logger,
                                       firewall=firewall_rule,
@@ -104,11 +106,10 @@ def create_firewall_rule(config, firewall_rule, **kwargs):
     ctx.instance.runtime_properties[NAME] = firewall.name
 
 
-
 @operation
 @throw_cloudify_exceptions
 def delete_firewall_rule(config, **kwargs):
-    ctx.logger.info('Create instance')
+    ctx.logger.info('Delete firewall rule')
     network_name = utils.get_gcp_resource_name(config['network'])
     firewall = {'name': ctx.instance.runtime_properties[NAME]}
     firewall = resources.FirewallRule(config,
@@ -117,6 +118,19 @@ def delete_firewall_rule(config, **kwargs):
                                       network=network_name)
     firewall.delete()
     ctx.instance.runtime_properties.pop(NAME)
+
+
+@operation
+@throw_cloudify_exceptions
+def create_security_group(config, rules, **kwargs):
+    ctx.logger.info('Create security group')
+    firewall = create_firewall_structure_from_rules(rules)
+    firewall = resources.FirewallRule(config,
+                                      ctx.logger,
+                                      firewall,
+                                      config['network'])
+    firewall.create()
+    ctx.instance.runtime_properties[NAME] = firewall.name
 
 
 def set_ip(instance):
@@ -128,3 +142,18 @@ def set_ip(instance):
     ctx.instance.runtime_properties['ip'] = \
         item['networkInterfaces'][0]['networkIP']
     # only with one default network interface
+
+
+def create_firewall_structure_from_rules(rules):
+    firewall = {'name': ctx.node.name,
+                'allowed': [],
+                'sourceTags': [],
+                'sourceRanges': [],
+                'targetTags': []}
+    for rule in rules:
+        firewall['sourceTags'].extend(rule.get('source_tags', []))
+        firewall['allowed'].extend([{'IPProtocol': rule.get('ip_protocol'),
+                                    'ports': rule.get('ports', [])}])
+        firewall['sourceRanges'].extend(rule.get('cidr_ip', []))
+        firewall['targetTags'].extend(rule.get('target_tags', []))
+    return firewall

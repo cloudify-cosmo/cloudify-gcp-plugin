@@ -58,3 +58,13 @@ def get_gcp_resource_name(name):
                                      final_name[-ID_HASH_CONST:])
     # convert string to lowercase
     return final_name.lower()
+
+
+def get_firewall_rule_name(network, firewall):
+    """
+    Prefix firewall rule name with network name
+
+    :return: network prefixed firewall rule name
+    """
+    name = '{0}-{1}'.format(network, firewall)
+    return get_gcp_resource_name(name)
