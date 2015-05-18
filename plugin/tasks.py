@@ -69,12 +69,12 @@ def delete_instance(config, **kwargs):
 @throw_cloudify_exceptions
 def create_network(config, network, **kwargs):
     ctx.logger.info('Create network')
-    network_name = utils.get_gcp_resource_name(network['name'])
+    network['name'] = utils.get_gcp_resource_name(network['name'])
     network = resources.Network(config,
                                 ctx.logger,
-                                network=network_name)
+                                network=network)
     network.create()
-    ctx.instance.runtime_properties[NAME] = network_name
+    ctx.instance.runtime_properties[NAME] = network['name']
 
 
 @operation
@@ -104,14 +104,16 @@ def create_firewall_rule(config, firewall_rule, **kwargs):
     ctx.instance.runtime_properties[NAME] = firewall.name
 
 
+
 @operation
 @throw_cloudify_exceptions
-def delete_firewall_rule(config, firewall_rule, **kwargs):
+def delete_firewall_rule(config, **kwargs):
     ctx.logger.info('Create instance')
     network_name = utils.get_gcp_resource_name(config['network'])
+    firewall = {'name': ctx.instance.runtime_properties[NAME]}
     firewall = resources.FirewallRule(config,
                                       ctx.logger,
-                                      firewall=firewall_rule,
+                                      firewall=firewall,
                                       network=network_name)
     firewall.delete()
     ctx.instance.runtime_properties.pop(NAME)

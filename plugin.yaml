@@ -22,6 +22,8 @@ node_types:
           inputs:
             config:
               default: {}
+            instance:
+              default: {}
         stop:
           implementation: gcp_plugin.plugin.tasks.delete_instance
           inputs:
@@ -41,6 +43,8 @@ node_types:
           inputs:
             config:
               default: {}
+            network:
+              default: {}
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_network
           inputs:
@@ -55,6 +59,8 @@ node_types:
           implementation: gcp_plugin.plugin.tasks.create_firewall_rule
           inputs:
             config:
+              default: {}
+            firewall_rule:
               default: {}
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
