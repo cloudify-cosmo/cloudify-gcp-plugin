@@ -67,6 +67,8 @@ node_types:
           inputs:
             config:
               default: {}
+            firewall_rule:
+              default: {}
 
 relationships:
   cloudify.gcp.relationships.connected_to:
