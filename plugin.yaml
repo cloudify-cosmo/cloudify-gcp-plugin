@@ -10,7 +10,7 @@ plugins:
     # URL to archive containing the plugin or name of directory containing
     # the plugin if it is included in the the blueprint directory under the
     # "plugins" directory.
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/master.zip
+    source: https://github.com/szpotona/cloudify-gcp-plugin/archive/add_security_groups.zip
 
 node_types:
   cloudify.gcp.nodes.Instance:
@@ -20,35 +20,31 @@ node_types:
         start:
           implementation: gcp_plugin.plugin.tasks.create_instance
           inputs:
-            config:
+            gcp_config:
               default: {}
             instance:
               default: {}
         stop:
           implementation: gcp_plugin.plugin.tasks.delete_instance
           inputs:
-            config:
+            gcp_config:
               default: {}
 
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.Network
-    properties:
-      network_name: 
-        description: The name of the network.
-        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: gcp_plugin.plugin.tasks.create_network
           inputs:
-            config:
+            gcp_config:
               default: {}
             network:
               default: {}
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_network
           inputs:
-            config:
+            gcp_config:
               default: {}
 
   cloudify.gcp.nodes.FirewallRule:
@@ -58,16 +54,40 @@ node_types:
         create:
           implementation: gcp_plugin.plugin.tasks.create_firewall_rule
           inputs:
-            config:
+            gcp_config:
               default: {}
             firewall_rule:
               default: {}
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
           inputs:
-            config:
+            gcp_config:
               default: {}
             firewall_rule:
+              default: {}
+
+  cloudify.gcp.nodes.SecurityGroup:
+    derived_from: cloudify.nodes.SecurityGroup
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: 
+          implementation: gcp_plugin.plugin.tasks.create_security_group
+          inputs: 
+            gcp_config:
+              description: >
+                A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+              default: {}
+            rules:
+              description: >
+                You need to pass in either source_tags list OR cidr_ip list,
+                and then the following two: ip_protocol and port list OR target_tags list.
+              default: []
+        delete:          
+          implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
+          inputs:
+            gcp_config:
+              description: >
+                A dictionary of values to pass to authenticate with the Google Cloud Platform API.
               default: {}
 
 relationships:

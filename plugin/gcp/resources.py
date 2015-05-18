@@ -43,17 +43,7 @@ class FirewallRule(GoogleCloudPlatform):
         super(FirewallRule, self).__init__(config, logger)
         self.firewall = firewall
         self.network = network
-        self.firewall['name'] = self.get_name()
         self.name = self.firewall['name']
-
-    def get_name(self):
-        """
-        Prefix firewall rule name with network name
-
-        :return: network prefixed firewall rule name
-        """
-        name = '{0}-{1}'.format(self.network, self.firewall['name'])
-        return utils.get_gcp_resource_name(name)
 
     @blocking(True)
     def create(self):
