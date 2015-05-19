@@ -22,7 +22,7 @@ from cloudify.workflows import local
 from cloudify import ctx
 import yaml
 
-from plugin.gcp.resources import Instance
+from plugin.gcp.instance import Instance
 
 
 class TestPlugin(unittest.TestCase):
