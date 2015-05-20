@@ -121,34 +121,6 @@ class GoogleCloudPlatform(object):
             else:
                 time.sleep(1)
 
-    @blocking(True)
-    def update_project_ssh_keypair(self, user, ssh_key):
-        """
-        Update project SSH keypair. Add new keypair to project's
-        common instance metadata.
-        Global operation.
-
-        :param user: user the key belongs to
-        :param ssh_key: key belonging to the user
-        :return: REST response with operation responsible for the sshKeys
-        addition to project metadata process and its status
-        """
-        self.logger.info('Update project sshKeys metadata')
-        key_name = 'key'
-        key_value = 'sshKeys'
-        commonInstanceMetadata = self.get_common_instance_metadata()
-        if commonInstanceMetadata.get('items') is None:
-            item = [{key_name: key_value,
-                    'value': '{0}:{1}'.format(user, ssh_key)}]
-            commonInstanceMetadata['items'] = item
-        else:
-            item = utils.get_item_from_gcp_response(
-                key_name, key_value, commonInstanceMetadata)
-            item['value'] = '{0}\n{1}:{2}'.format(item['value'], user, ssh_key)
-        return self.compute.projects().setCommonInstanceMetadata(
-            project=self.project,
-            body=commonInstanceMetadata).execute()
-
     def get_common_instance_metadata(self):
         """
         Get project's common instance metadata.

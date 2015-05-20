@@ -24,6 +24,7 @@ from plugin.gcp import utils
 from plugin.gcp.firewall import FirewallRule
 from plugin.gcp.instance import Instance
 from plugin.gcp.network import Network
+from plugin.gcp.keypair import KeyPair
 from plugin import tags
 
 NAME = 'gcp_name'
@@ -138,6 +139,17 @@ def create_security_group(gcp_config, rules, **kwargs):
                             gcp_config['network'])
     firewall.create()
     ctx.instance.runtime_properties[NAME] = firewall.name
+
+@operation
+@throw_cloudify_exceptions
+def create_keypair(gcp_config, user, private_key_path, **kwargs):
+    ctx.logger.info('Create keypair')
+    keypair = KeyPair(gcp_config,
+                      ctx.logger,
+                      user,
+                      private_key_path)
+    keypair.create_keypair()
+    keypair.update_project_ssh_keypair(user, keypair.public_key)
 
 
 def set_ip(instance):

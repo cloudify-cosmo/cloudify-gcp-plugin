@@ -10,7 +10,7 @@ plugins:
     # URL to archive containing the plugin or name of directory containing
     # the plugin if it is included in the the blueprint directory under the
     # "plugins" directory.
-    source: https://github.com/szpotona/cloudify-gcp-plugin/archive/use_resources.zip
+    source: https://github.com/szpotona/cloudify-gcp-plugin/archive/add_keypair.zip
 
 node_types:
   cloudify.gcp.nodes.Instance:
@@ -89,6 +89,22 @@ node_types:
               description: >
                 A dictionary of values to pass to authenticate with the Google Cloud Platform API.
               default: {}
+
+  cloudify.gcp.nodes.KeyPair:
+    derived_from: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.plugin.tasks.create_keypair
+          inputs:
+            gcp_config:
+              description: >
+                A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+              default: {}
+            user:
+              default: ''
+            private_key_path:
+              default: ''
 
 relationships:
   cloudify.gcp.relationships.connected_to:
