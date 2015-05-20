@@ -16,6 +16,7 @@ from plugin.gcp import utils
 from plugin.gcp.service import GoogleCloudPlatform
 from plugin.gcp.service import blocking
 
+
 class Network(GoogleCloudPlatform):
     def __init__(self,
                  config,

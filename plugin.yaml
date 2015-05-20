@@ -105,6 +105,17 @@ node_types:
               default: ''
             private_key_path:
               default: ''
+        delete:
+          implementation: gcp_plugin.plugin.tasks.delete_keypair
+          inputs:
+            gcp_config:
+              description: >
+                A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+              default: {}
+            user:
+              default: ''
+            private_key_path:
+              default: ''
 
 relationships:
   cloudify.gcp.relationships.connected_to:

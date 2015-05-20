@@ -22,8 +22,6 @@ import httplib2
 from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
-from plugin.gcp import utils
-
 
 def blocking(default):
     def inner(func):

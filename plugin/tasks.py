@@ -140,6 +140,7 @@ def create_security_group(gcp_config, rules, **kwargs):
     firewall.create()
     ctx.instance.runtime_properties[NAME] = firewall.name
 
+
 @operation
 @throw_cloudify_exceptions
 def create_keypair(gcp_config, user, private_key_path, **kwargs):
@@ -149,7 +150,21 @@ def create_keypair(gcp_config, user, private_key_path, **kwargs):
                       user,
                       private_key_path)
     keypair.create_keypair()
-    keypair.update_project_ssh_keypair(user, keypair.public_key)
+    keypair.add_project_ssh_key(user, keypair.public_key)
+    ctx.instance.runtime_properties['gcp_public_key'] = keypair.public_key
+
+
+@operation
+@throw_cloudify_exceptions
+def delete_keypair(gcp_config, user, private_key_path, **kwargs):
+    ctx.logger.info('Delete keypair')
+    keypair = KeyPair(gcp_config,
+                      ctx.logger,
+                      user,
+                      private_key_path)
+    keypair.public_key = ctx.instance.runtime_properties['gcp_public_key']
+    keypair.remove_project_ssh_key()
+    keypair.remove_private_key()
 
 
 def set_ip(instance):
