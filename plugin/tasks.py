@@ -42,9 +42,7 @@ def throw_cloudify_exceptions(func):
 @operation
 @throw_cloudify_exceptions
 def create_instance(gcp_config, instance, **kwargs):
-    ctx.logger.info('Create instance')
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
-    tag_list = instance.get('tags', []).extend(tags.AGENT_TAG)
     script = instance.get('startup_script')
     if script:
         script = ctx.download_resource(script)
@@ -52,7 +50,6 @@ def create_instance(gcp_config, instance, **kwargs):
                         ctx.logger,
                         instance_name=ctx.instance.id,
                         image=instance['image'],
-                        tags=tag_list,
                         externalIP=instance.get('externalIP', False),
                         startup_script=script)
     instance.create()
@@ -62,8 +59,27 @@ def create_instance(gcp_config, instance, **kwargs):
 
 @operation
 @throw_cloudify_exceptions
+def add_instance_tag(gcp_config, instance, tag, **kwargs):
+    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        instance_name=instance)
+    instance.set_tags([utils.get_gcp_resource_name(tag)])
+
+
+@operation
+@throw_cloudify_exceptions
+def remove_instance_tag(gcp_config, instance, tag, **kwargs):
+    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        instance_name=instance)
+    instance.remove_tags([utils.get_gcp_resource_name(tag)])
+
+
+@operation
+@throw_cloudify_exceptions
 def delete_instance(gcp_config, **kwargs):
-    ctx.logger.info('Delete instance')
     name = ctx.instance.runtime_properties[NAME]
     instance = Instance(gcp_config,
                         ctx.logger,
@@ -75,19 +91,17 @@ def delete_instance(gcp_config, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def create_network(gcp_config, network, **kwargs):
-    ctx.logger.info('Create network')
     network['name'] = utils.get_gcp_resource_name(network['name'])
     network = Network(gcp_config,
                       ctx.logger,
                       network=network)
     network.create()
-    ctx.instance.runtime_properties[NAME] = network['name']
+    ctx.instance.runtime_properties[NAME] = network.name
 
 
 @operation
 @throw_cloudify_exceptions
 def delete_network(gcp_config, **kwargs):
-    ctx.logger.info('Delete network')
     network_name = ctx.instance.runtime_properties[NAME]
     network = Network(gcp_config,
                       ctx.logger,
@@ -100,7 +114,6 @@ def delete_network(gcp_config, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def create_firewall_rule(gcp_config, firewall_rule, **kwargs):
-    ctx.logger.info('Create firewall rule')
     network_name = utils.get_gcp_resource_name(gcp_config['network'])
     firewall_rule['name'] = utils.get_firewall_rule_name(network_name,
                                                          firewall_rule)
@@ -116,7 +129,6 @@ def create_firewall_rule(gcp_config, firewall_rule, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def delete_firewall_rule(gcp_config, **kwargs):
-    ctx.logger.info('Delete firewall rule')
     network_name = utils.get_gcp_resource_name(gcp_config['network'])
     firewall = {'name': ctx.instance.runtime_properties[NAME]}
     firewall = FirewallRule(gcp_config,
@@ -130,7 +142,6 @@ def delete_firewall_rule(gcp_config, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def create_security_group(gcp_config, rules, **kwargs):
-    ctx.logger.info('Create security group')
     firewall = create_firewall_structure_from_rules(gcp_config['network'],
                                                     rules)
     firewall = FirewallRule(gcp_config,
@@ -144,7 +155,6 @@ def create_security_group(gcp_config, rules, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def create_keypair(gcp_config, user, private_key_path, **kwargs):
-    ctx.logger.info('Create keypair')
     keypair = KeyPair(gcp_config,
                       ctx.logger,
                       user,
@@ -157,7 +167,6 @@ def create_keypair(gcp_config, user, private_key_path, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def delete_keypair(gcp_config, user, private_key_path, **kwargs):
-    ctx.logger.info('Delete keypair')
     keypair = KeyPair(gcp_config,
                       ctx.logger,
                       user,

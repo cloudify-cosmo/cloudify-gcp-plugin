@@ -15,68 +15,86 @@ plugins:
 node_types:
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.Compute
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
-        start:
+        create:
           implementation: gcp_plugin.plugin.tasks.create_instance
           inputs:
             gcp_config:
-              default: {}
+              default: { get_property: [SELF, gcp_config]}
             instance:
               default: {}
-        stop:
+        delete:
           implementation: gcp_plugin.plugin.tasks.delete_instance
           inputs:
             gcp_config:
-              default: {}
+              default: { get_property: [SELF, gcp_config] }
 
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.Network
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: gcp_plugin.plugin.tasks.create_network
           inputs:
             gcp_config:
-              default: {}
+              default: { get_property: [SELF, gcp_config]}
             network:
               default: {}
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_network
           inputs:
             gcp_config:
-              default: {}
+              default: { get_property: [SELF, gcp_config]}
 
   cloudify.gcp.nodes.FirewallRule:
     derived_from: cloudify.nodes.Root
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: gcp_plugin.plugin.tasks.create_firewall_rule
           inputs:
             gcp_config:
-              default: {}
+              default: { get_property: [SELF, gcp_config]}
             firewall_rule:
               default: {}
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
           inputs:
             gcp_config:
-              default: {}
+              default: { get_property: [SELF, gcp_config]}
             firewall_rule:
               default: {}
 
   cloudify.gcp.nodes.SecurityGroup:
     derived_from: cloudify.nodes.SecurityGroup
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create: 
           implementation: gcp_plugin.plugin.tasks.create_security_group
           inputs: 
             gcp_config:
-              description: >
-                A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-              default: {}
+              default: { get_property: [SELF, gcp_config]}
             rules:
               description: >
                 You need to pass in either source_tags list OR cidr_ip list,
@@ -86,12 +104,15 @@ node_types:
           implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
           inputs:
             gcp_config:
-              description: >
-                A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-              default: {}
+              default: { get_property: [SELF, gcp_config]}
 
   cloudify.gcp.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -124,3 +145,48 @@ relationships:
   cloudify.gcp.relationships.contained_in:
     derived_from: cloudify.relationships.contained_in
 
+  cloudify.gcp.relationships.agent_connected_to_security_group:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.plugin.tasks.add_instance_tag
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance: 
+              default: { get_attribute: [SOURCE, gcp_name] }
+            tag:
+              default: AGENT
+        unlink:
+          implementation: gcp_plugin.plugin.tasks.remove_instance_tag
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance: 
+              default: { get_attribute: [SOURCE, gcp_name] }
+            tag:
+              default: AGENT
+
+  cloudify.gcp.relationships.manager_connected_to_security_group:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.plugin.tasks.add_instance_tag
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance: 
+              default: { get_attribute: [SOURCE, gcp_name] }
+            tag:
+              default: MANAGER
+        unlink:
+          implementation: gcp_plugin.plugin.tasks.remove_instance_tag
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance: 
+              default: { get_attribute: [SOURCE, gcp_name] }
+            tag:
+              default: MANAGER

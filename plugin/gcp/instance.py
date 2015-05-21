@@ -100,6 +100,18 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             body={"items": self.tags, "fingerprint": fingerprint}).execute()
 
+    @blocking(True)
+    def remove_tags(self, tags):
+        # each tag should be RFC1035 compliant
+        self.logger.info('Remove tags')
+        self.tags = [tag for tag in self.tags if tag not in tags]
+        fingerprint = self.get()["tags"]["fingerprint"]
+        return self.compute.instances().setTags(
+            project=self.project,
+            zone=self.zone,
+            instance=self.name,
+            body={"items": self.tags, "fingerprint": fingerprint}).execute()
+
     def get(self):
         self.logger.info("Get instance details")
         return self.compute.instances().get(
