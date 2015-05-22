@@ -20,16 +20,6 @@ from plugin.gcp import utils
 
 
 class TestUtils(unittest.TestCase):
-    def test_get_firewall_rule_name(self):
-        test_network_name = 'test_network_name'
-        test_firewall_rule_name = 'test_firewall_rule_name'
-        firewall = {'name': test_firewall_rule_name}
-        firewall_rule_name = utils.get_firewall_rule_name(
-            test_network_name,
-            firewall)
-        correct_name = 'test-network-name-test-firewall-rule-name'
-        self.assertEqual(firewall_rule_name, correct_name)
-
     def test_get_item_from_gcp_response(self):
         item = {'name': 'test'}
         sth_that_has_items = {'items': [item]}
