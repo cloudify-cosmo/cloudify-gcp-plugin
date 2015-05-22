@@ -19,6 +19,11 @@ from plugin.gcp.service import blocking
 
 
 class Instance(GoogleCloudPlatform):
+    ACCESS_CONFIG = 'External NAT'
+    ACCESS_CONFIG_TYPE = 'ONE_TO_ONE_NAT'
+    NETWORK_INTERFACE = 'nic0'
+    STANDARD_MACHINE_TYPE = 'n1-standard-1'
+
     def __init__(self,
                  config,
                  logger,
@@ -33,7 +38,8 @@ class Instance(GoogleCloudPlatform):
         self.zone = config['zone']
         self.name = utils.get_gcp_resource_name(instance_name)
         self.image = image
-        self.machine_type = machine_type if machine_type else 'n1-standard-1'
+        self.machine_type = machine_type \
+            if machine_type else self.STANDARD_MACHINE_TYPE
         self.network = config['network']
         self.startup_script = startup_script
         self.tags = tags
@@ -119,6 +125,25 @@ class Instance(GoogleCloudPlatform):
             project=self.project,
             zone=self.zone).execute()
 
+    def add_access_config(self):
+        body = {"kind": "compute#accessConfig",
+                "name": self.ACCESS_CONFIG,
+                "type": self.ACCESS_CONFIG_TYPE}
+        return self.compute.instances().addAccessConfig(
+            project=self.project,
+            instance=self.name,
+            zone=self.zone,
+            network_interface=self.NETWORK_INTERFACE,
+            body=body)
+
+    def delete_access_config(self):
+        return self.compute.instances().deleteAccessConfig(
+            project=self.project,
+            instance=self.name,
+            zone=self.zone,
+            access_config=self.ACCESS_CONFIG,
+            network_interface=self.NETWORK_INTERFACE)
+
     def list(self):
         """
         List GCP instances.
@@ -164,6 +189,8 @@ class Instance(GoogleCloudPlatform):
         if self.tags:
             body['tags'] = {"items": self.tags}
         if self.externalIP:
-            body['networkInterfaces'][0]['accessConfigs'] = \
-                [{'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}]
+            for item in body['networkInterfaces']:
+                if item['name'] == self.ACCESS_CONFIG:
+                    item['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT',
+                                              'name': 'External NAT'}]
         return body

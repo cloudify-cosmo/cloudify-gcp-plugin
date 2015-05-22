@@ -41,16 +41,17 @@ def throw_cloudify_exceptions(func):
 
 @operation
 @throw_cloudify_exceptions
-def create_instance(gcp_config, instance, **kwargs):
+def create_instance(gcp_config, instance_type, image_id, properties, **kwargs):
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
-    script = instance.get('startup_script')
+    script = properties.get('startup_script')
     if script:
         script = ctx.download_resource(script)
     instance = Instance(gcp_config,
                         ctx.logger,
                         instance_name=ctx.instance.id,
-                        image=instance['image'],
-                        externalIP=instance.get('externalIP', False),
+                        image=image_id,
+                        machine_type=instance_type,
+                        externalIP=properties.get('externalIP', False),
                         startup_script=script)
     instance.create()
     ctx.instance.runtime_properties[NAME] = instance.name
@@ -59,23 +60,41 @@ def create_instance(gcp_config, instance, **kwargs):
 
 @operation
 @throw_cloudify_exceptions
-def add_instance_tag(gcp_config, instance, tag, **kwargs):
+def add_instance_tag(gcp_config, instance_name, tag, **kwargs):
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
-                        instance_name=instance)
+                        instance_name=instance_name)
     instance.set_tags([utils.get_gcp_resource_name(tag)])
 
 
 @operation
 @throw_cloudify_exceptions
-def remove_instance_tag(gcp_config, instance, tag, **kwargs):
+def remove_instance_tag(gcp_config, instance_name, tag, **kwargs):
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
-                        instance_name=instance)
+                        instance_name=instance_name)
     instance.remove_tags([utils.get_gcp_resource_name(tag)])
 
+@operation
+@throw_cloudify_exceptions
+def add_external_ip(gcp_config, instance_name, **kwargs):
+    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        instance_name=instance_name)
+    instance.add_access_config()
+
+
+@operation
+@throw_cloudify_exceptions
+def remove_external_ip(gcp_config, instance_name, **kwargs):
+    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        instance_name=instance_name)
+    instance.delete_access_config()
 
 @operation
 @throw_cloudify_exceptions
@@ -197,7 +216,7 @@ def create_firewall_structure_from_rules(network, rules):
     for rule in rules:
         firewall['sourceTags'].extend(rule.get('source_tags', []))
         firewall['allowed'].extend([{'IPProtocol': rule.get('ip_protocol'),
-                                    'ports': rule.get('ports', [])}])
+                                    'port': rule.get('port', [])}])
         firewall['sourceRanges'].extend(rule.get('cidr_ip', []))
         firewall['targetTags'].extend(rule.get('target_tags', []))
     return firewall
