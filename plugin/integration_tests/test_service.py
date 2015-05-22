@@ -26,7 +26,7 @@ class TestService(unittest.TestCase):
     def setUp(self):  # noqa
         self.ctx = MockCloudifyContext()
         current_ctx.set(self.ctx)
-        with open('inputs2.yaml') as f:
+        with open('inputs_service.yaml') as f:
             self.config = yaml.safe_load(f).get('config')
 
     def test_create_network(self):
@@ -64,9 +64,13 @@ class TestService(unittest.TestCase):
             'name', self.config['network'], networks)
         self.assertIsNone(item)
 
+        firewall_name = utils.get_firewall_rule_name(
+            self.config['network'],
+            self.config['firewall'])
+        self.config['firewall']['name'] = firewall_name
         firewall_rules = gcp.list_firewall_rules()
         item = utils.get_item_from_gcp_response(
-            'name', self.config['firewall']['name'], firewall_rules)
+            'name', firewall_name, firewall_rules)
         self.assertIsNone(item)
 
         response = gcp.create_network(self.config['network'])
@@ -84,20 +88,17 @@ class TestService(unittest.TestCase):
         firewall_rules = gcp.list_firewall_rules()
         item = utils.get_item_from_gcp_response(
             'name',
-            utils.get_firewall_rule_name(
-                self.config['network'],
-                self.config['firewall']),
+            firewall_name,
             firewall_rules)
         self.assertIsNotNone(item)
 
-        response = gcp.delete_firewall_rule(self.config['network'],
-                                            self.config['firewall'])
+        response = gcp.delete_firewall_rule(self.config['firewall'])
 
         gcp.wait_for_operation(response['name'], True)
         firewall_rules = gcp.list_firewall_rules()
         item = utils.get_item_from_gcp_response(
             'name',
-            self.config['firewall']['name'],
+            firewall_name,
             firewall_rules)
         self.assertIsNone(item)
 

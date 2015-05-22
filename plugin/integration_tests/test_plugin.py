@@ -36,7 +36,7 @@ class TestPlugin(unittest.TestCase):
         # build blueprint path
         blueprint_path = os.path.join(os.path.dirname(__file__),
                                       'blueprint', 'blueprint.yaml')
-        with open('inputs.yaml') as f:
+        with open('inputs_plugin.yaml') as f:
             self.inputs = yaml.safe_load(f)
 
         # setup local workflow execution environment
@@ -52,7 +52,7 @@ class TestPlugin(unittest.TestCase):
                                   ctx.logger)
         instances = gcp.list_instances()
 
-        base = len(instances['items'])
+        base = len(instances.get('items', []))
         ctx.logger.info('Install workflow')
         # execute install workflow
         self.env.execute('install', task_retries=0)
@@ -66,4 +66,4 @@ class TestPlugin(unittest.TestCase):
 
         ctx.logger.info('Check instance number')
         instances = gcp.list_instances()
-        self.assertEqual(len(instances['items']), base)
+        self.assertEqual(len(instances.get('items', [])), base)

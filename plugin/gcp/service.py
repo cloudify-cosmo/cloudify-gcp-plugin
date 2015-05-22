@@ -136,7 +136,7 @@ class GoogleCloudPlatform(object):
                 with open(startup_script, 'r') as script:
                     item = {
                         'key': 'startup-script',
-                        'value': script
+                        'value': script.read()
                     }
                     body['metadata']['items'].append(item)
             except IOError as e:
@@ -272,12 +272,11 @@ class GoogleCloudPlatform(object):
         return self.compute.firewalls().insert(project=self.project['name'],
                                                body=firewall).execute()
 
-    def delete_firewall_rule(self, network, firewall):
+    def delete_firewall_rule(self, firewall):
         """
         Delete GCP firewall rule from GCP network.
         Global operation.
 
-        :param network: network name the firewall rule is connected to
         :param firewall: firewall dictionary
         :return: REST response with operation responsible for the firewall rule
         deletion process and its status
@@ -285,7 +284,7 @@ class GoogleCloudPlatform(object):
         self.logger.info('Delete firewall rule')
         return self.compute.firewalls().delete(
             project=self.project['name'],
-            firewall=utils.get_firewall_rule_name(network, firewall)).execute()
+            firewall=firewall['name']).execute()
 
     def list_firewall_rules(self):
         """
