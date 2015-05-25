@@ -152,34 +152,40 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      private_key_path:
+        description: >
+          The path where the key should be saved on the machine. If this is a bootstrap
+                process, this refers to the local computer. If this will run on the manager,
+                this will be saved on the manager.
+              type: string
+              default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
         default: {}
+      user:
+        type: string
+        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: gcp_plugin.plugin.tasks.create_keypair
           inputs:
-            gcp_config:
-              description: >
-                A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-              default: {}
-            user:
-              default: ''
-            private_key_path:
-              default: ''
+            gcp_config: 
+              default: { get_property: [SELF, gcp_config] }
+            user: 
+              default: { get_property: [SELF, user] }
+            private_key_path: 
+              default: { get_property: [SELF, private_key_path] }
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_keypair
           inputs:
-            gcp_config:
-              description: >
-                A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-              default: {}
-            user:
-              default: ''
-            private_key_path:
-              default: ''
+            gcp_config: 
+              default: { get_property: [SELF, gcp_config] }
+            user: 
+              default: { get_property: [SELF, user] }
+            private_key_path: 
+              default: { get_property: [SELF, private_key_path] }
 
   cloudify.gcp.nodes.ExternalIP:
     derived_from: cloudify.nodes.VirtualIP

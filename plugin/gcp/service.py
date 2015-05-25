@@ -59,8 +59,8 @@ class GoogleCloudPlatform(object):
         self.project = config['project']
         self.zone = config['zone']
         self.scope = self.COMPUTE_SCOPE
-        self.compute = self.create_compute()
         self.logger = logger.getChild('GCP')
+        self.compute = self.create_compute()
 
     def create_compute(self):
         """
