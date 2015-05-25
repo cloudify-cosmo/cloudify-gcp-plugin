@@ -125,6 +125,7 @@ class Instance(GoogleCloudPlatform):
             project=self.project,
             zone=self.zone).execute()
 
+    @blocking(True)
     def add_access_config(self):
         body = {"kind": "compute#accessConfig",
                 "name": self.ACCESS_CONFIG,
@@ -133,16 +134,16 @@ class Instance(GoogleCloudPlatform):
             project=self.project,
             instance=self.name,
             zone=self.zone,
-            network_interface=self.NETWORK_INTERFACE,
-            body=body)
+            networkInterface=self.NETWORK_INTERFACE,
+            body=body).execute()
 
     def delete_access_config(self):
         return self.compute.instances().deleteAccessConfig(
             project=self.project,
             instance=self.name,
             zone=self.zone,
-            access_config=self.ACCESS_CONFIG,
-            network_interface=self.NETWORK_INTERFACE)
+            accessConfig=self.ACCESS_CONFIG,
+            networkInterface=self.NETWORK_INTERFACE).execute()
 
     def list(self):
         """

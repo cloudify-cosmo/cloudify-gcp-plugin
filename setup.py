@@ -18,7 +18,7 @@ from setuptools import setup
 
 setup(
 
-    name='cloudify-plugin',
+    name='cloudify-gcp-plugin',
 
     version='0.1',
     description='Plugin for Google Cloud Platform',

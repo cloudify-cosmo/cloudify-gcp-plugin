@@ -33,6 +33,7 @@ node_types:
         description: >
           The instance's size.
         type: string
+        default: n1-standard-1
       properties:
         description: >
           Additional properties 
@@ -74,7 +75,7 @@ node_types:
           implementation: gcp_plugin.plugin.tasks.create_network
           inputs:
             gcp_config:
-              default: { get_property: [SELF, gcp_config]}
+              default: { get_property: [SELF, gcp_config] }
             network:
               default: {}
         delete:
@@ -219,7 +220,7 @@ relationships:
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
             tag:
-              default: AGENT
+              default: agent
         unlink:
           implementation: gcp_plugin.plugin.tasks.remove_instance_tag
           inputs:
@@ -228,7 +229,7 @@ relationships:
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
             tag:
-              default: AGENT
+              default: agent
 
   cloudify.gcp.relationships.manager_connected_to_security_group:
     derived_from: cloudify.relationships.connected_to
@@ -242,7 +243,7 @@ relationships:
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
             tag:
-              default: MANAGER
+              default: manager
         unlink:
           implementation: gcp_plugin.plugin.tasks.remove_instance_tag
           inputs:
@@ -251,7 +252,7 @@ relationships:
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
             tag:
-              default: MANAGER
+              default: manager
 
   cloudify.gcp.relationships.instance_connected_to_ip:
     derived_from: cloudify.relationships.connected_to
@@ -271,3 +272,28 @@ relationships:
               default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
+
+  cloudify.gcp.relationships.instance_connected_to_keypair:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.plugin.tasks.save_private_key
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            private_key: 
+              default: { get_attribute: [TARGET, gcp_private_key] }
+            user: 
+              default: { get_property: [TARGET, user] }
+            private_key_path: 
+              default: { get_property: [TARGET, private_key_path] }
+        unlink:
+          implementation: gcp_plugin.plugin.tasks.delete_private_key
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            user: 
+              default: { get_property: [TARGET, user] }
+            private_key_path: 
+              default: { get_property: [TARGET, private_key_path] }

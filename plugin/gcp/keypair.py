@@ -13,6 +13,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import os
+import tempfile
 
 from Crypto.PublicKey import RSA
 
@@ -35,16 +36,20 @@ class KeyPair(GoogleCloudPlatform):
         self.user = user
         self.private_key_path = private_key_path
         self.public_key = ''
+        self.private_key = ''
 
     def wait_for_operation(self, operation, global_operation=True):
         super(KeyPair, self).wait_for_operation(operation, global_operation)
 
     def create_keypair(self):
         key = RSA.generate(2048)
+        self.private_key = key.exportKey('PEM')
+        self.public_key = key.exportKey('OpenSSH')
+
+    def save_private_key(self):
         with open(self.private_key_path, 'w') as content_file:
             os.chmod(self.private_key_path, 0600)
-            content_file.write(key.exportKey('PEM'))
-        self.public_key = key.exportKey('OpenSSH')
+            content_file.write(self.private_key)
 
     @blocking(True)
     def add_project_ssh_key(self, user, ssh_key):
