@@ -156,10 +156,10 @@ node_types:
       private_key_path:
         description: >
           The path where the key should be saved on the machine. If this is a bootstrap
-                process, this refers to the local computer. If this will run on the manager,
-                this will be saved on the manager.
-              type: string
-              default: ''
+          process, this refers to the local computer. If this will run on the manager,
+          this will be saved on the manager.
+        type: string
+        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.

@@ -13,7 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import os
-import tempfile
 
 from Crypto.PublicKey import RSA
 
@@ -32,6 +31,14 @@ class KeyPair(GoogleCloudPlatform):
                  logger,
                  user,
                  private_key_path):
+        """
+        Create KeyPair object
+
+        :param config: gcp auth file
+        :param logger: logger object
+        :param user: name of the user to authenticate
+        :param private_key_path: path where private key is stored
+        """
         super(KeyPair, self).__init__(config, logger)
         self.user = user
         self.private_key_path = private_key_path
@@ -42,11 +49,19 @@ class KeyPair(GoogleCloudPlatform):
         super(KeyPair, self).wait_for_operation(operation, global_operation)
 
     def create_keypair(self):
+        """
+        Create keypair: private and public key.
+
+        """
         key = RSA.generate(2048)
         self.private_key = key.exportKey('PEM')
         self.public_key = key.exportKey('OpenSSH')
 
     def save_private_key(self):
+        """
+        Save private key to given path.
+
+        """
         with open(self.private_key_path, 'w') as content_file:
             os.chmod(self.private_key_path, 0600)
             content_file.write(self.private_key)
@@ -64,22 +79,22 @@ class KeyPair(GoogleCloudPlatform):
         addition to project metadata process and its status
         """
         self.logger.info('Update project sshKeys metadata')
-        commonInstanceMetadata = self.get_common_instance_metadata()
-        if commonInstanceMetadata.get('items') is None:
+        common_instance_metadata = self.get_common_instance_metadata()
+        if common_instance_metadata.get('items') is None:
             item = [{self.KEY_NAME: self.KEY_VALUE,
                     'value': '{0}:{1}'.format(user, ssh_key)}]
-            commonInstanceMetadata['items'] = item
+            common_instance_metadata['items'] = item
         else:
             item = utils.get_item_from_gcp_response(
                 self.KEY_NAME,
                 self.KEY_VALUE,
-                commonInstanceMetadata)
+                common_instance_metadata)
             key = '{0}:{1}'.format(user, ssh_key)
             if key not in item['value']:
                 item['value'] = '{0}\n{1}'.format(item['value'], key)
         return self.compute.projects().setCommonInstanceMetadata(
             project=self.project,
-            body=commonInstanceMetadata).execute()
+            body=common_instance_metadata).execute()
 
     @blocking(True)
     def remove_project_ssh_key(self):
@@ -92,20 +107,24 @@ class KeyPair(GoogleCloudPlatform):
         addition to project metadata process and its status
         """
         self.logger.info('Update project sshKeys metadata')
-        commonInstanceMetadata = self.get_common_instance_metadata()
-        if commonInstanceMetadata.get('items') is not None:
+        common_instance_metadata = self.get_common_instance_metadata()
+        if common_instance_metadata.get('items') is not None:
             item = utils.get_item_from_gcp_response(
                 self.KEY_NAME,
                 self.KEY_VALUE,
-                commonInstanceMetadata)
+                common_instance_metadata)
             key = '{0}:{1}'.format(self.user, self.public_key)
             if key in item['value']:
                 item['value'] = item['value'].replace(key, '')
         return self.compute.projects().setCommonInstanceMetadata(
             project=self.project,
-            body=commonInstanceMetadata).execute()
+            body=common_instance_metadata).execute()
 
     def remove_private_key(self):
+        """
+        Remove private key from file system.
+        In case IOError throws GCPError with relevant message.
+        """
         try:
             os.unlink(self.private_key_path)
         except IOError as e:

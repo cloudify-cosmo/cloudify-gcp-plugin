@@ -50,7 +50,7 @@ def create_instance(gcp_config, instance_type, image_id, properties, **kwargs):
                         instance_name=ctx.instance.id,
                         image=image_id,
                         machine_type=instance_type,
-                        externalIP=properties.get('externalIP', False),
+                        external_ip=properties.get('externalIP', False),
                         startup_script=script)
     instance.create()
     ctx.instance.runtime_properties[NAME] = instance.name
@@ -78,6 +78,7 @@ def remove_instance_tag(gcp_config, instance_name, tag, **kwargs):
                         instance_name=instance_name)
     instance.remove_tags([utils.get_gcp_resource_name(tag)])
 
+
 @operation
 @throw_cloudify_exceptions
 def add_external_ip(gcp_config, instance_name, **kwargs):
@@ -100,6 +101,7 @@ def remove_external_ip(gcp_config, instance_name, **kwargs):
                         ctx.logger,
                         instance_name=instance_name)
     instance.delete_access_config()
+
 
 @operation
 @throw_cloudify_exceptions
@@ -202,7 +204,11 @@ def create_keypair(gcp_config, user, private_key_path, **kwargs):
 
 @operation
 @throw_cloudify_exceptions
-def save_private_key(gcp_config, private_key, user, private_key_path, **kwargs):
+def save_private_key(gcp_config,
+                     private_key,
+                     user,
+                     private_key_path,
+                     **kwargs):
     keypair = KeyPair(gcp_config,
                       ctx.logger,
                       user,

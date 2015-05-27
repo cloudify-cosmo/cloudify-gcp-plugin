@@ -31,21 +31,20 @@ class Instance(GoogleCloudPlatform):
                  image=None,
                  machine_type=None,
                  startup_script=None,
-                 externalIP=False,
+                 external_ip=False,
                  tags=[]):
         """
-        Create
+        Create Instance object
 
         :param config: gcp auth file
         :param logger: logger object
-        :param instance_name:
-        :param image:
-        :param machine_type:
+        :param instance_name: name of the instance
+        :param image: image id in Google Cloud Platform
+        :param machine_type: machine type on GCP, default None
         :param startup_script: shell script text to be run on instance startup,
         default None
-        :param externalIP: external
-        :param tags:
-        :return:
+        :param external_ip: boolean external ip indicator, default False
+        :param tags: tags for the instance, default []
         """
         super(Instance, self).__init__(config, logger)
         self.project = config['project']
@@ -57,7 +56,7 @@ class Instance(GoogleCloudPlatform):
         self.network = config['network']
         self.startup_script = startup_script
         self.tags = tags
-        self.externalIP = externalIP
+        self.externalIP = external_ip
 
     @blocking(True)
     def create(self):
@@ -107,6 +106,13 @@ class Instance(GoogleCloudPlatform):
 
     @blocking(True)
     def set_tags(self, tags):
+        """
+        Set GCP instance tags.
+        Zone operation.
+
+        :return: REST response with operation responsible for the instance
+        tag setting process and its status
+        """
         # each tag should be RFC1035 compliant
         self.logger.info('Set tags')
         self.tags.extend(tags)
@@ -120,6 +126,13 @@ class Instance(GoogleCloudPlatform):
 
     @blocking(True)
     def remove_tags(self, tags):
+        """
+        Remove GCP instance tags.
+        Zone operation.
+
+        :return: REST response with operation responsible for the instance
+        tag removal process and its status
+        """
         # each tag should be RFC1035 compliant
         self.logger.info('Remove tags')
         self.tags = [tag for tag in self.tags if tag not in tags]
@@ -131,6 +144,9 @@ class Instance(GoogleCloudPlatform):
             body={"items": self.tags, "fingerprint": fingerprint}).execute()
 
     def get(self):
+        """
+        Get GCP instance details.
+        """
         self.logger.info("Get instance details")
         return self.compute.instances().get(
             instance=self.name,
@@ -139,6 +155,13 @@ class Instance(GoogleCloudPlatform):
 
     @blocking(True)
     def add_access_config(self):
+        """
+        Set GCP instance external IP.
+        Zone operation.
+
+        :return: REST response with operation responsible for the instance
+        external IP setting process and its status
+        """
         body = {"kind": "compute#accessConfig",
                 "name": self.ACCESS_CONFIG,
                 "type": self.ACCESS_CONFIG_TYPE}
@@ -150,6 +173,13 @@ class Instance(GoogleCloudPlatform):
             body=body).execute()
 
     def delete_access_config(self):
+        """
+        Set GCP instance tags.
+        Zone operation.
+
+        :return: REST response with operation responsible for the instance
+        tag setting process and its status
+        """
         return self.compute.instances().deleteAccessConfig(
             project=self.project,
             instance=self.name,

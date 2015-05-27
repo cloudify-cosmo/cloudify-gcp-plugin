@@ -15,6 +15,7 @@
 import re
 
 MAX_GCP_INSTANCE_NAME = 63
+ID_HASH_CONST = 6
 
 
 def get_item_from_gcp_response(key_field, key_name, items):
@@ -52,7 +53,6 @@ def get_gcp_resource_name(name):
         final_name = '{0}{1}'.format('a', final_name)
     # trim to the length limit
     if len(final_name) > MAX_GCP_INSTANCE_NAME:
-        ID_HASH_CONST = 6
         remain_len = MAX_GCP_INSTANCE_NAME - len(final_name)
         final_name = '{0}{1}'.format(final_name[:remain_len - ID_HASH_CONST],
                                      final_name[-ID_HASH_CONST:])

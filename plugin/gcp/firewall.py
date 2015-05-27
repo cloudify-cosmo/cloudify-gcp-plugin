@@ -23,9 +23,9 @@ class FirewallRule(GoogleCloudPlatform):
                  firewall,
                  network):
         """
+        Create Firewall rule object
 
-        :param auth:
-        :param project:
+        :param config:
         :param logger:
         :param firewall: firewall dictionary with a following structure:
         firewall = {'name': 'firewallname',
@@ -36,7 +36,6 @@ class FirewallRule(GoogleCloudPlatform):
                     }
         ref. https://cloud.google.com/compute/docs/reference/latest/firewalls
         :param network: network name the firewall rule is connected to
-        :return:
         """
         super(FirewallRule, self).__init__(config, logger)
         self.firewall = firewall
@@ -74,6 +73,13 @@ class FirewallRule(GoogleCloudPlatform):
 
     @blocking(True)
     def update(self):
+        """
+        Update GCP firewall rule.
+        Global operation.
+
+        :return: REST response with operation responsible for the firewall rule
+        update process and its status
+        """
         self.logger.info('Update firewall rule')
         return self.compute.firewalls().update(
             project=self.project,

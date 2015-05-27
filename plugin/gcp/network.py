@@ -22,6 +22,14 @@ class Network(GoogleCloudPlatform):
                  config,
                  logger,
                  network):
+        """
+        Create Network object
+
+        :param config: gcp auth file
+        :param logger: logger object
+        :param network: network dictionary having at least 'name' key
+
+        """
         super(Network, self).__init__(config, logger)
         self.network = network
         self.name = utils.get_gcp_resource_name(network['name'])

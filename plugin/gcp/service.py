@@ -24,6 +24,11 @@ from oauth2client.client import SignedJwtAssertionCredentials
 
 
 def blocking(default):
+    """
+    Decorator waiting for the operation if there is blocking=True parameter.
+    :param default:
+    :return:
+    """
     def inner(func):
         def _decorator(self, *args, **kwargs):
             blocking = kwargs.get('blocking', default)
@@ -84,7 +89,6 @@ class GoogleCloudPlatform(object):
         except IOError as e:
             self.logger.error(str(e))
             raise GCPError(str(e))
-
 
     def wait_for_operation(self,
                            operation,
