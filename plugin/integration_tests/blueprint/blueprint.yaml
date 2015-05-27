@@ -8,9 +8,11 @@ inputs:
     config:
         description: config data
         default: {}
-    instance:
-        description: instance data
-        default: {}
+    image_id:
+        description: image id in GCP
+        default: ''
+    instance_type:
+        type: string
 
 node_types:
     cloudify.gcp.Root:
@@ -20,24 +22,19 @@ node_types:
                 start:
                     implementation: gcp_plugin.plugin.tasks.create_instance
                     inputs:
-                        config:
-                            default: {}
-                        instance:
-                            default: {}
+                        gcp_config:
+                            default: { get_input: config }
+                        instance_type:
+                            default: n1-standard-1
+                        image_id:
+                            default: { get_input: image_id }
+                        properties:
+                            default: { externalIP: false }
                 stop:
                     implementation: gcp_plugin.plugin.tasks.delete_instance
                     inputs:
-                        config:
-                            default: {}
+                        gcp_config:
+                            default: { get_input: config }
 node_templates:
     testnode:
         type: cloudify.gcp.Root
-        interfaces:
-            cloudify.interfaces.lifecycle:
-                start:
-                    inputs:
-                        config: { get_input: config }
-                        instance: { get_input: instance }
-                stop:
-                    inputs:
-                        config: { get_input: config }

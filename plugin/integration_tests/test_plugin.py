@@ -46,11 +46,9 @@ class TestPlugin(unittest.TestCase):
 
     def test_create_instance(self):
         config = self.inputs['config']
-        config_instance = self.inputs['instance']
         instance = Instance(config,
                             ctx.logger,
-                            instance_name=ctx.instance.id,
-                            image=config_instance['image'])
+                            instance_name=ctx.instance.id)
         instances = instance.list()
         base = len(instances.get('items', []))
         ctx.logger.info('Install workflow')

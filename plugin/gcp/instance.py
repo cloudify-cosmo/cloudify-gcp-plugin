@@ -33,6 +33,20 @@ class Instance(GoogleCloudPlatform):
                  startup_script=None,
                  externalIP=False,
                  tags=[]):
+        """
+        Create
+
+        :param config: gcp auth file
+        :param logger: logger object
+        :param instance_name:
+        :param image:
+        :param machine_type:
+        :param startup_script: shell script text to be run on instance startup,
+        default None
+        :param externalIP: external
+        :param tags:
+        :return:
+        """
         super(Instance, self).__init__(config, logger)
         self.project = config['project']
         self.zone = config['zone']
@@ -51,8 +65,6 @@ class Instance(GoogleCloudPlatform):
         Create GCP VM instance with given parameters.
         Zone operation.
 
-        :param startup_script: shell script text to be run on instance startup,
-        default None
         :return: REST response with operation responsible for the instance
         creation process and its status
         :raise: GCPError if there is any problem with startup script file:
