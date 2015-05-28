@@ -1,15 +1,6 @@
 # cloudify-gcp-plugin
-A Cloudify Plugin that provisions resources in Google Cloud Platform
+A Cloudify Plugin that provisions resources in Google Cloud Platform. 
 
-# cloudfiy-gcp-plugin scripts
-## Bootstrap the cloudify manager
+This plugin is under development.
 
-To bootstrap the cloudify manager in Google Cloud Platform you need to prepare:
- - client_secret.json file that can be downloaded from cloud developers console
- - generated ssh keys that you want to upload to cloudify manager
- - filled inputs_gcp.yaml.template (renamed to inputs_gcp.yaml) with relevant values 
- 
- Simply run:
- ```
- python bootstrap_manager.py
- ```
+* Master [![Build Status](https://travis-ci.org/cloudify-cosmo/cloudify-gcp-plugin.svg?branch=master)](https://travis-ci.org/cloudify-cosmo/cloudify-gcp-plugin)
