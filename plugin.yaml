@@ -160,6 +160,18 @@ node_types:
           this will be saved on the manager.
         type: string
         default: ''
+      private_existing_key_path:
+        description: >
+          The path where the key should be saved on the machine. If this is a bootstrap
+          process, this refers to the local computer. If this will run on the manager,
+          this will be saved on the manager.
+        type: string
+        default: ''
+      public_existing_key_path:
+        description: >
+          The path to read from existing public key.
+        type: string
+        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
@@ -178,6 +190,12 @@ node_types:
               default: { get_property: [SELF, user] }
             private_key_path: 
               default: { get_property: [SELF, private_key_path] }
+            private_existing_key_path: 
+              default: { get_property: [SELF, private_existing_key_path] }
+            public_existing_key_path: 
+              default: { get_property: [SELF, public_existing_key_path] }
+            external:
+              default: { get_property: [SELF, use_external_resource] }
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_keypair
           inputs:

@@ -190,12 +190,22 @@ def create_security_group(gcp_config, rules, **kwargs):
 
 @operation
 @throw_cloudify_exceptions
-def create_keypair(gcp_config, user, private_key_path, **kwargs):
+def create_keypair(gcp_config,
+                   user,
+                   private_key_path,
+                   external,
+                   private_existing_key_path='',
+                   public_existing_key_path='',
+                   **kwargs):
     keypair = KeyPair(gcp_config,
                       ctx.logger,
                       user,
                       private_key_path)
-    keypair.create_keypair()
+    if external:
+        keypair.private_key = ctx.get_resource(private_existing_key_path)
+        keypair.public_key = ctx.get_resource(public_existing_key_path)
+    else:
+        keypair.create()
     keypair.add_project_ssh_key(user, keypair.public_key)
     ctx.instance.runtime_properties['gcp_private_key'] = keypair.private_key
     ctx.instance.runtime_properties['gcp_public_key'] = keypair.public_key
@@ -214,7 +224,6 @@ def save_private_key(gcp_config,
                       user,
                       private_key_path)
     keypair.private_key = private_key
-    keypair.save_private_key()
 
 
 @operation

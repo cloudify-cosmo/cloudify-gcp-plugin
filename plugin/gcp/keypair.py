@@ -48,7 +48,7 @@ class KeyPair(GoogleCloudPlatform):
     def wait_for_operation(self, operation, global_operation=True):
         super(KeyPair, self).wait_for_operation(operation, global_operation)
 
-    def create_keypair(self):
+    def create(self):
         """
         Create keypair: private and public key.
 
