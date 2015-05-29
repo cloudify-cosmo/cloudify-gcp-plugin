@@ -13,29 +13,19 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from functools import wraps
-
 from cloudify import ctx
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError
 
-from plugin.gcp.service import GCPError
+from plugin.utils import throw_cloudify_exceptions
+from plugin.utils import create_firewall_structure_from_rules
+from plugin.utils import NAME
+from plugin.utils import get_manager_provider_config
 from plugin.gcp import utils
 from plugin.gcp.firewall import FirewallRule
 from plugin.gcp.instance import Instance
 from plugin.gcp.network import Network
 from plugin.gcp.keypair import KeyPair
 
-NAME = 'gcp_name'
-
-
-def throw_cloudify_exceptions(func):
-    def _decorator(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except GCPError as e:
-            raise NonRecoverableError(e.message)
-    return wraps(func)(_decorator)
 
 
 @operation
@@ -52,6 +42,7 @@ def create_instance(gcp_config, instance_type, image_id, properties, **kwargs):
                         machine_type=instance_type,
                         external_ip=properties.get('externalIP', False),
                         startup_script=script)
+    add_to_security_groups(instance)
     instance.create()
     ctx.instance.runtime_properties[NAME] = instance.name
     set_ip(instance)
@@ -180,12 +171,25 @@ def delete_firewall_rule(gcp_config, **kwargs):
 def create_security_group(gcp_config, rules, **kwargs):
     firewall = create_firewall_structure_from_rules(gcp_config['network'],
                                                     rules)
+    ctx.instance.runtime_properties[utils.TARGET_TAGS] = \
+        firewall[utils.TARGET_TAGS]
+    ctx.instance.runtime_properties[utils.SOURCE_TAGS] = \
+        firewall[utils.SOURCE_TAGS]
     firewall = FirewallRule(gcp_config,
                             ctx.logger,
                             firewall,
                             gcp_config['network'])
     firewall.create()
     ctx.instance.runtime_properties[NAME] = firewall.name
+
+@operation
+@throw_cloudify_exceptions
+def delete_security_group(gcp_config, **kwargs):
+    if ctx.instance.runtime_properties.get(utils.TARGET_TAGS):
+        ctx.instance.runtime_properties.pop(utils.TARGET_TAGS)
+    if ctx.instance.runtime_properties.get(utils.SOURCE_TAGS):
+        ctx.instance.runtime_properties.pop(utils.SOURCE_TAGS)
+    delete_firewall_rule(gcp_config, **kwargs)
 
 
 @operation
@@ -261,24 +265,7 @@ def set_ip(instance, relationship=False):
     # only with one default network interface
 
 
-def create_firewall_structure_from_rules(network, rules):
-    firewall = {'name': utils.get_firewall_rule_name(network, ctx.instance.id),
-                'allowed': [],
-                'sourceTags': [],
-                'sourceRanges': [],
-                'targetTags': []}
+def add_to_security_groups(instance):
+    provider_config = get_manager_provider_config()
 
-    for rule in rules:
-        source_tags = rule.get('source_tags', [])
-        for tag in source_tags:
-            tag = utils.get_gcp_resource_name(tag)
-            if tag not in firewall['sourceTags']:
-                firewall['sourceTags'].append(tag)
-        firewall['allowed'].extend([{'IPProtocol': rule.get('ip_protocol'),
-                                    'ports': [rule.get('port', [])]}])
-        cidr = rule.get('cidr_ip')
-        if cidr and cidr not in firewall['sourceRanges']:
-            firewall['sourceRanges'].append(cidr)
-        firewall['targetTags'].extend(rule.get('target_tags', []))
-    ctx.logger.info(str(firewall))
-    return firewall
+    instance.tags.extend()

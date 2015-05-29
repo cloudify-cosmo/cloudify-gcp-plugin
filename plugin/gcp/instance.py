@@ -52,7 +52,7 @@ class Instance(GoogleCloudPlatform):
         self.machine_type = machine_type
         self.network = config['network']
         self.startup_script = startup_script
-        self.tags = tags
+        self.tags = tags.append(self.name) if tags else [self.name]
         self.externalIP = external_ip
 
     @blocking(True)
@@ -202,6 +202,7 @@ class Instance(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'name': self.name,
+            'tags': {'items': self.tags},
             'machineType': 'zones/{0}/machineTypes/{1}'.format(
                 self.zone,
                 self.machine_type),
@@ -226,8 +227,6 @@ class Instance(GoogleCloudPlatform):
                     {'key': 'bucket', 'value': self.project}]
             }
         }
-        if self.tags:
-            body['tags'] = {"items": self.tags}
         if self.externalIP:
             for item in body['networkInterfaces']:
                 if item['name'] == self.ACCESS_CONFIG:

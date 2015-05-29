@@ -36,11 +36,6 @@ node_types:
           https://cloud.google.com/compute/docs/machine-types
         type: string
         default: n1-standard-1
-      instance_tag:
-        description: >
-          The instance's tag whether it is manager or agent. [manager, agent]
-        type: string
-        default: agent
       instance_additional_settings:
         description: >
           Additional instance settings.
@@ -137,10 +132,6 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
         default: {}
-      tag:
-        description: >
-          A tag used to identificate which instances SG is working for.
-        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         create: 
@@ -242,8 +233,6 @@ relationships:
               default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
-            tag:
-              default: { get_property: [TARGET, tag] }
         unlink:
           implementation: gcp_plugin.plugin.tasks.remove_instance_tag
           inputs:
@@ -251,8 +240,6 @@ relationships:
               default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
-            tag:
-              default: { get_property: [TARGET, tag] }
 
   cloudify.gcp.relationships.instance_connected_to_ip:
     derived_from: cloudify.relationships.connected_to
