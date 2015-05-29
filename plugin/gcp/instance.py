@@ -32,7 +32,7 @@ class Instance(GoogleCloudPlatform):
                  machine_type=None,
                  startup_script=None,
                  external_ip=False,
-                 tags=[]):
+                 tags=None):
         """
         Create Instance object
 
@@ -47,12 +47,9 @@ class Instance(GoogleCloudPlatform):
         :param tags: tags for the instance, default []
         """
         super(Instance, self).__init__(config, logger)
-        self.project = config['project']
-        self.zone = config['zone']
         self.name = utils.get_gcp_resource_name(instance_name)
         self.image = image
-        self.machine_type = machine_type \
-            if machine_type else self.STANDARD_MACHINE_TYPE
+        self.machine_type = machine_type
         self.network = config['network']
         self.startup_script = startup_script
         self.tags = tags
@@ -234,6 +231,6 @@ class Instance(GoogleCloudPlatform):
         if self.externalIP:
             for item in body['networkInterfaces']:
                 if item['name'] == self.ACCESS_CONFIG:
-                    item['accessConfigs'] = [{'type': 'ONE_TO_ONE_NAT',
-                                              'name': 'External NAT'}]
+                    item['accessConfigs'] = [{'type': self.ACCESS_CONFIG_TYPE,
+                                              'name': self.ACCESS_CONFIG}]
         return body

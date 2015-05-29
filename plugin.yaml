@@ -18,12 +18,13 @@ node_types:
     properties:
       use_external_resource:
         description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
+          Indicate whether the resource exists and use existing (true) 
+          or if Cloudify should create new resource (false).
         type: boolean
         default: false
       gcp_config:
         description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+          A dictionary of values to pass to authenticate with the GCP API.
         default: {}
       image_id:
         description: >
@@ -31,12 +32,18 @@ node_types:
         type: string
       instance_type:
         description: >
-          The instance's size.
+          The instance's type. All available instance types can be found here: 
+          https://cloud.google.com/compute/docs/machine-types
         type: string
         default: n1-standard-1
-      properties:
+      instance_tag:
         description: >
-          Additional properties 
+          The instance's tag whether it is manager or agent. [manager, agent]
+        type: string
+        default: agent
+      instance_additional_settings:
+        description: >
+          Additional instance settings.
         default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -46,7 +53,7 @@ node_types:
             gcp_config:
               default: { get_property: [SELF, gcp_config]}
             properties:
-              default: { get_property: [SELF, properties]}
+              default: { get_property: [SELF, instance_additional_settings]}
             instance_type:
               default: { get_property: [SELF, instance_type]}
             image_id:
@@ -130,6 +137,10 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
         default: {}
+      tag:
+        description: >
+          A tag used to identificate which instances SG is working for.
+        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         create: 
@@ -220,13 +231,7 @@ node_types:
         default: {}
 
 relationships:
-  cloudify.gcp.relationships.connected_to:
-    derived_from: cloudify.relationships.connected_to
-
-  cloudify.gcp.relationships.contained_in:
-    derived_from: cloudify.relationships.contained_in
-
-  cloudify.gcp.relationships.agent_connected_to_security_group:
+  cloudify.gcp.relationships.instance_connected_to_security_group:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -238,7 +243,7 @@ relationships:
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
             tag:
-              default: agent
+              default: { get_property: [TARGET, tag] }
         unlink:
           implementation: gcp_plugin.plugin.tasks.remove_instance_tag
           inputs:
@@ -247,30 +252,7 @@ relationships:
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
             tag:
-              default: agent
-
-  cloudify.gcp.relationships.manager_connected_to_security_group:
-    derived_from: cloudify.relationships.connected_to
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        establish:
-          implementation: gcp_plugin.plugin.tasks.add_instance_tag
-          inputs:
-            gcp_config:
-              default: { get_property: [SOURCE, gcp_config] }
-            instance_name: 
-              default: { get_attribute: [SOURCE, gcp_name] }
-            tag:
-              default: manager
-        unlink:
-          implementation: gcp_plugin.plugin.tasks.remove_instance_tag
-          inputs:
-            gcp_config:
-              default: { get_property: [SOURCE, gcp_config] }
-            instance_name: 
-              default: { get_attribute: [SOURCE, gcp_name] }
-            tag:
-              default: manager
+              default: { get_property: [TARGET, tag] }
 
   cloudify.gcp.relationships.instance_connected_to_ip:
     derived_from: cloudify.relationships.connected_to
