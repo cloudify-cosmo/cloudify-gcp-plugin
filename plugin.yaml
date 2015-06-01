@@ -233,6 +233,8 @@ relationships:
               default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
+            tag:
+              default: { get_attribute: [TARGET, targetTags] }
         unlink:
           implementation: gcp_plugin.plugin.tasks.remove_instance_tag
           inputs:
@@ -240,6 +242,8 @@ relationships:
               default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
+            tag:
+              default: { get_attribute: [TARGET, targetTags] }
 
   cloudify.gcp.relationships.instance_connected_to_ip:
     derived_from: cloudify.relationships.connected_to

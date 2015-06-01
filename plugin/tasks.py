@@ -267,5 +267,5 @@ def set_ip(instance, relationship=False):
 
 def add_to_security_groups(instance):
     provider_config = get_manager_provider_config()
-
-    instance.tags.extend()
+    instance.tags.extend(
+        provider_config[utils.AGENTS_SECURITY_GROUP].get(utils.TARGET_TAGS))

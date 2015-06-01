@@ -66,6 +66,8 @@ def get_firewall_rule_name(network, firewall):
     """
     Prefix firewall rule name with network name
 
+    :param network: network to which the firewall rule belongs
+    :param firewall: firewall for which the name is created
     :return: network prefixed firewall rule name
     """
     name = '{0}-{1}'.format(network, firewall)

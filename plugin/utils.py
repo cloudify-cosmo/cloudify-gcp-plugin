@@ -22,9 +22,12 @@ from plugin.gcp import utils
 NAME = 'gcp_name'
 GCP_CONFIG = 'gcp_config'
 ID = 'id'
-SECURITY_GROUPS = ['management_security_group',
-                   'manager_agent_security_group',
-                   'agents_security_group']
+MANAGEMENT_SECURITY_GROUP = 'management_security_group'
+MANAGER_AGENT_SECURITY_GROUP = 'manager_agent_security_group'
+AGENTS_SECURITY_GROUP = 'agents_security_group'
+SECURITY_GROUPS = [MANAGEMENT_SECURITY_GROUP,
+                   MANAGER_AGENT_SECURITY_GROUP,
+                   AGENTS_SECURITY_GROUP]
 
 
 def throw_cloudify_exceptions(func):
@@ -42,8 +45,8 @@ def get_manager_provider_config():
     manager_agent_security_group = \
         provider_config.get('manager_agent_security_group', {})
     provider_context = {
-        'agents_security_group': agents_security_group.get(ID),
-        'manager_security_group': manager_agent_security_group.get(ID)
+        'agents_security_group': agents_security_group,
+        'manager_security_group': manager_agent_security_group
     }
     return provider_context
 
