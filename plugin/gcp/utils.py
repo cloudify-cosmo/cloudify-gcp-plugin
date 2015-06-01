@@ -16,8 +16,6 @@ import re
 
 MAX_GCP_INSTANCE_NAME = 63
 ID_HASH_CONST = 6
-TARGET_TAGS = 'targetTags'
-SOURCE_TAGS = 'sourceTags'
 
 
 def get_item_from_gcp_response(key_field, key_name, items):

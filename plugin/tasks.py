@@ -16,22 +16,21 @@
 from cloudify import ctx
 from cloudify.decorators import operation
 
+from plugin import utils
 from plugin.utils import throw_cloudify_exceptions
-from plugin.utils import create_firewall_structure_from_rules
-from plugin.utils import NAME
-from plugin.utils import get_manager_provider_config
-from plugin.gcp import utils
+from plugin.gcp.utils import get_gcp_resource_name
+from plugin.gcp.utils import get_firewall_rule_name
+from plugin.gcp.utils import get_item_from_gcp_response
 from plugin.gcp.firewall import FirewallRule
 from plugin.gcp.instance import Instance
 from plugin.gcp.network import Network
 from plugin.gcp.keypair import KeyPair
 
 
-
 @operation
 @throw_cloudify_exceptions
 def create_instance(gcp_config, instance_type, image_id, properties, **kwargs):
-    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    gcp_config['network'] = get_gcp_resource_name(gcp_config['network'])
     script = properties.get('startup_script')
     if script:
         script = ctx.download_resource(script)
@@ -42,20 +41,22 @@ def create_instance(gcp_config, instance_type, image_id, properties, **kwargs):
                         machine_type=instance_type,
                         external_ip=properties.get('externalIP', False),
                         startup_script=script)
-    add_to_security_groups(instance)
+    if ctx.node.properties['install_agent']:
+        add_to_security_groups(instance)
+    ctx.logger.info(str(instance.to_dict()))
     instance.create()
-    ctx.instance.runtime_properties[NAME] = instance.name
+    ctx.instance.runtime_properties[utils.NAME] = instance.name
     set_ip(instance)
 
 
 @operation
 @throw_cloudify_exceptions
 def add_instance_tag(gcp_config, instance_name, tag, **kwargs):
-    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    gcp_config['network'] = get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
                         instance_name=instance_name)
-    instance.set_tags([utils.get_gcp_resource_name(tag)])
+    instance.set_tags([get_gcp_resource_name(t) for t in tag])
 
 
 @operation
@@ -63,18 +64,18 @@ def add_instance_tag(gcp_config, instance_name, tag, **kwargs):
 def remove_instance_tag(gcp_config, instance_name, tag, **kwargs):
     if not instance_name:
         return
-    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    gcp_config['network'] = get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
                         instance_name=instance_name)
-    instance.remove_tags([utils.get_gcp_resource_name(tag)])
+    instance.remove_tags([get_gcp_resource_name(t) for t in tag])
 
 
 @operation
 @throw_cloudify_exceptions
 def add_external_ip(gcp_config, instance_name, **kwargs):
     # check if the instance has no external ips, only one is supported so far
-    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    gcp_config['network'] = get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
                         instance_name=instance_name)
@@ -87,7 +88,7 @@ def add_external_ip(gcp_config, instance_name, **kwargs):
 def remove_external_ip(gcp_config, instance_name, **kwargs):
     if not instance_name:
         return
-    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    gcp_config['network'] = get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
                         instance_name=instance_name)
@@ -97,80 +98,81 @@ def remove_external_ip(gcp_config, instance_name, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def delete_instance(gcp_config, **kwargs):
-    name = ctx.instance.runtime_properties.get(NAME)
+    name = ctx.instance.runtime_properties.get(utils.NAME)
     if not name:
         return
     instance = Instance(gcp_config,
                         ctx.logger,
                         instance_name=name)
     instance.delete()
-    if ctx.instance.runtime_properties.get(NAME):
-        ctx.instance.runtime_properties.pop(NAME)
+    if ctx.instance.runtime_properties.get(utils.NAME):
+        ctx.instance.runtime_properties.pop(utils.NAME)
 
 
 @operation
 @throw_cloudify_exceptions
 def create_network(gcp_config, network, **kwargs):
-    network['name'] = utils.get_gcp_resource_name(network['name'])
+    network['name'] = get_gcp_resource_name(network['name'])
     network = Network(gcp_config,
                       ctx.logger,
                       network=network)
     network.create()
-    ctx.instance.runtime_properties[NAME] = network.name
+    ctx.instance.runtime_properties[utils.NAME] = network.name
 
 
 @operation
 @throw_cloudify_exceptions
 def delete_network(gcp_config, **kwargs):
-    network_name = ctx.instance.runtime_properties.get(NAME)
-    if not network_name:
+    network = {'name': ctx.instance.runtime_properties.get(utils.NAME)}
+    if not network['name']:
         return
     network = Network(gcp_config,
                       ctx.logger,
-                      network=network_name)
+                      network=network)
 
     network.delete()
-    if ctx.instance.runtime_properties.get(NAME):
-        ctx.instance.runtime_properties.pop(NAME)
+    if ctx.instance.runtime_properties.get(utils.NAME):
+        ctx.instance.runtime_properties.pop(utils.NAME)
 
 
 @operation
 @throw_cloudify_exceptions
 def create_firewall_rule(gcp_config, firewall_rule, **kwargs):
-    network_name = utils.get_gcp_resource_name(gcp_config['network'])
-    firewall_rule['name'] = utils.get_firewall_rule_name(network_name,
-                                                         firewall_rule)
+    network_name = get_gcp_resource_name(gcp_config['network'])
+    firewall_rule['name'] = get_firewall_rule_name(network_name,
+                                                   firewall_rule)
     firewall = FirewallRule(gcp_config,
                             ctx.logger,
                             firewall=firewall_rule,
                             network=network_name)
 
     firewall.create()
-    ctx.instance.runtime_properties[NAME] = firewall.name
+    ctx.instance.runtime_properties[utils.NAME] = firewall.name
 
 
 @operation
 @throw_cloudify_exceptions
 def delete_firewall_rule(gcp_config, **kwargs):
-    firewall_name = ctx.instance.runtime_properties.get(NAME)
+    firewall_name = ctx.instance.runtime_properties.get(utils.NAME)
     if not firewall_name:
         return
-    network_name = utils.get_gcp_resource_name(gcp_config['network'])
+    network_name = get_gcp_resource_name(gcp_config['network'])
     firewall = {'name': firewall_name}
     firewall = FirewallRule(gcp_config,
                             ctx.logger,
                             firewall=firewall,
                             network=network_name)
     firewall.delete()
-    if ctx.instance.runtime_properties.get(NAME):
-        ctx.instance.runtime_properties.pop(NAME)
+    if ctx.instance.runtime_properties.get(utils.NAME):
+        ctx.instance.runtime_properties.pop(utils.NAME)
 
 
 @operation
 @throw_cloudify_exceptions
 def create_security_group(gcp_config, rules, **kwargs):
-    firewall = create_firewall_structure_from_rules(gcp_config['network'],
-                                                    rules)
+    firewall = utils.create_firewall_structure_from_rules(
+        gcp_config['network'],
+        rules)
     ctx.instance.runtime_properties[utils.TARGET_TAGS] = \
         firewall[utils.TARGET_TAGS]
     ctx.instance.runtime_properties[utils.SOURCE_TAGS] = \
@@ -180,7 +182,7 @@ def create_security_group(gcp_config, rules, **kwargs):
                             firewall,
                             gcp_config['network'])
     firewall.create()
-    ctx.instance.runtime_properties[NAME] = firewall.name
+    ctx.instance.runtime_properties[utils.NAME] = firewall.name
 
 @operation
 @throw_cloudify_exceptions
@@ -255,7 +257,9 @@ def delete_keypair(gcp_config, user, private_key_path, **kwargs):
 
 def set_ip(instance, relationship=False):
     instances = instance.list()
-    item = utils.get_item_from_gcp_response('name', instance.name, instances)
+    item = get_item_from_gcp_response('name',
+                                      instance.name,
+                                      instances)
     if relationship:
         ctx.target.instance.runtime_properties['gcp_resource_id'] = \
             item['networkInterfaces'][0]['accessConfigs'][0]['natIP']
@@ -266,6 +270,7 @@ def set_ip(instance, relationship=False):
 
 
 def add_to_security_groups(instance):
-    provider_config = get_manager_provider_config()
+    provider_config = utils.get_manager_provider_config()
+    ctx.logger.info(str(provider_config[utils.AGENTS_SECURITY_GROUP]))
     instance.tags.extend(
         provider_config[utils.AGENTS_SECURITY_GROUP].get(utils.TARGET_TAGS))

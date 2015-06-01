@@ -202,7 +202,7 @@ class Instance(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'name': self.name,
-            'tags': {'items': self.tags},
+            'tags': {'items': list(set(self.tags))},
             'machineType': 'zones/{0}/machineTypes/{1}'.format(
                 self.zone,
                 self.machine_type),
