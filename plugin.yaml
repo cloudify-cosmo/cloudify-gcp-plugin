@@ -59,6 +59,33 @@ node_types:
             gcp_config:
               default: { get_property: [SELF, gcp_config] }
 
+  cloudify.gcp.nodes.Volume:
+    derived_from: cloudify.nodes.Volume
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.plugin.tasks.create_network
+          inputs:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config] }
+            network:
+              default: {}
+        delete:
+          implementation: gcp_plugin.plugin.tasks.delete_network
+          inputs:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config]}
+
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.Network
     properties:
