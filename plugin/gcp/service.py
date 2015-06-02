@@ -23,22 +23,19 @@ from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
 
-def blocking(default):
+def blocking(func):
     """
     Decorator waiting for the operation if there is blocking=True parameter.
-    :param default:
     :return:
     """
-    def inner(func):
-        def _decorator(self, *args, **kwargs):
-            blocking = kwargs.get('blocking', default)
-            response = func(self, *args, **kwargs)
-            if blocking:
-                self.wait_for_operation(response['name'])
-            else:
-                return response
-        return wraps(func)(_decorator)
-    return inner
+    def _decorator(self, *args, **kwargs):
+        block = kwargs.pop('blocking', True)
+        response = func(self, *args, **kwargs)
+        if block:
+            self.wait_for_operation(response['name'])
+        else:
+            return response
+    return wraps(func)(_decorator)
 
 
 class GoogleCloudPlatform(object):

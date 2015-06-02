@@ -52,10 +52,12 @@ class Instance(GoogleCloudPlatform):
         self.machine_type = machine_type
         self.network = config['network']
         self.startup_script = startup_script
-        self.tags = tags.append(self.name) if tags else [self.name]
+        self.tags = [self.name]
+        if tags:
+            self.tags.extend(tags)
         self.externalIP = external_ip
 
-    @blocking(True)
+    @blocking
     def create(self):
         """
         Create GCP VM instance with given parameters.
@@ -86,7 +88,7 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone,
             body=body).execute()
 
-    @blocking(True)
+    @blocking
     def delete(self):
         """
         Delete GCP instance.
@@ -101,7 +103,7 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone,
             instance=self.name).execute()
 
-    @blocking(True)
+    @blocking
     def set_tags(self, tags):
         """
         Set GCP instance tags.
@@ -121,7 +123,7 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             body={"items": self.tags, "fingerprint": fingerprint}).execute()
 
-    @blocking(True)
+    @blocking
     def remove_tags(self, tags):
         """
         Remove GCP instance tags.
@@ -150,7 +152,7 @@ class Instance(GoogleCloudPlatform):
             project=self.project,
             zone=self.zone).execute()
 
-    @blocking(True)
+    @blocking
     def add_access_config(self):
         """
         Set GCP instance external IP.
@@ -169,6 +171,7 @@ class Instance(GoogleCloudPlatform):
             networkInterface=self.NETWORK_INTERFACE,
             body=body).execute()
 
+    @blocking
     def delete_access_config(self):
         """
         Set GCP instance tags.
@@ -202,6 +205,7 @@ class Instance(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'name': self.name,
+            'description': 'Cloudify generated instance',
             'tags': {'items': list(set(self.tags))},
             'machineType': 'zones/{0}/machineTypes/{1}'.format(
                 self.zone,

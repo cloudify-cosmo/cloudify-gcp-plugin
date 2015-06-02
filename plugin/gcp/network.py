@@ -34,7 +34,7 @@ class Network(GoogleCloudPlatform):
         self.network = network
         self.name = utils.get_gcp_resource_name(network['name'])
 
-    @blocking(True)
+    @blocking
     def create(self):
         """
         Create GCP network.
@@ -47,7 +47,7 @@ class Network(GoogleCloudPlatform):
         return self.compute.networks().insert(project=self.project,
                                               body=self.to_dict()).execute()
 
-    @blocking(True)
+    @blocking
     def delete(self):
         """
         Delete GCP network.

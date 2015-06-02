@@ -5,36 +5,64 @@ imports:
     - test_plugin.yaml
 
 inputs:
-    config:
-        description: config data
-        default: {}
-    image_id:
-        description: image id in GCP
-        default: ''
-    instance_type:
-        type: string
+  config:
+    description: config data
+    default: {}
+  image_id:
+    description: image id in GCP
+  instance_type:
+    type: string
+  instance_additional_settings:
+    default: {}
 
 node_types:
-    cloudify.gcp.Root:
-        derived_from: cloudify.nodes.Root
-        interfaces:
-            cloudify.interfaces.lifecycle:
-                start:
-                    implementation: gcp_plugin.plugin.tasks.create_instance
-                    inputs:
-                        gcp_config:
-                            default: { get_input: config }
-                        instance_type:
-                            default: n1-standard-1
-                        image_id:
-                            default: { get_input: image_id }
-                        properties:
-                            default: { externalIP: false }
-                stop:
-                    implementation: gcp_plugin.plugin.tasks.delete_instance
-                    inputs:
-                        gcp_config:
-                            default: { get_input: config }
+  cloudify.gcp.nodes.Instance:
+    derived_from: cloudify.nodes.Root
+    properties:
+      install_agent: False
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true) 
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: { get_input: config }
+      image_id:
+        description: >
+          The ID of the image in your GCP account.
+        type: string
+        default: { get_input: image_id }
+      instance_type:
+        description: >
+          The instance's type. All available instance types can be found here: 
+          https://cloud.google.com/compute/docs/machine-types
+        type: string
+        default: { get_input: instance_type }
+      instance_additional_settings:
+        description: >
+          Additional instance settings.
+        default: { get_input: instance_additional_settings }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.plugin.tasks.create_instance
+          inputs:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config]}
+            properties:
+              default: { get_property: [SELF, instance_additional_settings]}
+            instance_type:
+              default: { get_property: [SELF, instance_type]}
+            image_id:
+              default: { get_property: [SELF, image_id]}
+        delete:
+          implementation: gcp_plugin.plugin.tasks.delete_instance
+          inputs:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config] }
 node_templates:
-    testnode:
-        type: cloudify.gcp.Root
+  testnode:
+    type: cloudify.gcp.nodes.Instance

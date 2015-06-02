@@ -43,7 +43,6 @@ def create_instance(gcp_config, instance_type, image_id, properties, **kwargs):
                         startup_script=script)
     if ctx.node.properties['install_agent']:
         add_to_security_groups(instance)
-    ctx.logger.info(str(instance.to_dict()))
     instance.create()
     ctx.instance.runtime_properties[utils.NAME] = instance.name
     set_ip(instance)
@@ -183,6 +182,7 @@ def create_security_group(gcp_config, rules, **kwargs):
                             gcp_config['network'])
     firewall.create()
     ctx.instance.runtime_properties[utils.NAME] = firewall.name
+
 
 @operation
 @throw_cloudify_exceptions

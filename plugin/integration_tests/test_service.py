@@ -37,14 +37,14 @@ class TestService(unittest.TestCase):
                           self.config['network'])
         networks = network.list()
         item = utils.get_item_from_gcp_response(
-            'name', self.config['network']['name'], networks)
+            'name', network.name, networks)
         self.assertIsNone(item)
-
+        self.ctx.logger.info(str(network.create))
         network.create()
 
         networks = network.list()
         item = utils.get_item_from_gcp_response(
-            'name', self.config['network']['name'], networks)
+            'name', network.name, networks)
         self.assertIsNotNone(item)
 
         network.delete()
@@ -113,7 +113,8 @@ class TestService(unittest.TestCase):
                             self.ctx.logger,
                             instance_name=name,
                             image=self.config['instance']['image'],
-                            tags=[test_tag])
+                            tags=[test_tag],
+                            machine_type=self.config['instance_type'])
 
         instance.create()
         instances = instance.list()

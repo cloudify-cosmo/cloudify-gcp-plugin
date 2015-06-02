@@ -42,7 +42,7 @@ class FirewallRule(GoogleCloudPlatform):
         self.network = network
         self.name = self.firewall['name']
 
-    @blocking(True)
+    @blocking
     def create(self):
         """
         Create GCP firewall rule in a GCP network.
@@ -57,7 +57,7 @@ class FirewallRule(GoogleCloudPlatform):
             project=self.project,
             body=self.firewall).execute()
 
-    @blocking(True)
+    @blocking
     def delete(self):
         """
         Delete GCP firewall rule from GCP network.
@@ -71,7 +71,7 @@ class FirewallRule(GoogleCloudPlatform):
             project=self.project,
             firewall=self.firewall['name']).execute()
 
-    @blocking(True)
+    @blocking
     def update(self):
         """
         Update GCP firewall rule.
