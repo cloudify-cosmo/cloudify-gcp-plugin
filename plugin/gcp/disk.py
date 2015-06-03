@@ -20,8 +20,8 @@ class Disk(GoogleCloudPlatform):
     def __init__(self,
                  config,
                  logger,
-                 image,
-                 name):
+                 name,
+                 image=None):
         super(Disk, self).__init__(config, logger)
         self.image = image
         self.name = name
@@ -46,5 +46,7 @@ class Disk(GoogleCloudPlatform):
         return self.compute.disks().delete(
             project=self.project,
             zone=self.zone,
-            body=self.to_dict()).execute()
+            disk=self.name).execute()
 
+    def wait_for_operation(self, operation, global_operation=False):
+        super(Disk, self).wait_for_operation(operation, global_operation)

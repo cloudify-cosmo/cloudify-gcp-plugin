@@ -25,6 +25,7 @@ from plugin.gcp.firewall import FirewallRule
 from plugin.gcp.instance import Instance
 from plugin.gcp.network import Network
 from plugin.gcp.keypair import KeyPair
+from plugin.gcp.disk import Disk
 
 
 @operation
@@ -104,8 +105,7 @@ def delete_instance(gcp_config, **kwargs):
                         ctx.logger,
                         instance_name=name)
     instance.delete()
-    if ctx.instance.runtime_properties.get(utils.NAME):
-        ctx.instance.runtime_properties.pop(utils.NAME)
+    ctx.instance.runtime_properties.pop(utils.NAME, None)
 
 
 @operation
@@ -130,8 +130,7 @@ def delete_network(gcp_config, **kwargs):
                       network=network)
 
     network.delete()
-    if ctx.instance.runtime_properties.get(utils.NAME):
-        ctx.instance.runtime_properties.pop(utils.NAME)
+    ctx.instance.runtime_properties.pop(utils.NAME, None)
 
 
 @operation
@@ -162,8 +161,7 @@ def delete_firewall_rule(gcp_config, **kwargs):
                             firewall=firewall,
                             network=network_name)
     firewall.delete()
-    if ctx.instance.runtime_properties.get(utils.NAME):
-        ctx.instance.runtime_properties.pop(utils.NAME)
+    ctx.instance.runtime_properties.pop(utils.NAME, None)
 
 
 @operation
@@ -187,10 +185,8 @@ def create_security_group(gcp_config, rules, **kwargs):
 @operation
 @throw_cloudify_exceptions
 def delete_security_group(gcp_config, **kwargs):
-    if ctx.instance.runtime_properties.get(utils.TARGET_TAGS):
-        ctx.instance.runtime_properties.pop(utils.TARGET_TAGS)
-    if ctx.instance.runtime_properties.get(utils.SOURCE_TAGS):
-        ctx.instance.runtime_properties.pop(utils.SOURCE_TAGS)
+    ctx.instance.runtime_properties.pop(utils.TARGET_TAGS, None)
+    ctx.instance.runtime_properties.pop(utils.SOURCE_TAGS, None)
     delete_firewall_rule(gcp_config, **kwargs)
 
 
@@ -228,8 +224,31 @@ def delete_keypair(gcp_config, user, private_key_path, **kwargs):
     keypair.public_key = ctx.instance.runtime_properties[utils.PUBLIC_KEY]
     keypair.remove_project_ssh_key()
     keypair.remove_private_key()
-    ctx.instance.runtime_properties.pop(utils.PRIVATE_KEY)
-    ctx.instance.runtime_properties.pop(utils.PUBLIC_KEY)
+    ctx.instance.runtime_properties.pop(utils.PRIVATE_KEY, None)
+    ctx.instance.runtime_properties.pop(utils.PUBLIC_KEY, None)
+
+
+@operation
+@throw_cloudify_exceptions
+def create_disk(gcp_config, image, **kwargs):
+    name = get_gcp_resource_name(ctx.instance.id)
+    disk = Disk(gcp_config,
+                ctx.logger,
+                image=image,
+                name=name)
+    disk.create()
+    ctx.instance.runtime_properties[utils.NAME] = name
+
+
+@operation
+@throw_cloudify_exceptions
+def delete_disk(gcp_config, **kwargs):
+    name = get_gcp_resource_name(ctx.instance.id)
+    disk = Disk(gcp_config,
+                ctx.logger,
+                name=name)
+    disk.delete()
+    ctx.instance.runtime_properties.pop(utils.NAME, None)
 
 
 def set_ip(instance, relationship=False):
