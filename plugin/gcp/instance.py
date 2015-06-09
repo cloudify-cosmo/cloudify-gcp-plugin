@@ -27,7 +27,7 @@ class Instance(GoogleCloudPlatform):
     def __init__(self,
                  config,
                  logger,
-                 instance_name,
+                 name,
                  image=None,
                  machine_type=None,
                  startup_script=None,
@@ -38,7 +38,7 @@ class Instance(GoogleCloudPlatform):
 
         :param config: gcp auth file
         :param logger: logger object
-        :param instance_name: name of the instance
+        :param name: name of the instance
         :param image: image id in Google Cloud Platform
         :param machine_type: machine type on GCP, default None
         :param startup_script: shell script text to be run on instance startup,
@@ -47,17 +47,16 @@ class Instance(GoogleCloudPlatform):
         :param tags: tags for the instance, default []
         """
         super(Instance, self).__init__(config, logger)
-        self.name = utils.get_gcp_resource_name(instance_name)
+        self.name = utils.get_gcp_resource_name(name)
         self.image = image
         self.machine_type = machine_type
         self.network = config['network']
         self.startup_script = startup_script
-        self.tags = [self.name]
-        if tags:
-            self.tags.extend(tags)
+        self.tags = tags.append(self.name) if tags else [self.name]
         self.externalIP = external_ip
+        self.disks = []
 
-    @blocking
+    @blocking(True)
     def create(self):
         """
         Create GCP VM instance with given parameters.
@@ -92,7 +91,7 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone,
             body=body).execute()
 
-    @blocking
+    @blocking(True)
     def delete(self):
         """
         Delete GCP instance.
@@ -107,7 +106,7 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone,
             instance=self.name).execute()
 
-    @blocking
+    @blocking(True)
     def set_tags(self, tags):
         """
         Set GCP instance tags.
@@ -129,7 +128,7 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             body={'items': self.tags, 'fingerprint': fingerprint}).execute()
 
-    @blocking
+    @blocking(True)
     def remove_tags(self, tags):
         """
         Remove GCP instance tags.
@@ -163,7 +162,7 @@ class Instance(GoogleCloudPlatform):
             project=self.project,
             zone=self.zone).execute()
 
-    @blocking
+    @blocking(True)
     def add_access_config(self):
         """
         Set GCP instance external IP.
@@ -184,7 +183,7 @@ class Instance(GoogleCloudPlatform):
             networkInterface=self.NETWORK_INTERFACE,
             body=body).execute()
 
-    @blocking
+    @blocking(True)
     def delete_access_config(self):
         """
         Set GCP instance tags.
@@ -194,7 +193,7 @@ class Instance(GoogleCloudPlatform):
         external ip removing process and its status
         """
         self.logger.info(
-            'Remove external IP to instance {0}'.format(self.name))
+            'Remove external IP from instance {0}'.format(self.name))
 
         return self.compute.instances().deleteAccessConfig(
             project=self.project,
@@ -227,15 +226,6 @@ class Instance(GoogleCloudPlatform):
             'machineType': 'zones/{0}/machineTypes/{1}'.format(
                 self.zone,
                 self.machine_type),
-            'disks': [
-                {
-                    'boot': True,
-                    'autoDelete': True,
-                    'initializeParams': {
-                        'sourceImage': self.image
-                    }
-                }
-            ],
             'networkInterfaces': [
                 {'network': 'global/networks/{0}'.format(self.network)}],
             'serviceAccounts': [
@@ -248,6 +238,12 @@ class Instance(GoogleCloudPlatform):
                     {'key': 'bucket', 'value': self.project}]
             }
         }
+        if not self.disks:
+            body['disks'] = [{'boot': True,
+                              'autoDelete': True,
+                              'initializeParams': {
+                                  'sourceImage': self.image
+                              }}]
         if self.externalIP:
             for item in body['networkInterfaces']:
                 if item['name'] == self.ACCESS_CONFIG:

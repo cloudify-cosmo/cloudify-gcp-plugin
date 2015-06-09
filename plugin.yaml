@@ -30,6 +30,7 @@ node_types:
         description: >
           The ID of the image in your GCP account.
         type: string
+        default: {}
       instance_type:
         description: >
           The instance's type. All available instance types can be found here: 
@@ -293,4 +294,34 @@ relationships:
             gcp_config:
               default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
+              default: { get_attribute: [SOURCE, gcp_name] }
+
+  cloudify.gcp.relationships.file_system_contained_in_compute:
+    derived_from: cloudify.relationships.contained_in
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.plugin.tasks.add_boot_disk
+
+  cloudify.gcp.relationships.instance_connected_to_disk:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.plugin.tasks.attach_disk
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance_name: 
+              default: { get_attribute: [TARGET, gcp_name] }
+            disk: 
+              default: { get_attribute: [SOURCE, gcp_disk] }
+        unlink:
+          implementation: gcp_plugin.plugin.tasks.detach_disk
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance_name: 
+              default: { get_property: [TARGET, gcp_name] }
+            disk_name: 
               default: { get_attribute: [SOURCE, gcp_name] }

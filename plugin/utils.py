@@ -20,6 +20,7 @@ from plugin.gcp.service import GCPError
 from plugin.gcp import utils
 
 NAME = 'gcp_name'
+DISK = 'gcp_disk'
 GCP_CONFIG = 'gcp_config'
 ID = 'id'
 TARGET_TAGS = 'targetTags'

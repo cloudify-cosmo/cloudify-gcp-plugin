@@ -21,18 +21,40 @@ class Disk(GoogleCloudPlatform):
                  config,
                  logger,
                  name,
-                 image=None):
+                 image=None,
+                 size_gb=None):
         super(Disk, self).__init__(config, logger)
         self.image = image
         self.name = name
+        self.sizeGb = size_gb
 
     def to_dict(self):
         body = {
             'description': 'Cloudify generated disk',
-            'sourceImage': self.image,
             'name': self.name
         }
+        if self.image:
+            body['sourceImage'] = self.image
+        if self.sizeGb:
+            body['sizeGb'] = self.sizeGb
         return body
+
+    def disk_to_insert_instance_dict(self, mount_name):
+        disk_info = self.get()
+        body = {
+            'deviceName': mount_name,
+            'boot': False,
+            'mode': 'READ_WRITE',
+            'autoDelete': False,
+            'source': disk_info['selfLink']
+        }
+        return body
+
+    def get(self):
+        return self.compute.disks().get(
+            project=self.project,
+            zone=self.zone,
+            disk=self.name).execute()
 
     @blocking(True)
     def create(self):

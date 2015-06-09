@@ -37,7 +37,7 @@ def create_instance(gcp_config, instance_type, image_id, properties, **kwargs):
         script = ctx.download_resource(script)
     instance = Instance(gcp_config,
                         ctx.logger,
-                        instance_name=ctx.instance.id,
+                        name=ctx.instance.id,
                         image=image_id,
                         machine_type=instance_type,
                         external_ip=properties.get('externalIP', False),
@@ -55,7 +55,7 @@ def add_instance_tag(gcp_config, instance_name, tag, **kwargs):
     gcp_config['network'] = get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
-                        instance_name=instance_name)
+                        name=instance_name)
     instance.set_tags([get_gcp_resource_name(t) for t in tag])
 
 
@@ -67,7 +67,7 @@ def remove_instance_tag(gcp_config, instance_name, tag, **kwargs):
     gcp_config['network'] = get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
-                        instance_name=instance_name)
+                        name=instance_name)
     instance.remove_tags([get_gcp_resource_name(t) for t in tag])
 
 
@@ -78,7 +78,7 @@ def add_external_ip(gcp_config, instance_name, **kwargs):
     gcp_config['network'] = get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
-                        instance_name=instance_name)
+                        name=instance_name)
     instance.add_access_config()
     set_ip(instance, relationship=True)
 
@@ -91,7 +91,7 @@ def remove_external_ip(gcp_config, instance_name, **kwargs):
     gcp_config['network'] = get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
-                        instance_name=instance_name)
+                        name=instance_name)
     instance.delete_access_config()
 
 
@@ -103,7 +103,7 @@ def delete_instance(gcp_config, **kwargs):
         return
     instance = Instance(gcp_config,
                         ctx.logger,
-                        instance_name=name)
+                        name=name)
     instance.delete()
     ctx.instance.runtime_properties.pop(utils.NAME, None)
 
@@ -238,17 +238,48 @@ def create_disk(gcp_config, image, **kwargs):
                 name=name)
     disk.create()
     ctx.instance.runtime_properties[utils.NAME] = name
+    ctx.instance.runtime_properties[utils.DISK] = \
+        disk.disk_to_insert_instance_dict(name)
 
 
 @operation
 @throw_cloudify_exceptions
 def delete_disk(gcp_config, **kwargs):
-    name = get_gcp_resource_name(ctx.instance.id)
+    name = ctx.instance.runtime_properties[utils.NAME]
     disk = Disk(gcp_config,
                 ctx.logger,
                 name=name)
     disk.delete()
     ctx.instance.runtime_properties.pop(utils.NAME, None)
+
+
+@operation
+@throw_cloudify_exceptions
+def add_boot_disk(gcp_config, disk_name, **kwargs):
+    disk = Disk(gcp_config,
+                ctx.logger,
+                name=disk_name)
+    disk_body = disk.disk_to_insert_instance_dict(disk_name)
+    disk_body['boot'] = True
+    ctx.source.instance.runtime_properties[utils.DISK] = [disk_body]
+
+
+@operation
+@throw_cloudify_exceptions
+def attach_disk(gcp_config, instance_name, disk, **kwargs):
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=instance_name)
+    instance.attach_disk(disk)
+
+
+@operation
+@throw_cloudify_exceptions
+def detach_disk(gcp_config, instance_name, disk_name, **kwargs):
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=instance_name)
+    instance.detach_disk(disk_name)
 
 
 def set_ip(instance, relationship=False):

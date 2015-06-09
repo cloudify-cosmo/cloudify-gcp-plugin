@@ -111,7 +111,7 @@ class TestService(unittest.TestCase):
         self.config['config']['network'] = 'default'
         instance = Instance(self.config['config'],
                             self.ctx.logger,
-                            instance_name=name,
+                            name=name,
                             image=self.config['instance']['image'],
                             tags=[test_tag],
                             machine_type=self.config['instance_type'])

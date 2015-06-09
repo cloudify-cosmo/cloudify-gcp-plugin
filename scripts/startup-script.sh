@@ -29,11 +29,11 @@ EOF
 virtualenv /home/$USER/env
 source /home/$USER/env/bin/activate
 
-pip install https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/3.2m6.zip
-pip install https://github.com/cloudify-cosmo/cloudify-rest-client/archive/3.2m6.zip
-pip install https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/3.2m6.zip
-pip install https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.2m6.zip
-pip install https://github.com/cloudify-cosmo/cloudify-cli/archive/3.2m6.zip
+pip install https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/3.2rc1.zip
+pip install https://github.com/cloudify-cosmo/cloudify-rest-client/archive/3.2rc1.zip
+pip install https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/3.2rc1.zip
+pip install https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.2rc1.zip
+pip install https://github.com/cloudify-cosmo/cloudify-cli/archive/3.2rc1.zip
 
 cfy init
 

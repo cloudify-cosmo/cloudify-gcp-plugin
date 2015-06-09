@@ -48,7 +48,7 @@ class TestPlugin(unittest.TestCase):
         config = self.inputs['config']
         instance = Instance(config,
                             ctx.logger,
-                            instance_name=ctx.instance.id)
+                            name=ctx.instance.id)
         instances = instance.list()
         base = len(instances.get('items', []))
         ctx.logger.info('Install workflow')
