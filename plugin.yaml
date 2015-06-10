@@ -43,7 +43,7 @@ node_types:
         default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
-        create:
+        start:
           implementation: gcp_plugin.plugin.tasks.create_instance
           inputs:
             gcp_config:
@@ -298,9 +298,9 @@ relationships:
 
   cloudify.gcp.relationships.file_system_contained_in_compute:
     derived_from: cloudify.relationships.contained_in
-    source_interfaces:
+    target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish:
+        preconfigure:
           implementation: gcp_plugin.plugin.tasks.add_boot_disk
 
   cloudify.gcp.relationships.instance_connected_to_disk:

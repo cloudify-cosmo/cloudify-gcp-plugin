@@ -109,6 +109,7 @@ def delete_instance(gcp_config, **kwargs):
                         name=name)
     instance.delete()
     ctx.instance.runtime_properties.pop(utils.NAME, None)
+    ctx.instance.runtime_properties.pop(utils.DISK, None)
 
 
 @operation
@@ -254,17 +255,15 @@ def delete_disk(gcp_config, **kwargs):
                 name=name)
     disk.delete()
     ctx.instance.runtime_properties.pop(utils.NAME, None)
+    ctx.instance.runtime_properties.pop(utils.DISK, None)
 
 
 @operation
 @throw_cloudify_exceptions
-def add_boot_disk(gcp_config, disk_name, **kwargs):
-    disk = Disk(gcp_config,
-                ctx.logger,
-                name=disk_name)
-    disk_body = disk.disk_to_insert_instance_dict(disk_name)
+def add_boot_disk(**kwargs):
+    disk_body = ctx.target.instance.runtime_properties[utils.DISK]
     disk_body['boot'] = True
-    ctx.source.instance.runtime_properties[utils.DISK] = [disk_body]
+    ctx.source.instance.runtime_properties[utils.DISK] = disk_body
 
 
 @operation
