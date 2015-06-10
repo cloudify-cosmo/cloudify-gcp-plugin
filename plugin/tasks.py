@@ -44,6 +44,9 @@ def create_instance(gcp_config, instance_type, image_id, properties, **kwargs):
                         startup_script=script)
     if ctx.node.properties['install_agent']:
         add_to_security_groups(instance)
+    disk = ctx.instance.runtime_properties.get(utils.DISK)
+    if disk:
+        instance.disks = [disk]
     instance.create()
     ctx.instance.runtime_properties[utils.NAME] = instance.name
     set_ip(instance)
