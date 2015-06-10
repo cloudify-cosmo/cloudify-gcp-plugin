@@ -202,6 +202,22 @@ class Instance(GoogleCloudPlatform):
             accessConfig=self.ACCESS_CONFIG,
             networkInterface=self.NETWORK_INTERFACE).execute()
 
+    @blocking(True)
+    def attach_disk(self, disk):
+        return self.compute.instances().attachDisk(
+            project=self.project,
+            zone=self.zone,
+            instance=self.name,
+            body=disk).execute()
+
+    @blocking(True)
+    def detach_disk(self, disk_name):
+        return self.compute.instances().detachDisk(
+            project=self.project,
+            zone=self.zone,
+            instance=self.name,
+            deviceName=disk_name).execute()
+
     def list(self):
         """
         List GCP instances.
@@ -239,11 +255,13 @@ class Instance(GoogleCloudPlatform):
             }
         }
         if not self.disks:
-            body['disks'] = [{'boot': True,
-                              'autoDelete': True,
-                              'initializeParams': {
-                                  'sourceImage': self.image
-                              }}]
+            self.disks = [{'boot': True,
+                           'autoDelete': True,
+                           'initializeParams': {
+                               'sourceImage': self.image
+                           }}]
+        body['disks'] = self.disks
+
         if self.externalIP:
             for item in body['networkInterfaces']:
                 if item['name'] == self.ACCESS_CONFIG:

@@ -101,7 +101,7 @@ class KeyPair(GoogleCloudPlatform):
             project=self.project,
             body=common_instance_metadata).execute()
 
-    @blocking
+    @blocking(True)
     def remove_project_ssh_key(self):
         """
         Update project SSH private key. Remove new key to project's
