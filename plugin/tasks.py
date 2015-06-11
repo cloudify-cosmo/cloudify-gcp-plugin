@@ -220,30 +220,6 @@ def create_keypair(gcp_config,
 
 @operation
 @throw_cloudify_exceptions
-def save_private_key(gcp_config,
-                     private_key,
-                     user,
-                     private_key_path,
-                     **kwargs):
-    keypair = KeyPair(gcp_config,
-                      ctx.logger,
-                      user,
-                      private_key_path)
-    keypair.private_key = private_key
-
-
-@operation
-@throw_cloudify_exceptions
-def delete_private_key(gcp_config, user, private_key_path, **kwargs):
-    keypair = KeyPair(gcp_config,
-                      ctx.logger,
-                      user,
-                      private_key_path)
-    keypair.remove_private_key()
-
-
-@operation
-@throw_cloudify_exceptions
 def delete_keypair(gcp_config, user, private_key_path, **kwargs):
     keypair = KeyPair(gcp_config,
                       ctx.logger,
@@ -251,6 +227,7 @@ def delete_keypair(gcp_config, user, private_key_path, **kwargs):
                       private_key_path)
     keypair.public_key = ctx.instance.runtime_properties['gcp_public_key']
     keypair.remove_project_ssh_key()
+    keypair.remove_private_key()
     ctx.instance.runtime_properties.pop('gcp_public_key')
     ctx.instance.runtime_properties.pop('gcp_private_key')
 
