@@ -15,6 +15,7 @@
 import re
 
 MAX_GCP_INSTANCE_NAME = 63
+ID_HASH_CONST = 6
 
 
 def get_item_from_gcp_response(key_field, key_name, items):
@@ -30,17 +31,6 @@ def get_item_from_gcp_response(key_field, key_name, items):
         if item.get(key_field) == key_name:
             return item
     return None
-
-
-def get_firewall_rule_name(network, firewall):
-    """
-    Prefix firewall rule name with network name
-    :param network: name of the network the firewall rule is connected to
-    :param firewall: the firewall rule name
-    :return: network prefixed firewall rule name
-    """
-    name = '{0}-{1}'.format(network, firewall['name'])
-    return get_gcp_resource_name(name)
 
 
 def get_gcp_resource_name(name):
@@ -63,9 +53,20 @@ def get_gcp_resource_name(name):
         final_name = '{0}{1}'.format('a', final_name)
     # trim to the length limit
     if len(final_name) > MAX_GCP_INSTANCE_NAME:
-        ID_HASH_CONST = 6
         remain_len = MAX_GCP_INSTANCE_NAME - len(final_name)
         final_name = '{0}{1}'.format(final_name[:remain_len - ID_HASH_CONST],
                                      final_name[-ID_HASH_CONST:])
     # convert string to lowercase
     return final_name.lower()
+
+
+def get_firewall_rule_name(network, firewall):
+    """
+    Prefix firewall rule name with network name
+
+    :param network: network to which the firewall rule belongs
+    :param firewall: firewall for which the name is created
+    :return: network prefixed firewall rule name
+    """
+    name = '{0}-{1}'.format(network, firewall)
+    return get_gcp_resource_name(name)

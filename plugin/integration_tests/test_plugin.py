@@ -22,14 +22,14 @@ from cloudify.workflows import local
 from cloudify import ctx
 import yaml
 
-from plugin.gcp.service import GoogleCloudPlatform
+from plugin.gcp.instance import Instance
 
 
 class TestPlugin(unittest.TestCase):
     inputs = None
 
     def setUp(self):  # noqa
-        ctx = MockCloudifyContext()
+        ctx = MockCloudifyContext(node_id='id', node_name='name')
         current_ctx.set(ctx)
         ctx.logger.info('Setting environment')
 
@@ -46,24 +46,22 @@ class TestPlugin(unittest.TestCase):
 
     def test_create_instance(self):
         config = self.inputs['config']
-        gcp = GoogleCloudPlatform(config['auth'],
-                                  config['project'],
-                                  config['scope'],
-                                  ctx.logger)
-        instances = gcp.list_instances()
-
+        instance = Instance(config,
+                            ctx.logger,
+                            instance_name=ctx.instance.id)
+        instances = instance.list()
         base = len(instances.get('items', []))
         ctx.logger.info('Install workflow')
         # execute install workflow
         self.env.execute('install', task_retries=0)
 
         ctx.logger.info('Check instance number')
-        instances = gcp.list_instances()
+        instances = instance.list()
         self.assertEqual(len(instances['items']), base + 1)
 
         ctx.logger.info('Uninstall workflow')
         self.env.execute('uninstall', task_retries=0)
 
         ctx.logger.info('Check instance number')
-        instances = gcp.list_instances()
+        instances = instance.list()
         self.assertEqual(len(instances.get('items', [])), base)
