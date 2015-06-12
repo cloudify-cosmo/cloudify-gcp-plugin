@@ -68,7 +68,6 @@ class KeyPair(GoogleCloudPlatform):
             os.chmod(self.private_key_path, 0600)
             content_file.write(self.private_key)
 
-    @blocking(True)
     def add_project_ssh_key(self, user, ssh_key):
         """
         Update project SSH private key. Add new key to project's
@@ -101,7 +100,6 @@ class KeyPair(GoogleCloudPlatform):
             project=self.project,
             body=common_instance_metadata).execute()
 
-    @blocking
     def remove_project_ssh_key(self):
         """
         Update project SSH private key. Remove new key to project's

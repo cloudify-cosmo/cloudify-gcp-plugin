@@ -56,7 +56,6 @@ class Instance(GoogleCloudPlatform):
         self.externalIP = external_ip
         self.disks = []
 
-    @blocking(True)
     def create(self):
         """
         Create GCP VM instance with given parameters.
@@ -91,7 +90,6 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone,
             body=body).execute()
 
-    @blocking(True)
     def delete(self):
         """
         Delete GCP instance.
@@ -106,7 +104,6 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone,
             instance=self.name).execute()
 
-    @blocking(True)
     def set_tags(self, tags):
         """
         Set GCP instance tags.
@@ -128,7 +125,6 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             body={'items': self.tags, 'fingerprint': fingerprint}).execute()
 
-    @blocking(True)
     def remove_tags(self, tags):
         """
         Remove GCP instance tags.
@@ -162,7 +158,6 @@ class Instance(GoogleCloudPlatform):
             project=self.project,
             zone=self.zone).execute()
 
-    @blocking(True)
     def add_access_config(self):
         """
         Set GCP instance external IP.
@@ -183,7 +178,6 @@ class Instance(GoogleCloudPlatform):
             networkInterface=self.NETWORK_INTERFACE,
             body=body).execute()
 
-    @blocking(True)
     def delete_access_config(self):
         """
         Set GCP instance tags.
@@ -202,7 +196,6 @@ class Instance(GoogleCloudPlatform):
             accessConfig=self.ACCESS_CONFIG,
             networkInterface=self.NETWORK_INTERFACE).execute()
 
-    @blocking(True)
     def attach_disk(self, disk):
         return self.compute.instances().attachDisk(
             project=self.project,
@@ -210,7 +203,6 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             body=disk).execute()
 
-    @blocking(True)
     def detach_disk(self, disk_name):
         return self.compute.instances().detachDisk(
             project=self.project,

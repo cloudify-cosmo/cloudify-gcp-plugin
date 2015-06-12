@@ -56,14 +56,12 @@ class Disk(GoogleCloudPlatform):
             zone=self.zone,
             disk=self.name).execute()
 
-    @blocking(True)
     def create(self):
         return self.compute.disks().insert(
             project=self.project,
             zone=self.zone,
             body=self.to_dict()).execute()
 
-    @blocking(True)
     def delete(self):
         return self.compute.disks().delete(
             project=self.project,
