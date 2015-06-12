@@ -51,7 +51,11 @@ class FirewallRule(GoogleCloudPlatform):
         :return: REST response with operation responsible for the firewall rule
         creation process and its status
         """
-        self.logger.info('Create firewall rule')
+        self.logger.info(
+            'Create firewall rule {0} in network {1}'.format(
+                self.name,
+                self.network))
+
         self.firewall['network'] = 'global/networks/{0}'.format(self.network)
         return self.compute.firewalls().insert(
             project=self.project,
@@ -66,7 +70,11 @@ class FirewallRule(GoogleCloudPlatform):
         :return: REST response with operation responsible for the firewall rule
         deletion process and its status
         """
-        self.logger.info('Delete firewall rule')
+        self.logger.info(
+            'Delete firewall rule {0} from network {1}'.format(
+                self.name,
+                self.network))
+
         return self.compute.firewalls().delete(
             project=self.project,
             firewall=self.firewall['name']).execute()
@@ -80,7 +88,8 @@ class FirewallRule(GoogleCloudPlatform):
         :return: REST response with operation responsible for the firewall rule
         update process and its status
         """
-        self.logger.info('Update firewall rule')
+        self.logger.info('Update firewall rule {0}'.format(self.name))
+
         return self.compute.firewalls().update(
             project=self.project,
             firewall=self.firewall['name'],
@@ -92,7 +101,9 @@ class FirewallRule(GoogleCloudPlatform):
 
         :return: REST response with list of firewall rules in a project
         """
-        self.logger.info('List firewall rules in project')
+        self.logger.info(
+            'List firewall rules in project {0}'.format(self.project))
+
         return self.compute.firewalls().list(
             project=self.project).execute()
 

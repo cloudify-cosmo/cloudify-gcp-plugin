@@ -62,6 +62,8 @@ class KeyPair(GoogleCloudPlatform):
         Save private key to given path.
 
         """
+        self.logger.info(
+            'Save private key to {0}'.format(self.private_key_path))
         with open(self.private_key_path, 'w') as content_file:
             os.chmod(self.private_key_path, 0600)
             content_file.write(self.private_key)
@@ -78,7 +80,6 @@ class KeyPair(GoogleCloudPlatform):
         :return: REST response with operation responsible for the sshKeys
         addition to project metadata process and its status
         """
-        self.logger.info('Update project sshKeys metadata')
         common_instance_metadata = self.get_common_instance_metadata()
         if common_instance_metadata.get('items') is None:
             item = [{self.KEY_NAME: self.KEY_VALUE,
@@ -92,6 +93,10 @@ class KeyPair(GoogleCloudPlatform):
             key = '{0}:{1}'.format(user, ssh_key)
             if key not in item['value']:
                 item['value'] = '{0}\n{1}'.format(item['value'], key)
+        self.logger.info(
+            'Add sshKey {0} to project {1} metadata'.format(
+                ssh_key,
+                self.project))
         return self.compute.projects().setCommonInstanceMetadata(
             project=self.project,
             body=common_instance_metadata).execute()
@@ -106,7 +111,6 @@ class KeyPair(GoogleCloudPlatform):
         :return: REST response with operation responsible for the sshKeys
         addition to project metadata process and its status
         """
-        self.logger.info('Update project sshKeys metadata')
         common_instance_metadata = self.get_common_instance_metadata()
         if common_instance_metadata.get('items') is not None:
             item = utils.get_item_from_gcp_response(
@@ -114,6 +118,10 @@ class KeyPair(GoogleCloudPlatform):
                 self.KEY_VALUE,
                 common_instance_metadata)
             key = '{0}:{1}'.format(self.user, self.public_key)
+            self.logger.info(
+                'Remove sshKey {1} from project {0} metadata'.format(
+                    key,
+                    self.project))
             if key in item['value']:
                 item['value'] = item['value'].replace(key, '')
         return self.compute.projects().setCommonInstanceMetadata(

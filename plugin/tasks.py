@@ -213,8 +213,8 @@ def create_keypair(gcp_config,
     else:
         keypair.create()
     keypair.add_project_ssh_key(user, keypair.public_key)
-    ctx.instance.runtime_properties['gcp_private_key'] = keypair.private_key
-    ctx.instance.runtime_properties['gcp_public_key'] = keypair.public_key
+    ctx.instance.runtime_properties[utils.PRIVATE_KEY] = keypair.private_key
+    ctx.instance.runtime_properties[utils.PUBLIC_KEY] = keypair.public_key
     keypair.save_private_key()
 
 
@@ -225,11 +225,11 @@ def delete_keypair(gcp_config, user, private_key_path, **kwargs):
                       ctx.logger,
                       user,
                       private_key_path)
-    keypair.public_key = ctx.instance.runtime_properties['gcp_public_key']
+    keypair.public_key = ctx.instance.runtime_properties[utils.PUBLIC_KEY]
     keypair.remove_project_ssh_key()
     keypair.remove_private_key()
-    ctx.instance.runtime_properties.pop('gcp_public_key')
-    ctx.instance.runtime_properties.pop('gcp_private_key')
+    ctx.instance.runtime_properties.pop(utils.PRIVATE_KEY)
+    ctx.instance.runtime_properties.pop(utils.PUBLIC_KEY)
 
 
 def set_ip(instance, relationship=False):
@@ -248,6 +248,5 @@ def set_ip(instance, relationship=False):
 
 def add_to_security_groups(instance):
     provider_config = utils.get_manager_provider_config()
-    ctx.logger.info(str(provider_config[utils.AGENTS_SECURITY_GROUP]))
     instance.tags.extend(
         provider_config[utils.AGENTS_SECURITY_GROUP].get(utils.TARGET_TAGS))

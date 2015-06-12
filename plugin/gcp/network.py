@@ -43,7 +43,7 @@ class Network(GoogleCloudPlatform):
         :return: REST response with operation responsible for the network
         creation process and its status
         """
-        self.logger.info('Create network')
+        self.logger.info('Create network {0}'.format(self.name))
         return self.compute.networks().insert(project=self.project,
                                               body=self.to_dict()).execute()
 
@@ -57,7 +57,7 @@ class Network(GoogleCloudPlatform):
         :return: REST response with operation responsible for the network
         deletion process and its status
         """
-        self.logger.info('Delete network')
+        self.logger.info('Delete network {0}'.format(self.name))
         return self.compute.networks().delete(
             project=self.project,
             network=self.name).execute()
@@ -68,7 +68,7 @@ class Network(GoogleCloudPlatform):
 
         :return: REST response with list of networks in a project
         """
-        self.logger.info('List networks')
+        self.logger.info('List networks in project {0}'.format(self.project))
         return self.compute.networks().list(
             project=self.project).execute()
 

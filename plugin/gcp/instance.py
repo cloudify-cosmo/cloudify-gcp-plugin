@@ -68,9 +68,13 @@ class Instance(GoogleCloudPlatform):
         :raise: GCPError if there is any problem with startup script file:
         e.g. the file is not under the given path or it has wrong permissions
         """
-        self.logger.info('Create instance')
-        body = self.to_dict()
+        self.logger.info(
+            'Create instance {0}, zone {1}, project {2}'.format(
+                self.name,
+                self.zone,
+                self.project))
 
+        body = self.to_dict()
         if self.startup_script is not None:
             try:
                 with open(self.startup_script, 'r') as script:
@@ -97,7 +101,7 @@ class Instance(GoogleCloudPlatform):
         :return: REST response with operation responsible for the instance
         deletion process and its status
         """
-        self.logger.info('Delete instance')
+        self.logger.info('Delete instance {0}'.format(self.name))
         return self.compute.instances().delete(
             project=self.project,
             zone=self.zone,
@@ -113,15 +117,17 @@ class Instance(GoogleCloudPlatform):
         tag setting process and its status
         """
         # each tag should be RFC1035 compliant
-        self.logger.info('Set tags')
+        self.logger.info(
+            'Set tags {0} to instance {1}'.format(str(self.tags), self.name))
+
         self.tags.extend(tags)
         self.tags = list(set(self.tags))
-        fingerprint = self.get()["tags"]["fingerprint"]
+        fingerprint = self.get()['tags']['fingerprint']
         return self.compute.instances().setTags(
             project=self.project,
             zone=self.zone,
             instance=self.name,
-            body={"items": self.tags, "fingerprint": fingerprint}).execute()
+            body={'items': self.tags, 'fingerprint': fingerprint}).execute()
 
     @blocking
     def remove_tags(self, tags):
@@ -133,20 +139,25 @@ class Instance(GoogleCloudPlatform):
         tag removal process and its status
         """
         # each tag should be RFC1035 compliant
-        self.logger.info('Remove tags')
+        self.logger.info(
+            'Remove tags {0} from instance {1}'.format(
+                str(self.tags),
+                self.name))
+
         self.tags = [tag for tag in self.tags if tag not in tags]
-        fingerprint = self.get()["tags"]["fingerprint"]
+        fingerprint = self.get()['tags']['fingerprint']
         return self.compute.instances().setTags(
             project=self.project,
             zone=self.zone,
             instance=self.name,
-            body={"items": self.tags, "fingerprint": fingerprint}).execute()
+            body={'items': self.tags, 'fingerprint': fingerprint}).execute()
 
     def get(self):
         """
         Get GCP instance details.
         """
-        self.logger.info("Get instance details")
+        self.logger.info('Get instance {0} details'.format(self.name))
+
         return self.compute.instances().get(
             instance=self.name,
             project=self.project,
@@ -161,9 +172,11 @@ class Instance(GoogleCloudPlatform):
         :return: REST response with operation responsible for the instance
         external IP setting process and its status
         """
-        body = {"kind": "compute#accessConfig",
-                "name": self.ACCESS_CONFIG,
-                "type": self.ACCESS_CONFIG_TYPE}
+        self.logger.info('Add external IP to instance {0}'.format(self.name))
+
+        body = {'kind': 'compute#accessConfig',
+                'name': self.ACCESS_CONFIG,
+                'type': self.ACCESS_CONFIG_TYPE}
         return self.compute.instances().addAccessConfig(
             project=self.project,
             instance=self.name,
@@ -178,8 +191,11 @@ class Instance(GoogleCloudPlatform):
         Zone operation.
 
         :return: REST response with operation responsible for the instance
-        tag setting process and its status
+        external ip removing process and its status
         """
+        self.logger.info(
+            'Remove external IP to instance {0}'.format(self.name))
+
         return self.compute.instances().deleteAccessConfig(
             project=self.project,
             instance=self.name,
@@ -194,7 +210,8 @@ class Instance(GoogleCloudPlatform):
 
         :return: REST response with a list of instances and its details
         """
-        self.logger.info("List instances")
+        self.logger.info('List instances in project {0}'.format(self.project))
+
         return self.compute.instances().list(
             project=self.project,
             zone=self.zone).execute()

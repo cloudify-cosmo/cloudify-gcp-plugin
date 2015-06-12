@@ -127,7 +127,8 @@ class GoogleCloudPlatform(object):
         :return: CommonInstanceMetadata list extracted from REST response get
         project metadata.
         """
-        self.logger.info('Get commonInstanceMetadata')
+        self.logger.info(
+            'Get commonInstanceMetadata for project {0}'.format(self.project))
         metadata = self.compute.projects().get(project=self.project).execute()
         return metadata['commonInstanceMetadata']
 
