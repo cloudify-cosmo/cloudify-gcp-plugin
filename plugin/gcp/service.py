@@ -14,30 +14,11 @@
 #    * limitations under the License.
 
 import json
-from functools import wraps
-import time
 
 import Crypto
 import httplib2
 from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
-
-
-def blocking(default):
-    """
-    Decorator waiting for the operation if there is blocking=True parameter.
-    :return:
-    """
-    def inner(func):
-        def _decorator(self, *args, **kwargs):
-            block = kwargs.pop('blocking', default)
-            response = func(self, *args, **kwargs)
-            if block:
-                self.wait_for_operation(response['name'])
-            else:
-                return response
-        return wraps(func)(_decorator)
-    return inner
 
 
 class GoogleCloudPlatform(object):
@@ -88,39 +69,6 @@ class GoogleCloudPlatform(object):
         except IOError as e:
             self.logger.error(str(e))
             raise GCPError(str(e))
-
-    def wait_for_operation(self,
-                           operation,
-                           global_operation=True):
-        """
-        Method waiting with active polling (sleep(1)) until the given operation
-        finishes (changes status to DONE).
-        Handles all operation: zone and global.
-
-        :param operation: operation name
-        :param global_operation: indicator of global operation, default False
-        :return: REST response with operation properties and status
-        :raise: GCPError if the server response contains error message
-        """
-        self.logger.info('Wait for operation: {0}.'.format(operation))
-        while True:
-            if global_operation:
-                result = self.compute.globalOperations().get(
-                    project=self.project,
-                    operation=operation).execute()
-            else:
-                result = self.compute.zoneOperations().get(
-                    project=self.project,
-                    zone=self.zone,
-                    operation=operation).execute()
-            if result['status'] == 'DONE':
-                if 'error' in result:
-                    self.logger.error('Response with error')
-                    raise GCPError(result['error'])
-                self.logger.info('Operation finished: {0}'.format(operation))
-                return result
-            else:
-                time.sleep(1)
 
     def get_common_instance_metadata(self):
         """

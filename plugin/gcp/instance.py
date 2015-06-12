@@ -15,7 +15,6 @@
 from plugin.gcp import utils
 from plugin.gcp.service import GoogleCloudPlatform
 from plugin.gcp.service import GCPError
-from plugin.gcp.service import blocking
 
 
 class Instance(GoogleCloudPlatform):
@@ -222,9 +221,6 @@ class Instance(GoogleCloudPlatform):
         return self.compute.instances().list(
             project=self.project,
             zone=self.zone).execute()
-
-    def wait_for_operation(self, operation, global_operation=False):
-        super(Instance, self).wait_for_operation(operation, global_operation)
 
     def to_dict(self):
         body = {

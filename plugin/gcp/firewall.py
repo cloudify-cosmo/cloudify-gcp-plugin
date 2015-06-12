@@ -13,7 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 from plugin.gcp.service import GoogleCloudPlatform
-from plugin.gcp.service import blocking
 
 
 class FirewallRule(GoogleCloudPlatform):
@@ -103,7 +102,3 @@ class FirewallRule(GoogleCloudPlatform):
 
         return self.compute.firewalls().list(
             project=self.project).execute()
-
-    def wait_for_operation(self, operation, global_operation=True):
-        super(FirewallRule, self).wait_for_operation(operation,
-                                                     global_operation)

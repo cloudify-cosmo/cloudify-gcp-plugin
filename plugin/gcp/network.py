@@ -14,7 +14,6 @@
 #    * limitations under the License.
 from plugin.gcp import utils
 from plugin.gcp.service import GoogleCloudPlatform
-from plugin.gcp.service import blocking
 
 
 class Network(GoogleCloudPlatform):
@@ -34,7 +33,6 @@ class Network(GoogleCloudPlatform):
         self.network = network
         self.name = utils.get_gcp_resource_name(network['name'])
 
-    @blocking(True)
     def create(self):
         """
         Create GCP network.
@@ -47,7 +45,6 @@ class Network(GoogleCloudPlatform):
         return self.compute.networks().insert(project=self.project,
                                               body=self.to_dict()).execute()
 
-    @blocking(True)
     def delete(self):
         """
         Delete GCP network.
@@ -71,9 +68,6 @@ class Network(GoogleCloudPlatform):
         self.logger.info('List networks in project {0}'.format(self.project))
         return self.compute.networks().list(
             project=self.project).execute()
-
-    def wait_for_operation(self, operation, global_operation=True):
-        super(Network, self).wait_for_operation(operation, global_operation)
 
     def to_dict(self):
         body = {

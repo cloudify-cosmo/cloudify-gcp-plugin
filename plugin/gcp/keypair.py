@@ -17,7 +17,6 @@ import os
 from Crypto.PublicKey import RSA
 
 from plugin.gcp.service import GoogleCloudPlatform
-from plugin.gcp.service import blocking
 from plugin.gcp.service import GCPError
 from plugin.gcp import utils
 
@@ -44,9 +43,6 @@ class KeyPair(GoogleCloudPlatform):
         self.private_key_path = private_key_path
         self.public_key = ''
         self.private_key = ''
-
-    def wait_for_operation(self, operation, global_operation=True):
-        super(KeyPair, self).wait_for_operation(operation, global_operation)
 
     def create(self):
         """

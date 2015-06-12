@@ -13,7 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 from plugin.gcp.service import GoogleCloudPlatform
-from plugin.gcp.service import blocking
 
 
 class Disk(GoogleCloudPlatform):
@@ -67,6 +66,3 @@ class Disk(GoogleCloudPlatform):
             project=self.project,
             zone=self.zone,
             disk=self.name).execute()
-
-    def wait_for_operation(self, operation, global_operation=False):
-        super(Disk, self).wait_for_operation(operation, global_operation)
