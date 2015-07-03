@@ -24,6 +24,9 @@ STORAGE_SCOPE_FULL = 'https://www.googleapis.com/auth/devstorage.full_control'
 COMPUTE_DISCOVERY = 'compute'
 STORAGE_DISCOVERY = 'storage'
 
+CHUNKSIZE = 2 * 1024 * 1024
+
+
 def get_item_from_gcp_response(key_field, key_name, items):
     """
     Get item from GCP REST response JSON list by name.
