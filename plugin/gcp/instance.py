@@ -45,8 +45,10 @@ class Instance(GoogleCloudPlatform):
         :param external_ip: boolean external ip indicator, default False
         :param tags: tags for the instance, default []
         """
-        super(Instance, self).__init__(config, logger)
-        self.name = utils.get_gcp_resource_name(name)
+        super(Instance, self).__init__(
+            config,
+            logger,
+            utils.get_gcp_resource_name(name))
         self.image = image
         self.machine_type = machine_type
         self.network = config['network']
@@ -84,7 +86,7 @@ class Instance(GoogleCloudPlatform):
                 self.logger.error(str(e))
                 raise GCPError(str(e))
 
-        return self.compute.instances().insert(
+        return self.discovery.instances().insert(
             project=self.project,
             zone=self.zone,
             body=body).execute()
@@ -98,7 +100,7 @@ class Instance(GoogleCloudPlatform):
         deletion process and its status
         """
         self.logger.info('Delete instance {0}'.format(self.name))
-        return self.compute.instances().delete(
+        return self.discovery.instances().delete(
             project=self.project,
             zone=self.zone,
             instance=self.name).execute()
@@ -118,7 +120,7 @@ class Instance(GoogleCloudPlatform):
         self.tags.extend(tags)
         self.tags = list(set(self.tags))
         fingerprint = self.get()['tags']['fingerprint']
-        return self.compute.instances().setTags(
+        return self.discovery.instances().setTags(
             project=self.project,
             zone=self.zone,
             instance=self.name,
@@ -140,7 +142,7 @@ class Instance(GoogleCloudPlatform):
 
         self.tags = [tag for tag in self.tags if tag not in tags]
         fingerprint = self.get()['tags']['fingerprint']
-        return self.compute.instances().setTags(
+        return self.discovery.instances().setTags(
             project=self.project,
             zone=self.zone,
             instance=self.name,
@@ -152,7 +154,7 @@ class Instance(GoogleCloudPlatform):
         """
         self.logger.info('Get instance {0} details'.format(self.name))
 
-        return self.compute.instances().get(
+        return self.discovery.instances().get(
             instance=self.name,
             project=self.project,
             zone=self.zone).execute()
@@ -170,7 +172,7 @@ class Instance(GoogleCloudPlatform):
         body = {'kind': 'compute#accessConfig',
                 'name': self.ACCESS_CONFIG,
                 'type': self.ACCESS_CONFIG_TYPE}
-        return self.compute.instances().addAccessConfig(
+        return self.discovery.instances().addAccessConfig(
             project=self.project,
             instance=self.name,
             zone=self.zone,
@@ -188,7 +190,7 @@ class Instance(GoogleCloudPlatform):
         self.logger.info(
             'Remove external IP from instance {0}'.format(self.name))
 
-        return self.compute.instances().deleteAccessConfig(
+        return self.discovery.instances().deleteAccessConfig(
             project=self.project,
             instance=self.name,
             zone=self.zone,
@@ -196,14 +198,14 @@ class Instance(GoogleCloudPlatform):
             networkInterface=self.NETWORK_INTERFACE).execute()
 
     def attach_disk(self, disk):
-        return self.compute.instances().attachDisk(
+        return self.discovery.instances().attachDisk(
             project=self.project,
             zone=self.zone,
             instance=self.name,
             body=disk).execute()
 
     def detach_disk(self, disk_name):
-        return self.compute.instances().detachDisk(
+        return self.discovery.instances().detachDisk(
             project=self.project,
             zone=self.zone,
             instance=self.name,
@@ -218,7 +220,7 @@ class Instance(GoogleCloudPlatform):
         """
         self.logger.info('List instances in project {0}'.format(self.project))
 
-        return self.compute.instances().list(
+        return self.discovery.instances().list(
             project=self.project,
             zone=self.zone).execute()
 

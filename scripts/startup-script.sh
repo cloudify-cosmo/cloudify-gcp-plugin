@@ -37,19 +37,19 @@ pip install https://github.com/cloudify-cosmo/cloudify-cli/archive/3.2rc1.zip
 
 cfy init
 
-wget https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager-blueprints/3.2m6/simple/simple.yaml -O $BLUEPRINT
+wget https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager-blueprints/3.2rc1/simple/simple-manager-blueprint.yaml -O blueprint
 
-cat << EOF > $INPUTS
-public_ip: $MANAGER_IP
-private_ip: $MANAGER_IP
-ssh_user: $USER
-ssh_key_filename: $SSH_KEY
+cat << EOF > inputs
+public_ip: 10.0.0.6
+private_ip: localhost
+ssh_user: vagrant
+ssh_key_filename: /home/vagrant/.ssh/id_rsa
 
-agents_user: $USER
+agents_user: vagrant
 resources_prefix: ''
 EOF
 
-cfy bootstrap -p $BLUEPRINT -i $INPUTS --install-plugins
+cfy bootstrap -p blueprint -i inputs --install-plugins
 
 cat << EOF > $AUTH_LOCATION
 AUTH_FILE

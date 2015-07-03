@@ -36,10 +36,9 @@ class FirewallRule(GoogleCloudPlatform):
         ref. https://cloud.google.com/compute/docs/reference/latest/firewalls
         :param network: network name the firewall rule is connected to
         """
-        super(FirewallRule, self).__init__(config, logger)
+        super(FirewallRule, self).__init__(config, logger, firewall['name'])
         self.firewall = firewall
         self.network = network
-        self.name = self.firewall['name']
 
     def create(self):
         """
@@ -55,7 +54,7 @@ class FirewallRule(GoogleCloudPlatform):
                 self.network))
 
         self.firewall['network'] = 'global/networks/{0}'.format(self.network)
-        return self.compute.firewalls().insert(
+        return self.discovery.firewalls().insert(
             project=self.project,
             body=self.firewall).execute()
 
@@ -72,7 +71,7 @@ class FirewallRule(GoogleCloudPlatform):
                 self.name,
                 self.network))
 
-        return self.compute.firewalls().delete(
+        return self.discovery.firewalls().delete(
             project=self.project,
             firewall=self.firewall['name']).execute()
 
@@ -86,7 +85,7 @@ class FirewallRule(GoogleCloudPlatform):
         """
         self.logger.info('Update firewall rule {0}'.format(self.name))
 
-        return self.compute.firewalls().update(
+        return self.discovery.firewalls().update(
             project=self.project,
             firewall=self.firewall['name'],
             body=self.firewall).execute()
@@ -100,5 +99,5 @@ class FirewallRule(GoogleCloudPlatform):
         self.logger.info(
             'List firewall rules in project {0}'.format(self.project))
 
-        return self.compute.firewalls().list(
+        return self.discovery.firewalls().list(
             project=self.project).execute()

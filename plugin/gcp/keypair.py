@@ -38,7 +38,7 @@ class KeyPair(GoogleCloudPlatform):
         :param user: name of the user to authenticate
         :param private_key_path: path where private key is stored
         """
-        super(KeyPair, self).__init__(config, logger)
+        super(KeyPair, self).__init__(config, logger, None)
         self.user = user
         self.private_key_path = private_key_path
         self.public_key = ''
@@ -92,7 +92,7 @@ class KeyPair(GoogleCloudPlatform):
             'Add sshKey {0} to project {1} metadata'.format(
                 ssh_key,
                 self.project))
-        return self.compute.projects().setCommonInstanceMetadata(
+        return self.discovery.projects().setCommonInstanceMetadata(
             project=self.project,
             body=common_instance_metadata).execute()
 
@@ -118,7 +118,7 @@ class KeyPair(GoogleCloudPlatform):
                     self.project))
             if key in item['value']:
                 item['value'] = item['value'].replace(key, '')
-        return self.compute.projects().setCommonInstanceMetadata(
+        return self.discovery.projects().setCommonInstanceMetadata(
             project=self.project,
             body=common_instance_metadata).execute()
 

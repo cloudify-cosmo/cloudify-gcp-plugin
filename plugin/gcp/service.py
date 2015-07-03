@@ -20,22 +20,23 @@ import httplib2
 from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
+from plugin.gcp import utils
+
 
 class GoogleCloudPlatform(object):
     """
     Class using google-python-api-client library to connect to Google Cloud
     Platform.
     """
-    COMPUTE_SCOPE = 'https://www.googleapis.com/auth/compute'
 
-    def __init__(self, config, logger):
+    def __init__(self, config, logger, name, scope=utils.COMPUTE_SCOPE,
+                 discovery=utils.COMPUTE_DISCOVERY):
         """
         GoogleCloudPlatform class constructor.
-        Create compute object that will be making
-        Google Cloud Platform Compute API calls.
+        Create API discovery object that will be making GCP REST API calls.
 
-        :param auth: path to service account JSON file
-        :param project: dictionary with project properties
+        :param config: dictionary with project properties: path to auth file,
+        project and zone
         :param scope: scope string of GCP connection
         :param logger: logger object that the class methods will be logging to
         :return:
@@ -43,15 +44,18 @@ class GoogleCloudPlatform(object):
         self.auth = config['auth']
         self.project = config['project']
         self.zone = config['zone']
-        self.scope = self.COMPUTE_SCOPE
+        self.scope = scope
+        self.name = name
         self.logger = logger.getChild('GCP')
-        self.compute = self.create_compute()
+        self.discovery = self.create_discovery(discovery, self.scope)
 
-    def create_compute(self):
+    def create_discovery(self, discovery, scope):
         """
-        Create Google Cloud Compute object and perform authentication.
+        Create Google Cloud API discovery object and perform authentication.
 
-        :return: compute object
+        :param discovery: name of the API discovery to be created
+        :param scope: scope the API discovery will have
+        :return: discovery object
         :raise: GCPError if there is a problem with service account JSON file:
         e.g. the file is not under the given path or it has wrong permissions
         """
@@ -62,10 +66,10 @@ class GoogleCloudPlatform(object):
             credentials = SignedJwtAssertionCredentials(
                 account_data['client_email'],
                 account_data['private_key'],
-                scope=self.scope)
+                scope=scope)
             http = httplib2.Http()
             credentials.authorize(http)
-            return build('compute', 'v1', http=http)
+            return build(discovery, 'v1', http=http)
         except IOError as e:
             self.logger.error(str(e))
             raise GCPError(str(e))
@@ -79,7 +83,7 @@ class GoogleCloudPlatform(object):
         """
         self.logger.info(
             'Get commonInstanceMetadata for project {0}'.format(self.project))
-        metadata = self.compute.projects().get(project=self.project).execute()
+        metadata = self.discovery.projects().get(project=self.project).execute()
         return metadata['commonInstanceMetadata']
 
 

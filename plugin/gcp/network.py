@@ -29,9 +29,11 @@ class Network(GoogleCloudPlatform):
         :param network: network dictionary having at least 'name' key
 
         """
-        super(Network, self).__init__(config, logger)
+        super(Network, self).__init__(
+            config,
+            logger,
+            utils.get_gcp_resource_name(network['name']))
         self.network = network
-        self.name = utils.get_gcp_resource_name(network['name'])
 
     def create(self):
         """
@@ -42,8 +44,8 @@ class Network(GoogleCloudPlatform):
         creation process and its status
         """
         self.logger.info('Create network {0}'.format(self.name))
-        return self.compute.networks().insert(project=self.project,
-                                              body=self.to_dict()).execute()
+        return self.discovery.networks().insert(project=self.project,
+                                                body=self.to_dict()).execute()
 
     def delete(self):
         """
@@ -55,7 +57,7 @@ class Network(GoogleCloudPlatform):
         deletion process and its status
         """
         self.logger.info('Delete network {0}'.format(self.name))
-        return self.compute.networks().delete(
+        return self.discovery.networks().delete(
             project=self.project,
             network=self.name).execute()
 
@@ -66,7 +68,7 @@ class Network(GoogleCloudPlatform):
         :return: REST response with list of networks in a project
         """
         self.logger.info('List networks in project {0}'.format(self.project))
-        return self.compute.networks().list(
+        return self.discovery.networks().list(
             project=self.project).execute()
 
     def to_dict(self):

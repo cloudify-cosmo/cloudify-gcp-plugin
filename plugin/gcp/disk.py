@@ -22,9 +22,8 @@ class Disk(GoogleCloudPlatform):
                  name,
                  image=None,
                  size_gb=None):
-        super(Disk, self).__init__(config, logger)
+        super(Disk, self).__init__(config, logger, name)
         self.image = image
-        self.name = name
         self.sizeGb = size_gb
 
     def to_dict(self):
@@ -50,19 +49,19 @@ class Disk(GoogleCloudPlatform):
         return body
 
     def get(self):
-        return self.compute.disks().get(
+        return self.discovery.disks().get(
             project=self.project,
             zone=self.zone,
             disk=self.name).execute()
 
     def create(self):
-        return self.compute.disks().insert(
+        return self.discovery.disks().insert(
             project=self.project,
             zone=self.zone,
             body=self.to_dict()).execute()
 
     def delete(self):
-        return self.compute.disks().delete(
+        return self.discovery.disks().delete(
             project=self.project,
             zone=self.zone,
             disk=self.name).execute()

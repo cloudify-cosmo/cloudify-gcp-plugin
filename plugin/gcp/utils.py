@@ -17,6 +17,12 @@ import re
 MAX_GCP_INSTANCE_NAME = 63
 ID_HASH_CONST = 6
 
+COMPUTE_SCOPE = 'https://www.googleapis.com/auth/compute'
+STORAGE_SCOPE_RW = 'https://www.googleapis.com/auth/devstorage.read_write'
+STORAGE_SCOPE_FULL = 'https://www.googleapis.com/auth/devstorage.full_control'
+
+COMPUTE_DISCOVERY = 'compute'
+STORAGE_DISCOVERY = 'storage'
 
 def get_item_from_gcp_response(key_field, key_name, items):
     """
