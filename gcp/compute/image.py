@@ -12,9 +12,9 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-from plugin.gcp.service import GoogleCloudPlatform
-from plugin.gcp import utils
-from plugin.gcp.storage import Storage
+from gcp.gcp import GoogleCloudPlatform
+from gcp.compute import constants
+from gcp.storage import Storage
 
 
 class Image(GoogleCloudPlatform):
@@ -54,8 +54,8 @@ class Image(GoogleCloudPlatform):
         self.upload()
 
     def list_objects(self):
-        storage = self.create_discovery(discovery=utils.STORAGE_DISCOVERY,
-                                        scope=utils.STORAGE_SCOPE_RW)
+        storage = self.create_discovery(discovery=constants.STORAGE_DISCOVERY,
+                                        scope=constants.STORAGE_SCOPE_RW)
         response = storage.objects().list(bucket=self.project).execute()
         return response.get('items')
 

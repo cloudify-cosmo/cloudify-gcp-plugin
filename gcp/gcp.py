@@ -20,7 +20,7 @@ import httplib2
 from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
-from plugin.gcp import utils
+from gcp.compute import utils
 
 
 class GoogleCloudPlatform(object):

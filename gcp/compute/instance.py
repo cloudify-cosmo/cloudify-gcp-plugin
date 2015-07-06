@@ -12,9 +12,9 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-from plugin.gcp import utils
-from plugin.gcp.service import GoogleCloudPlatform
-from plugin.gcp.service import GCPError
+from gcp.compute import utils
+from gcp.gcp import GoogleCloudPlatform
+from gcp.gcp import GCPError
 
 
 class Instance(GoogleCloudPlatform):
@@ -198,6 +198,12 @@ class Instance(GoogleCloudPlatform):
             networkInterface=self.NETWORK_INTERFACE).execute()
 
     def attach_disk(self, disk):
+        """
+        Attach disk to the instance.
+
+        :param disk: disk structure to be attached to the instance
+        :return:
+        """
         return self.discovery.instances().attachDisk(
             project=self.project,
             zone=self.zone,
@@ -205,6 +211,12 @@ class Instance(GoogleCloudPlatform):
             body=disk).execute()
 
     def detach_disk(self, disk_name):
+        """
+        Detach disk identified by the name from the instance.
+
+        :param disk_name: name of the disk to be detached
+        :return:
+        """
         return self.discovery.instances().detachDisk(
             project=self.project,
             zone=self.zone,

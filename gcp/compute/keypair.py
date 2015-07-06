@@ -16,9 +16,9 @@ import os
 
 from Crypto.PublicKey import RSA
 
-from plugin.gcp.service import GoogleCloudPlatform
-from plugin.gcp.service import GCPError
-from plugin.gcp import utils
+from gcp.gcp import GoogleCloudPlatform
+from gcp.gcp import GCPError
+from gcp.compute import utils
 
 
 class KeyPair(GoogleCloudPlatform):

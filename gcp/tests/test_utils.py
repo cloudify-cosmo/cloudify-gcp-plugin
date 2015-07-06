@@ -16,7 +16,7 @@
 
 import unittest
 
-from plugin.gcp import utils
+from gcp.compute import utils
 
 
 class TestUtils(unittest.TestCase):

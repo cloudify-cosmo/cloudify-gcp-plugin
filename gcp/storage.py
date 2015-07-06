@@ -15,9 +15,9 @@
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.http import HttpError
 
-from plugin.gcp.service import GoogleCloudPlatform
-from plugin.gcp.service import GCPError
-from plugin.gcp import utils
+from gcp.gcp import GoogleCloudPlatform
+from gcp.gcp import GCPError
+from gcp.compute import constants
 
 
 class Storage(GoogleCloudPlatform):
@@ -38,14 +38,14 @@ class Storage(GoogleCloudPlatform):
         super(Storage, self).__init__(config,
                                       logger,
                                       name,
-                                      scope=utils.STORAGE_SCOPE_RW,
-                                      discovery=utils.STORAGE_DISCOVERY)
+                                      scope=constants.STORAGE_SCOPE_RW,
+                                      discovery=constants.STORAGE_DISCOVERY)
         self.config = config
         self.bucket = bucket if bucket else self.project
 
     def upload_to_bucket(self, path):
         media = MediaFileUpload(path,
-                                chunksize=utils.CHUNKSIZE,
+                                chunksize=constants.CHUNKSIZE,
                                 resumable=True)
         request = self.discovery.objects().insert(bucket=self.bucket,
                                                   name=self.name,

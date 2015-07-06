@@ -13,18 +13,13 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import re
+from functools import wraps
 
-MAX_GCP_INSTANCE_NAME = 63
-ID_HASH_CONST = 6
+from cloudify import ctx
+from cloudify.exceptions import NonRecoverableError
 
-COMPUTE_SCOPE = 'https://www.googleapis.com/auth/compute'
-STORAGE_SCOPE_RW = 'https://www.googleapis.com/auth/devstorage.read_write'
-STORAGE_SCOPE_FULL = 'https://www.googleapis.com/auth/devstorage.full_control'
-
-COMPUTE_DISCOVERY = 'compute'
-STORAGE_DISCOVERY = 'storage'
-
-CHUNKSIZE = 2 * 1024 * 1024
+from gcp.gcp import GCPError
+from gcp.compute import constants
 
 
 def get_item_from_gcp_response(key_field, key_name, items):
@@ -61,10 +56,11 @@ def get_gcp_resource_name(name):
     if not final_name[0].isalpha():
         final_name = '{0}{1}'.format('a', final_name)
     # trim to the length limit
-    if len(final_name) > MAX_GCP_INSTANCE_NAME:
-        remain_len = MAX_GCP_INSTANCE_NAME - len(final_name)
-        final_name = '{0}{1}'.format(final_name[:remain_len - ID_HASH_CONST],
-                                     final_name[-ID_HASH_CONST:])
+    if len(final_name) > constants.MAX_GCP_NAME:
+        remain_len = constants.MAX_GCP_NAME - len(final_name)
+        final_name = '{0}{1}'.format(
+            final_name[:remain_len - constants.ID_HASH_CONST],
+            final_name[-constants.ID_HASH_CONST:])
     # convert string to lowercase
     return final_name.lower()
 
@@ -79,3 +75,50 @@ def get_firewall_rule_name(network, firewall):
     """
     name = '{0}-{1}'.format(network, firewall)
     return get_gcp_resource_name(name)
+
+
+def throw_cloudify_exceptions(func):
+    def _decorator(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except GCPError as e:
+            raise NonRecoverableError(e.message)
+    return wraps(func)(_decorator)
+
+
+def get_manager_provider_config():
+    provider_config = ctx.provider_context.get('resources', {})
+    agents_security_group = provider_config.get('agents_security_group', {})
+    manager_agent_security_group = \
+        provider_config.get('manager_agent_security_group', {})
+    provider_context = {
+        'agents_security_group': agents_security_group,
+        'manager_security_group': manager_agent_security_group
+    }
+    return provider_context
+
+
+def create_firewall_structure_from_rules(network, rules):
+    firewall = {'name': get_firewall_rule_name(network, ctx.instance.id),
+                'allowed': [],
+                constants.SOURCE_TAGS: [],
+                'sourceRanges': [],
+                constants.TARGET_TAGS: []}
+
+    for rule in rules:
+        source_tags = rule.get('source_tags', [])
+        target_tags = rule.get('target_tags', [])
+        for tag in source_tags:
+            tag = get_gcp_resource_name(tag)
+            if tag not in firewall[constants.SOURCE_TAGS]:
+                firewall[constants.SOURCE_TAGS].append(tag)
+        for tag in target_tags:
+            tag = get_gcp_resource_name(tag)
+            if tag not in firewall[constants.TARGET_TAGS]:
+                firewall[constants.TARGET_TAGS].append(tag)
+        firewall['allowed'].extend([{'IPProtocol': rule.get('ip_protocol'),
+                                    'ports': [rule.get('port', [])]}])
+        cidr = rule.get('cidr_ip')
+        if cidr and cidr not in firewall['sourceRanges']:
+            firewall['sourceRanges'].append(cidr)
+    return firewall

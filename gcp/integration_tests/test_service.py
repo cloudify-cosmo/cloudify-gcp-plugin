@@ -18,10 +18,10 @@ from cloudify.state import current_ctx
 import unittest
 import yaml
 
-from plugin.gcp.firewall import FirewallRule
-from plugin.gcp.instance import Instance
-from plugin.gcp.network import Network
-from plugin.gcp import utils
+from gcp.compute.firewall import FirewallRule
+from gcp.compute.instance import Instance
+from gcp.compute.network import Network
+from gcp.compute import utils
 
 
 class TestService(unittest.TestCase):

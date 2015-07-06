@@ -44,7 +44,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
-          implementation: gcp_plugin.plugin.tasks.create_instance
+          implementation: gcp_plugin.gcp.compute.tasks.create_instance
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config]}
@@ -55,7 +55,7 @@ node_types:
             image_id:
               default: { get_property: [SELF, image_id]}
         delete:
-          implementation: gcp_plugin.plugin.tasks.delete_instance
+          implementation: gcp_plugin.gcp.compute.tasks.delete_instance
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config] }
@@ -79,14 +79,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.plugin.tasks.create_disk
+          implementation: gcp_plugin.gcp.compute.tasks.create_disk
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config] }
             image:
               default: { get_property: [SELF, image] }
         delete:
-          implementation: gcp_plugin.plugin.tasks.delete_disk
+          implementation: gcp_plugin.gcp.compute.tasks.delete_disk
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config]}
@@ -106,14 +106,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.plugin.tasks.create_network
+          implementation: gcp_plugin.gcp.compute.tasks.create_network
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config] }
             network:
               default: {}
         delete:
-          implementation: gcp_plugin.plugin.tasks.delete_network
+          implementation: gcp_plugin.gcp.compute.tasks.delete_network
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config]}
@@ -133,14 +133,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.plugin.tasks.create_firewall_rule
+          implementation: gcp_plugin.gcp.compute.tasks.create_firewall_rule
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config]}
             firewall_rule:
               default: {}
         delete:
-          implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
+          implementation: gcp_plugin.gcp.compute.tasks.delete_firewall_rule
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config]}
@@ -167,14 +167,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create: 
-          implementation: gcp_plugin.plugin.tasks.create_security_group
+          implementation: gcp_plugin.gcp.compute.tasks.create_security_group
           inputs: 
             gcp_config:
               default: { get_property: [SELF, gcp_config] }
             rules:
               default: { get_property: [SELF, rules] }
         delete:          
-          implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
+          implementation: gcp_plugin.gcp.compute.tasks.delete_firewall_rule
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config] }
@@ -216,7 +216,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.plugin.tasks.create_keypair
+          implementation: gcp_plugin.gcp.compute.tasks.create_keypair
           inputs:
             gcp_config: 
               default: { get_property: [SELF, gcp_config] }
@@ -231,7 +231,7 @@ node_types:
             external:
               default: { get_property: [SELF, use_external_resource] }
         delete:
-          implementation: gcp_plugin.plugin.tasks.delete_keypair
+          implementation: gcp_plugin.gcp.compute.tasks.delete_keypair
           inputs:
             gcp_config: 
               default: { get_property: [SELF, gcp_config] }
@@ -259,7 +259,7 @@ relationships:
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         establish:
-          implementation: gcp_plugin.plugin.tasks.add_instance_tag
+          implementation: gcp_plugin.gcp.compute.tasks.add_instance_tag
           inputs:
             gcp_config:
               default: { get_property: [SOURCE, gcp_config] }
@@ -268,7 +268,7 @@ relationships:
             tag:
               default: { get_attribute: [TARGET, targetTags] }
         unlink:
-          implementation: gcp_plugin.plugin.tasks.remove_instance_tag
+          implementation: gcp_plugin.gcp.compute.tasks.remove_instance_tag
           inputs:
             gcp_config:
               default: { get_property: [SOURCE, gcp_config] }
@@ -282,14 +282,14 @@ relationships:
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         establish:
-          implementation: gcp_plugin.plugin.tasks.add_external_ip
+          implementation: gcp_plugin.gcp.compute.tasks.add_external_ip
           inputs:
             gcp_config:
               default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
         unlink:
-          implementation: gcp_plugin.plugin.tasks.remove_external_ip
+          implementation: gcp_plugin.gcp.compute.tasks.remove_external_ip
           inputs:
             gcp_config:
               default: { get_property: [SOURCE, gcp_config] }
@@ -301,14 +301,14 @@ relationships:
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
-          implementation: gcp_plugin.plugin.tasks.add_boot_disk
+          implementation: gcp_plugin.gcp.compute.tasks.add_boot_disk
 
   cloudify.gcp.relationships.instance_connected_to_disk:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         establish:
-          implementation: gcp_plugin.plugin.tasks.attach_disk
+          implementation: gcp_plugin.gcp.compute.tasks.attach_disk
           inputs:
             gcp_config:
               default: { get_property: [SOURCE, gcp_config] }
@@ -317,7 +317,7 @@ relationships:
             disk: 
               default: { get_attribute: [SOURCE, gcp_disk] }
         unlink:
-          implementation: gcp_plugin.plugin.tasks.detach_disk
+          implementation: gcp_plugin.gcp.compute.tasks.detach_disk
           inputs:
             gcp_config:
               default: { get_property: [SOURCE, gcp_config] }
