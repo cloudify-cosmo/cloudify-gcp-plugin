@@ -15,10 +15,13 @@
 import os
 
 from Crypto.PublicKey import RSA
+from cloudify import ctx
+from cloudify.decorators import operation
 
+from gcp.compute import constants
+from gcp.compute import utils
 from gcp.gcp import GoogleCloudPlatform
 from gcp.gcp import GCPError
-from gcp.compute import utils
 
 
 class KeyPair(GoogleCloudPlatform):
@@ -132,3 +135,41 @@ class KeyPair(GoogleCloudPlatform):
         except IOError as e:
             self.logger.error(str(e))
             raise GCPError(str(e))
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def create_keypair(gcp_config,
+                   user,
+                   private_key_path,
+                   external,
+                   private_existing_key_path='',
+                   public_existing_key_path='',
+                   **kwargs):
+    keypair = KeyPair(gcp_config,
+                      ctx.logger,
+                      user,
+                      private_key_path)
+    if external:
+        keypair.private_key = ctx.get_resource(private_existing_key_path)
+        keypair.public_key = ctx.get_resource(public_existing_key_path)
+    else:
+        keypair.create()
+    keypair.add_project_ssh_key(user, keypair.public_key)
+    ctx.instance.runtime_properties[constants.PRIVATE_KEY] = keypair.private_key
+    ctx.instance.runtime_properties[constants.PUBLIC_KEY] = keypair.public_key
+    keypair.save_private_key()
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def delete_keypair(gcp_config, user, private_key_path, **kwargs):
+    keypair = KeyPair(gcp_config,
+                      ctx.logger,
+                      user,
+                      private_key_path)
+    keypair.public_key = ctx.instance.runtime_properties[constants.PUBLIC_KEY]
+    keypair.remove_project_ssh_key()
+    keypair.remove_private_key()
+    ctx.instance.runtime_properties.pop(constants.PRIVATE_KEY, None)
+    ctx.instance.runtime_properties.pop(constants.PUBLIC_KEY, None)

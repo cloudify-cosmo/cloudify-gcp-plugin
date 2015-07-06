@@ -12,6 +12,10 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+from cloudify import ctx
+from cloudify.decorators import operation
+
+from gcp.compute import constants
 from gcp.compute import utils
 from gcp.gcp import GoogleCloudPlatform
 from gcp.gcp import GCPError
@@ -270,3 +274,126 @@ class Instance(GoogleCloudPlatform):
                     item['accessConfigs'] = [{'type': self.ACCESS_CONFIG_TYPE,
                                               'name': self.ACCESS_CONFIG}]
         return body
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def create_instance(gcp_config, instance_type, image_id, properties, **kwargs):
+    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    script = properties.get('startup_script')
+    if script:
+        script = ctx.download_resource(script)
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=ctx.instance.id,
+                        image=image_id,
+                        machine_type=instance_type,
+                        external_ip=properties.get('externalIP', False),
+                        startup_script=script)
+    if ctx.node.properties['install_agent']:
+        add_to_security_groups(instance)
+    disk = ctx.instance.runtime_properties.get(constants.DISK)
+    if disk:
+        instance.disks = [disk]
+    instance.create()
+    ctx.instance.runtime_properties[constants.NAME] = instance.name
+    set_ip(instance)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def add_instance_tag(gcp_config, instance_name, tag, **kwargs):
+    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=instance_name)
+    instance.set_tags([utils.get_gcp_resource_name(t) for t in tag])
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def remove_instance_tag(gcp_config, instance_name, tag, **kwargs):
+    if not instance_name:
+        return
+    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=instance_name)
+    instance.remove_tags([utils.get_gcp_resource_name(t) for t in tag])
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def add_external_ip(gcp_config, instance_name, **kwargs):
+    # check if the instance has no external ips, only one is supported so far
+    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=instance_name)
+    instance.add_access_config()
+    set_ip(instance, relationship=True)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def remove_external_ip(gcp_config, instance_name, **kwargs):
+    if not instance_name:
+        return
+    gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=instance_name)
+    instance.delete_access_config()
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def delete_instance(gcp_config, **kwargs):
+    name = ctx.instance.runtime_properties.get(constants.NAME)
+    if not name:
+        return
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=name)
+    instance.delete()
+    ctx.instance.runtime_properties.pop(constants.NAME, None)
+    ctx.instance.runtime_properties.pop(constants.DISK, None)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def attach_disk(gcp_config, instance_name, disk, **kwargs):
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=instance_name)
+    instance.attach_disk(disk)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def detach_disk(gcp_config, instance_name, disk_name, **kwargs):
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=instance_name)
+    instance.detach_disk(disk_name)
+
+
+def set_ip(instance, relationship=False):
+    instances = instance.list()
+    item = utils.get_item_from_gcp_response('name',
+                                            instance.name,
+                                            instances)
+    if relationship:
+        ctx.target.instance.runtime_properties['gcp_resource_id'] = \
+            item['networkInterfaces'][0]['accessConfigs'][0]['natIP']
+    else:
+        ctx.instance.runtime_properties['ip'] = \
+            item['networkInterfaces'][0]['networkIP']
+    # only with one default network interface
+
+
+def add_to_security_groups(instance):
+    provider_config = utils.get_manager_provider_config()
+    instance.tags.extend(
+        provider_config[constants.AGENTS_SECURITY_GROUP]
+        .get(constants.TARGET_TAGS))

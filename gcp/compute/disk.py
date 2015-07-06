@@ -12,6 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+from cloudify import ctx
+from cloudify.decorators import operation
+
+from gcp.compute import utils
+from gcp.compute import constants
 from gcp.gcp import GoogleCloudPlatform
 
 
@@ -65,3 +70,36 @@ class Disk(GoogleCloudPlatform):
             project=self.project,
             zone=self.zone,
             disk=self.name).execute()
+
+@operation
+@utils.throw_cloudify_exceptions
+def create_disk(gcp_config, image, **kwargs):
+    name = utils.get_gcp_resource_name(ctx.instance.id)
+    disk = Disk(gcp_config,
+                ctx.logger,
+                image=image,
+                name=name)
+    disk.create()
+    ctx.instance.runtime_properties[constants.NAME] = name
+    ctx.instance.runtime_properties[constants.DISK] = \
+        disk.disk_to_insert_instance_dict(name)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def delete_disk(gcp_config, **kwargs):
+    name = ctx.instance.runtime_properties[constants.NAME]
+    disk = Disk(gcp_config,
+                ctx.logger,
+                name=name)
+    disk.delete()
+    ctx.instance.runtime_properties.pop(constants.NAME, None)
+    ctx.instance.runtime_properties.pop(constants.DISK, None)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def add_boot_disk(**kwargs):
+    disk_body = ctx.target.instance.runtime_properties[constants.DISK]
+    disk_body['boot'] = True
+    ctx.source.instance.runtime_properties[constants.DISK] = disk_body

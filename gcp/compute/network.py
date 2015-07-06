@@ -12,6 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+
+from cloudify import ctx
+from cloudify.decorators import operation
+
+from gcp.compute import constants
 from gcp.compute import utils
 from gcp.gcp import GoogleCloudPlatform
 
@@ -77,3 +82,28 @@ class Network(GoogleCloudPlatform):
             'name': self.name
         }
         return body
+
+@operation
+@utils.throw_cloudify_exceptions
+def create_network(gcp_config, network, **kwargs):
+    network['name'] = utils.get_gcp_resource_name(network['name'])
+    network = Network(gcp_config,
+                      ctx.logger,
+                      network=network)
+    network.create()
+    ctx.instance.runtime_properties[constants.NAME] = network.name
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def delete_network(gcp_config, **kwargs):
+    network = {'name': ctx.instance.runtime_properties.get(constants.NAME)}
+    if not network['name']:
+        return
+    network = Network(gcp_config,
+                      ctx.logger,
+                      network=network)
+
+    network.delete()
+    ctx.instance.runtime_properties.pop(constants.NAME, None)
+
