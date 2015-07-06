@@ -14,7 +14,7 @@
 #    * limitations under the License.
 from gcp.gcp import GoogleCloudPlatform
 from gcp.compute import constants
-from gcp.storage import Storage
+from gcp.storage import Object
 
 
 class Image(GoogleCloudPlatform):
@@ -49,7 +49,7 @@ class Image(GoogleCloudPlatform):
             body=self.to_dict()).execute()
 
     def upload_from_file(self, file_path):
-        obj = Storage(self.config, self.logger, self.name)
+        obj = Object(self.config, self.logger, self.name)
         self.url = obj.upload_to_bucket(path=file_path)
         self.upload()
 
@@ -68,3 +68,4 @@ class Image(GoogleCloudPlatform):
             }
         }
         return body
+

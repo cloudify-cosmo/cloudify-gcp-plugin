@@ -20,7 +20,7 @@ from gcp.gcp import GCPError
 from gcp.compute import constants
 
 
-class Storage(GoogleCloudPlatform):
+class Object(GoogleCloudPlatform):
     def __init__(self,
                  config,
                  logger,
@@ -35,11 +35,11 @@ class Storage(GoogleCloudPlatform):
         :param bucket: name of the bucket to store Object in,
         if other than project name
         """
-        super(Storage, self).__init__(config,
-                                      logger,
-                                      name,
-                                      scope=constants.STORAGE_SCOPE_RW,
-                                      discovery=constants.STORAGE_DISCOVERY)
+        super(Object, self).__init__(config,
+                                     logger,
+                                     name,
+                                     scope=constants.STORAGE_SCOPE_RW,
+                                     discovery=constants.STORAGE_DISCOVERY)
         self.config = config
         self.bucket = bucket if bucket else self.project
 
@@ -57,3 +57,40 @@ class Storage(GoogleCloudPlatform):
             except HttpError as e:
                 raise GCPError(e.message)
         return response['selfLink']
+
+    def delete(self):
+        return self.discovery.objects().delete(bucket=self.bucket,
+                                               name=self.name).execute()
+
+
+class Bucket(GoogleCloudPlatform):
+    def __init__(self,
+                 config,
+                 logger,
+                 name=None):
+        """
+        Create Bucket object
+
+        :param config:
+        :param logger:
+        :param name: name of the bucket, if None project name will be taken
+        """
+        super(Bucket, self).__init__(config,
+                                     logger,
+                                     name,
+                                     scope=constants.STORAGE_SCOPE_RW,
+                                     discovery=constants.STORAGE_DISCOVERY)
+        self.name = self.name if name else self.project
+
+    def create(self):
+        body = {'name': self.name}
+        return self.discovery.buckets().create(project=self.project,
+                                               body=body).execute()
+
+    def delete(self):
+        return self.discovery.buckets().delete(bucket=self.name).execute()
+
+    def list(self):
+        response = self.discovery.buckets().list(
+            project=self.project).execute()
+        return response['items']
