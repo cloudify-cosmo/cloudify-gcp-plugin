@@ -79,16 +79,16 @@ class Image(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def upload_image(gcp_config, image_name, image_path, **kwargs):
+def create(gcp_config, image_name, image_path, **kwargs):
     image = Image(gcp_config, ctx.logger, image_name)
     local_path = ctx.download_resource(image_path)
     image.upload_and_create(local_path)
     ctx.instance.runtime_properties[constants.NAME] = image.name
 
+
 @operation
 @utils.throw_cloudify_exceptions
-def delete_image(gcp_config, **kwargs):
-    name = ctx.instance.runtime_properties[constants.NAME]
+def delete(gcp_config, **kwargs):
+    name = ctx.instance.runtime_properties.pop(constants.NAME, None)
     image = Image(gcp_config, ctx.logger, name)
     image.delete()
-    ctx.instance.runtime_properties.pop(constants.NAME, None)

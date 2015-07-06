@@ -107,12 +107,13 @@ class FirewallRule(GoogleCloudPlatform):
         return self.discovery.firewalls().list(
             project=self.project).execute()
 
+
 @operation
 @utils.throw_cloudify_exceptions
-def create_firewall_rule(gcp_config, firewall_rule, **kwargs):
+def create(gcp_config, firewall_rule, **kwargs):
     network_name = utils.get_gcp_resource_name(gcp_config['network'])
     firewall_rule['name'] = utils.get_firewall_rule_name(network_name,
-                                                   firewall_rule)
+                                                         firewall_rule)
     firewall = FirewallRule(gcp_config,
                             ctx.logger,
                             firewall=firewall_rule,
@@ -124,18 +125,16 @@ def create_firewall_rule(gcp_config, firewall_rule, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def delete_firewall_rule(gcp_config, **kwargs):
-    firewall_name = ctx.instance.runtime_properties.get(constants.NAME)
+def delete(gcp_config, **kwargs):
+    firewall_name = ctx.instance.runtime_properties.pop(constants.NAME, None)
     if not firewall_name:
         return
     network_name = utils.get_gcp_resource_name(gcp_config['network'])
-    firewall = {'name': firewall_name}
     firewall = FirewallRule(gcp_config,
                             ctx.logger,
-                            firewall=firewall,
+                            firewall={'name': firewall_name},
                             network=network_name)
     firewall.delete()
-    ctx.instance.runtime_properties.pop(constants.NAME, None)
 
 
 @operation
@@ -161,4 +160,4 @@ def create_security_group(gcp_config, rules, **kwargs):
 def delete_security_group(gcp_config, **kwargs):
     ctx.instance.runtime_properties.pop(constants.TARGET_TAGS, None)
     ctx.instance.runtime_properties.pop(constants.SOURCE_TAGS, None)
-    delete_firewall_rule(gcp_config, **kwargs)
+    delete(gcp_config, **kwargs)

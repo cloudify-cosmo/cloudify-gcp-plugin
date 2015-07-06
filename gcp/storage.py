@@ -15,9 +15,9 @@
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.http import HttpError
 
-from gcp.gcp import GoogleCloudPlatform
-from gcp.gcp import GCPError
-from gcp.compute import constants
+from gcp import GoogleCloudPlatform
+from gcp import GCPError
+from compute import constants
 
 
 class Object(GoogleCloudPlatform):

@@ -20,7 +20,7 @@ import httplib2
 from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
-from gcp.compute import utils
+from compute import constants
 
 
 class GoogleCloudPlatform(object):
@@ -29,8 +29,8 @@ class GoogleCloudPlatform(object):
     Platform.
     """
 
-    def __init__(self, config, logger, name, scope=utils.COMPUTE_SCOPE,
-                 discovery=utils.COMPUTE_DISCOVERY):
+    def __init__(self, config, logger, name, scope=constants.COMPUTE_SCOPE,
+                 discovery=constants.COMPUTE_DISCOVERY):
         """
         GoogleCloudPlatform class constructor.
         Create API discovery object that will be making GCP REST API calls.
@@ -83,7 +83,8 @@ class GoogleCloudPlatform(object):
         """
         self.logger.info(
             'Get commonInstanceMetadata for project {0}'.format(self.project))
-        metadata = self.discovery.projects().get(project=self.project).execute()
+        metadata = self.discovery.projects().get(
+            project=self.project).execute()
         return metadata['commonInstanceMetadata']
 
 

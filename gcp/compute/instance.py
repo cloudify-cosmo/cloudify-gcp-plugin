@@ -278,7 +278,7 @@ class Instance(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create_instance(gcp_config, instance_type, image_id, properties, **kwargs):
+def create(gcp_config, instance_type, image_id, properties, **kwargs):
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     script = properties.get('startup_script')
     if script:
@@ -348,15 +348,14 @@ def remove_external_ip(gcp_config, instance_name, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def delete_instance(gcp_config, **kwargs):
-    name = ctx.instance.runtime_properties.get(constants.NAME)
+def delete(gcp_config, **kwargs):
+    name = ctx.instance.runtime_properties.pop(constants.NAME, None)
     if not name:
         return
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=name)
     instance.delete()
-    ctx.instance.runtime_properties.pop(constants.NAME, None)
     ctx.instance.runtime_properties.pop(constants.DISK, None)
 
 

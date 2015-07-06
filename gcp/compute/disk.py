@@ -71,9 +71,10 @@ class Disk(GoogleCloudPlatform):
             zone=self.zone,
             disk=self.name).execute()
 
+
 @operation
 @utils.throw_cloudify_exceptions
-def create_disk(gcp_config, image, **kwargs):
+def create(gcp_config, image, **kwargs):
     name = utils.get_gcp_resource_name(ctx.instance.id)
     disk = Disk(gcp_config,
                 ctx.logger,
@@ -87,13 +88,12 @@ def create_disk(gcp_config, image, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def delete_disk(gcp_config, **kwargs):
-    name = ctx.instance.runtime_properties[constants.NAME]
+def delete(gcp_config, **kwargs):
+    name = ctx.instance.runtime_properties.pop(constants.NAME, None)
     disk = Disk(gcp_config,
                 ctx.logger,
                 name=name)
     disk.delete()
-    ctx.instance.runtime_properties.pop(constants.NAME, None)
     ctx.instance.runtime_properties.pop(constants.DISK, None)
 
 

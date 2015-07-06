@@ -139,13 +139,13 @@ class KeyPair(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create_keypair(gcp_config,
-                   user,
-                   private_key_path,
-                   external,
-                   private_existing_key_path='',
-                   public_existing_key_path='',
-                   **kwargs):
+def create(gcp_config,
+           user,
+           private_key_path,
+           external,
+           private_existing_key_path='',
+           public_existing_key_path='',
+           **kwargs):
     keypair = KeyPair(gcp_config,
                       ctx.logger,
                       user,
@@ -156,14 +156,15 @@ def create_keypair(gcp_config,
     else:
         keypair.create()
     keypair.add_project_ssh_key(user, keypair.public_key)
-    ctx.instance.runtime_properties[constants.PRIVATE_KEY] = keypair.private_key
+    ctx.instance.runtime_properties[constants.PRIVATE_KEY] = \
+        keypair.private_key
     ctx.instance.runtime_properties[constants.PUBLIC_KEY] = keypair.public_key
     keypair.save_private_key()
 
 
 @operation
 @utils.throw_cloudify_exceptions
-def delete_keypair(gcp_config, user, private_key_path, **kwargs):
+def delete(gcp_config, user, private_key_path, **kwargs):
     keypair = KeyPair(gcp_config,
                       ctx.logger,
                       user,
