@@ -106,14 +106,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.network.create_network
+          implementation: gcp_plugin.gcp.compute.network.create
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config] }
             network:
               default: {}
         delete:
-          implementation: gcp_plugin.gcp.compute.network.delete_network
+          implementation: gcp_plugin.gcp.compute.network.delete
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config]}
