@@ -18,6 +18,7 @@ from cloudify.decorators import operation
 from gcp.compute import constants
 from gcp.compute import utils
 from gcp.gcp import GoogleCloudPlatform
+from gcp.gcp import check_response
 
 
 class FirewallRule(GoogleCloudPlatform):
@@ -45,6 +46,7 @@ class FirewallRule(GoogleCloudPlatform):
         self.firewall = firewall
         self.network = network
 
+    @check_response
     def create(self):
         """
         Create GCP firewall rule in a GCP network.
@@ -63,6 +65,7 @@ class FirewallRule(GoogleCloudPlatform):
             project=self.project,
             body=self.firewall).execute()
 
+    @check_response
     def delete(self):
         """
         Delete GCP firewall rule from GCP network.
@@ -80,6 +83,7 @@ class FirewallRule(GoogleCloudPlatform):
             project=self.project,
             firewall=self.firewall['name']).execute()
 
+    @check_response
     def update(self):
         """
         Update GCP firewall rule.
@@ -95,6 +99,7 @@ class FirewallRule(GoogleCloudPlatform):
             firewall=self.firewall['name'],
             body=self.firewall).execute()
 
+    @check_response
     def list(self):
         """
         List GCP firewall rules in all networks.

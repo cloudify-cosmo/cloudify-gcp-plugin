@@ -13,6 +13,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+from functools import wraps
 import json
 
 import Crypto
@@ -21,6 +22,21 @@ from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
 
 from compute import constants
+
+
+def check_response(func):
+    """
+    Decorator checking first REST response.
+    :return:
+    """
+    def _decorator(self, *args, **kwargs):
+        response = func(self, *args, **kwargs)
+        if 'error' in response:
+            self.logger.error('Response with error {0}'
+                              .format(response['error']))
+            raise GCPError(response['error'])
+        return response
+    return wraps(func)(_decorator)
 
 
 class GoogleCloudPlatform(object):

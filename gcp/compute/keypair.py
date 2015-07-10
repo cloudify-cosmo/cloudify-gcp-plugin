@@ -20,6 +20,7 @@ from cloudify.decorators import operation
 
 from gcp.compute import constants
 from gcp.compute import utils
+from gcp.gcp import check_response
 from gcp.gcp import GoogleCloudPlatform
 from gcp.gcp import GCPError
 
@@ -47,6 +48,7 @@ class KeyPair(GoogleCloudPlatform):
         self.public_key = ''
         self.private_key = ''
 
+    @check_response
     def create(self):
         """
         Create keypair: private and public key.
@@ -56,6 +58,7 @@ class KeyPair(GoogleCloudPlatform):
         self.private_key = key.exportKey('PEM')
         self.public_key = key.exportKey('OpenSSH')
 
+    @check_response
     def save_private_key(self):
         """
         Save private key to given path.
@@ -67,6 +70,7 @@ class KeyPair(GoogleCloudPlatform):
             os.chmod(self.private_key_path, 0600)
             content_file.write(self.private_key)
 
+    @check_response
     def add_project_ssh_key(self, user, ssh_key):
         """
         Update project SSH private key. Add new key to project's
@@ -99,6 +103,7 @@ class KeyPair(GoogleCloudPlatform):
             project=self.project,
             body=common_instance_metadata).execute()
 
+    @check_response
     def remove_project_ssh_key(self):
         """
         Update project SSH private key. Remove new key to project's

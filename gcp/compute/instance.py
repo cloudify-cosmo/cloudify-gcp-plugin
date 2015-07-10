@@ -18,6 +18,7 @@ from cloudify.decorators import operation
 from gcp.compute import constants
 from gcp.compute import utils
 from gcp.gcp import GoogleCloudPlatform
+from gcp.gcp import check_response
 from gcp.gcp import GCPError
 
 
@@ -61,6 +62,7 @@ class Instance(GoogleCloudPlatform):
         self.externalIP = external_ip
         self.disks = []
 
+    @check_response
     def create(self):
         """
         Create GCP VM instance with given parameters.
@@ -95,6 +97,7 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone,
             body=body).execute()
 
+    @check_response
     def delete(self):
         """
         Delete GCP instance.
@@ -109,6 +112,7 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone,
             instance=self.name).execute()
 
+    @check_response
     def set_tags(self, tags):
         """
         Set GCP instance tags.
@@ -130,6 +134,7 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             body={'items': self.tags, 'fingerprint': fingerprint}).execute()
 
+    @check_response
     def remove_tags(self, tags):
         """
         Remove GCP instance tags.
@@ -152,6 +157,7 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             body={'items': self.tags, 'fingerprint': fingerprint}).execute()
 
+    @check_response
     def get(self):
         """
         Get GCP instance details.
@@ -163,6 +169,7 @@ class Instance(GoogleCloudPlatform):
             project=self.project,
             zone=self.zone).execute()
 
+    @check_response
     def add_access_config(self):
         """
         Set GCP instance external IP.
@@ -183,6 +190,7 @@ class Instance(GoogleCloudPlatform):
             networkInterface=self.NETWORK_INTERFACE,
             body=body).execute()
 
+    @check_response
     def delete_access_config(self):
         """
         Set GCP instance tags.
@@ -201,6 +209,7 @@ class Instance(GoogleCloudPlatform):
             accessConfig=self.ACCESS_CONFIG,
             networkInterface=self.NETWORK_INTERFACE).execute()
 
+    @check_response
     def attach_disk(self, disk):
         """
         Attach disk to the instance.
@@ -214,6 +223,7 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             body=disk).execute()
 
+    @check_response
     def detach_disk(self, disk_name):
         """
         Detach disk identified by the name from the instance.
@@ -227,6 +237,7 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             deviceName=disk_name).execute()
 
+    @check_response
     def list(self):
         """
         List GCP instances.

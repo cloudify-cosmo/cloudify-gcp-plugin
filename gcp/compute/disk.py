@@ -18,6 +18,7 @@ from cloudify.decorators import operation
 from gcp.compute import utils
 from gcp.compute import constants
 from gcp.gcp import GoogleCloudPlatform
+from gcp.gcp import check_response
 
 
 class Disk(GoogleCloudPlatform):
@@ -53,18 +54,21 @@ class Disk(GoogleCloudPlatform):
         }
         return body
 
+    @check_response
     def get(self):
         return self.discovery.disks().get(
             project=self.project,
             zone=self.zone,
             disk=self.name).execute()
 
+    @check_response
     def create(self):
         return self.discovery.disks().insert(
             project=self.project,
             zone=self.zone,
             body=self.to_dict()).execute()
 
+    @check_response
     def delete(self):
         return self.discovery.disks().delete(
             project=self.project,

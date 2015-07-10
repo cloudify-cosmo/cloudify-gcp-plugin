@@ -16,6 +16,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 
 from gcp.gcp import GoogleCloudPlatform
+from gcp.gcp import check_response
 from gcp.compute import constants
 from gcp.compute import utils
 from gcp.storage import Object
@@ -33,7 +34,7 @@ class Image(GoogleCloudPlatform):
 
         :param config:
         :param logger:
-        :param url: path to image to be uploaded
+        :param url: image url in storage to be uploaded
         :param id: image_id
         """
         super(Image, self).__init__(config, logger, name)
@@ -41,6 +42,7 @@ class Image(GoogleCloudPlatform):
         self.id = id
         self.config = config
 
+    @check_response
     def create(self):
         # upload tar.gz to a bucket
         # check if this bucket exists, create if not
@@ -51,11 +53,13 @@ class Image(GoogleCloudPlatform):
             project=self.project,
             body=self.to_dict()).execute()
 
+    @check_response
     def upload_and_create(self, file_path):
         obj = Object(self.config, self.logger, self.name)
         self.url = obj.upload_to_bucket(path=file_path)
         self.create()
 
+    @check_response
     def delete(self):
         return self.discovery.images().delete(project=self.project,
                                               name=self.name).execute()
