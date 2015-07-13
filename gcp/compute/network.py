@@ -98,10 +98,11 @@ def create(gcp_config, network, **kwargs):
 @operation
 @utils.throw_cloudify_exceptions
 def delete(gcp_config, **kwargs):
-    name = ctx.instance.runtime_properties.pop(constants.NAME, None)
+    name = ctx.instance.runtime_properties.get(constants.NAME, None)
     if not name:
         return
     network = Network(gcp_config,
                       ctx.logger,
                       network={'name': name})
     network.delete()
+    ctx.instance.runtime_properties.pop(constants.NAME, None)

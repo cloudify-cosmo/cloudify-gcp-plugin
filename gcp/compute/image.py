@@ -37,7 +37,9 @@ class Image(GoogleCloudPlatform):
         :param url: image url in storage to be uploaded
         :param id: image_id
         """
-        super(Image, self).__init__(config, logger, name)
+        super(Image, self).__init__(config, logger, name,
+                                    scope=[constants.COMPUTE_SCOPE,
+                                           constants.STORAGE_SCOPE_RW])
         self.url = url
         self.id = id
         self.config = config
@@ -49,13 +51,11 @@ class Image(GoogleCloudPlatform):
         # bucket will be named by project name
         # insert image from tar.gz to the projects
 
-        self.discovery.images().insert(
-            project=self.project,
-            body=self.to_dict()).execute()
+        return self.discovery.images().insert(project=self.project,
+                                              body=self.to_dict()).execute()
 
-    @check_response
     def upload_and_create(self, file_path):
-        obj = Object(self.config, self.logger, self.name)
+        obj = Object(self.config, self.logger, '{0}.tar.gz'.format(self.name))
         self.url = obj.upload_to_bucket(path=file_path)
         self.create()
 
@@ -93,6 +93,7 @@ def create(gcp_config, image_name, image_path, **kwargs):
 @operation
 @utils.throw_cloudify_exceptions
 def delete(gcp_config, **kwargs):
-    name = ctx.instance.runtime_properties.pop(constants.NAME, None)
+    name = ctx.instance.runtime_properties.get(constants.NAME, None)
     image = Image(gcp_config, ctx.logger, name)
     image.delete()
+    ctx.instance.runtime_properties.pop(constants.NAME, None)

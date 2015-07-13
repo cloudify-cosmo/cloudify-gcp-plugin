@@ -313,6 +313,20 @@ def create(gcp_config, instance_type, image_id, properties, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
+def delete(gcp_config, **kwargs):
+    name = ctx.instance.runtime_properties.get(constants.NAME, None)
+    if not name:
+        return
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=name)
+    instance.delete()
+    ctx.instance.runtime_properties.pop(constants.DISK, None)
+    ctx.instance.runtime_properties.pop(constants.NAME, None)
+
+
+@operation
+@utils.throw_cloudify_exceptions
 def add_instance_tag(gcp_config, instance_name, tag, **kwargs):
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
@@ -355,19 +369,6 @@ def remove_external_ip(gcp_config, instance_name, **kwargs):
                         ctx.logger,
                         name=instance_name)
     instance.delete_access_config()
-
-
-@operation
-@utils.throw_cloudify_exceptions
-def delete(gcp_config, **kwargs):
-    name = ctx.instance.runtime_properties.pop(constants.NAME, None)
-    if not name:
-        return
-    instance = Instance(gcp_config,
-                        ctx.logger,
-                        name=name)
-    instance.delete()
-    ctx.instance.runtime_properties.pop(constants.DISK, None)
 
 
 @operation

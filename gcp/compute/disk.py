@@ -93,12 +93,13 @@ def create(gcp_config, image, **kwargs):
 @operation
 @utils.throw_cloudify_exceptions
 def delete(gcp_config, **kwargs):
-    name = ctx.instance.runtime_properties.pop(constants.NAME, None)
+    name = ctx.instance.runtime_properties.get(constants.NAME, None)
     disk = Disk(gcp_config,
                 ctx.logger,
                 name=name)
     disk.delete()
     ctx.instance.runtime_properties.pop(constants.DISK, None)
+    ctx.instance.runtime_properties.pop(constants.NAME, None)
 
 
 @operation

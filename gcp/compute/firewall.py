@@ -131,7 +131,7 @@ def create(gcp_config, firewall_rule, **kwargs):
 @operation
 @utils.throw_cloudify_exceptions
 def delete(gcp_config, **kwargs):
-    firewall_name = ctx.instance.runtime_properties.pop(constants.NAME, None)
+    firewall_name = ctx.instance.runtime_properties.get(constants.NAME, None)
     if not firewall_name:
         return
     network_name = utils.get_gcp_resource_name(gcp_config['network'])
@@ -140,6 +140,7 @@ def delete(gcp_config, **kwargs):
                             firewall={'name': firewall_name},
                             network=network_name)
     firewall.delete()
+    ctx.instance.runtime_properties.pop(constants.NAME, None)
 
 
 @operation

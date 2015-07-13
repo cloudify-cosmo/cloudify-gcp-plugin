@@ -15,6 +15,7 @@
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.http import HttpError
 
+from gcp import check_response
 from gcp import GoogleCloudPlatform
 from gcp import GCPError
 from compute import constants
@@ -82,14 +83,17 @@ class Bucket(GoogleCloudPlatform):
                                      discovery=constants.STORAGE_DISCOVERY)
         self.name = self.name if name else self.project
 
+    @check_response
     def create(self):
         body = {'name': self.name}
         return self.discovery.buckets().create(project=self.project,
                                                body=body).execute()
 
+    @check_response
     def delete(self):
         return self.discovery.buckets().delete(bucket=self.name).execute()
 
+    @check_response
     def list(self):
         response = self.discovery.buckets().list(
             project=self.project).execute()
