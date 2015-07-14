@@ -28,7 +28,9 @@ node_types:
         default: {}
       image_id:
         description: >
-          The ID of the image in your GCP account.
+          The ID of the image in your GCP account. Description of demanded value
+          can be found under sourceImage property:
+          https://cloud.google.com/compute/docs/reference/latest/instances/insert
         type: string
         default: {}
       instance_type:
@@ -68,9 +70,11 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
-      image:
+      disk_image_id:
         description: >
-          The image of the Volume.
+          The image of the Volume. Description of demanded value can be found 
+          under sourceImage property:
+          https://cloud.google.com/compute/docs/reference/latest/disks/insert
         default: ''
       gcp_config:
         description: >
@@ -83,8 +87,8 @@ node_types:
           inputs:
             gcp_config:
               default: { get_property: [SELF, gcp_config] }
-            image:
-              default: { get_property: [SELF, image] }
+            disk_image_id:
+              default: { get_property: [SELF, disk_image_id] }
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_disk
           inputs:
