@@ -10,62 +10,322 @@ plugins:
     # URL to archive containing the plugin or name of directory containing
     # the plugin if it is included in the the blueprint directory under the
     # "plugins" directory.
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/master.zip
+    source: https://github.com/szpotona/cloudify-gcp-plugin/archive/add_disk.zip
 
 node_types:
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.Compute
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true) 
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      image_id:
+        description: >
+          The ID of the image in your GCP account. Description of demanded value
+          can be found under sourceImage property:
+          https://cloud.google.com/compute/docs/reference/latest/instances/insert
+        type: string
+        default: {}
+      instance_type:
+        description: >
+          The instance's type. All available instance types can be found here: 
+          https://cloud.google.com/compute/docs/machine-types
+        type: string
+        default: n1-standard-1
+      instance_additional_settings:
+        description: >
+          Additional instance settings.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
           implementation: gcp_plugin.plugin.tasks.create_instance
           inputs:
-            config:
-              default: {}
-        stop:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config]}
+            properties:
+              default: { get_property: [SELF, instance_additional_settings]}
+            instance_type:
+              default: { get_property: [SELF, instance_type]}
+            image_id:
+              default: { get_property: [SELF, image_id]}
+        delete:
           implementation: gcp_plugin.plugin.tasks.delete_instance
           inputs:
-            config:
-              default: {}
+            gcp_config:
+              default: { get_property: [SELF, gcp_config] }
+
+  cloudify.gcp.nodes.Volume:
+    derived_from: cloudify.nodes.Volume
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      disk_image_id:
+        description: >
+          The image of the Volume. Description of demanded value can be found 
+          under sourceImage property:
+          https://cloud.google.com/compute/docs/reference/latest/disks/insert
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.plugin.tasks.create_disk
+          inputs:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config] }
+            disk_image_id:
+              default: { get_property: [SELF, disk_image_id] }
+        delete:
+          implementation: gcp_plugin.plugin.tasks.delete_disk
+          inputs:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config]}
 
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.Network
     properties:
-      network_name: 
-        description: The name of the network.
-        default: ''
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: gcp_plugin.plugin.tasks.create_network
           inputs:
-            config:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config] }
+            network:
               default: {}
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_network
           inputs:
-            config:
-              default: {}
+            gcp_config:
+              default: { get_property: [SELF, gcp_config]}
 
   cloudify.gcp.nodes.FirewallRule:
     derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: gcp_plugin.plugin.tasks.create_firewall_rule
           inputs:
-            config:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config]}
+            firewall_rule:
               default: {}
         delete:
           implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
           inputs:
-            config:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config]}
+            firewall_rule:
               default: {}
 
+  cloudify.gcp.nodes.SecurityGroup:
+    derived_from: cloudify.nodes.SecurityGroup
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      rules:
+        description: >
+          You need to pass in either source_tags list OR cidr_ip list,
+          and then the following two: ip_protocol and port list OR target_tags list.
+        default: []
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: 
+          implementation: gcp_plugin.plugin.tasks.create_security_group
+          inputs: 
+            gcp_config:
+              default: { get_property: [SELF, gcp_config] }
+            rules:
+              default: { get_property: [SELF, rules] }
+        delete:          
+          implementation: gcp_plugin.plugin.tasks.delete_firewall_rule
+          inputs:
+            gcp_config:
+              default: { get_property: [SELF, gcp_config] }
+
+  cloudify.gcp.nodes.KeyPair:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      private_key_path:
+        description: >
+          The path where the key should be saved on the machine. If this is a bootstrap
+          process, this refers to the local computer. If this will run on the manager,
+          this will be saved on the manager.
+        type: string
+        default: ''
+      private_existing_key_path:
+        description: >
+          The path where the key should be saved on the machine. If this is a bootstrap
+          process, this refers to the local computer. If this will run on the manager,
+          this will be saved on the manager.
+        type: string
+        default: ''
+      public_existing_key_path:
+        description: >
+          The path to read from existing public key.
+        type: string
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
+      user:
+        type: string
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.plugin.tasks.create_keypair
+          inputs:
+            gcp_config: 
+              default: { get_property: [SELF, gcp_config] }
+            user: 
+              default: { get_property: [SELF, user] }
+            private_key_path: 
+              default: { get_property: [SELF, private_key_path] }
+            private_existing_key_path: 
+              default: { get_property: [SELF, private_existing_key_path] }
+            public_existing_key_path: 
+              default: { get_property: [SELF, public_existing_key_path] }
+            external:
+              default: { get_property: [SELF, use_external_resource] }
+        delete:
+          implementation: gcp_plugin.plugin.tasks.delete_keypair
+          inputs:
+            gcp_config: 
+              default: { get_property: [SELF, gcp_config] }
+            user: 
+              default: { get_property: [SELF, user] }
+            private_key_path: 
+              default: { get_property: [SELF, private_key_path] }
+
+  cloudify.gcp.nodes.ExternalIP:
+    derived_from: cloudify.nodes.VirtualIP
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+
 relationships:
-  cloudify.gcp.relationships.connected_to:
+  cloudify.gcp.relationships.instance_connected_to_security_group:
     derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.plugin.tasks.add_instance_tag
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance_name: 
+              default: { get_attribute: [SOURCE, gcp_name] }
+            tag:
+              default: { get_attribute: [TARGET, targetTags] }
+        unlink:
+          implementation: gcp_plugin.plugin.tasks.remove_instance_tag
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance_name: 
+              default: { get_attribute: [SOURCE, gcp_name] }
+            tag:
+              default: { get_attribute: [TARGET, targetTags] }
 
-  cloudify.gcp.relationships.contained_in:
+  cloudify.gcp.relationships.instance_connected_to_ip:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.plugin.tasks.add_external_ip
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance_name: 
+              default: { get_attribute: [SOURCE, gcp_name] }
+        unlink:
+          implementation: gcp_plugin.plugin.tasks.remove_external_ip
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance_name: 
+              default: { get_attribute: [SOURCE, gcp_name] }
+
+  cloudify.gcp.relationships.file_system_contained_in_compute:
     derived_from: cloudify.relationships.contained_in
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: gcp_plugin.plugin.tasks.add_boot_disk
 
+  cloudify.gcp.relationships.instance_connected_to_disk:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.plugin.tasks.attach_disk
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance_name: 
+              default: { get_attribute: [TARGET, gcp_name] }
+            disk: 
+              default: { get_attribute: [SOURCE, gcp_disk] }
+        unlink:
+          implementation: gcp_plugin.plugin.tasks.detach_disk
+          inputs:
+            gcp_config:
+              default: { get_property: [SOURCE, gcp_config] }
+            instance_name: 
+              default: { get_property: [TARGET, gcp_name] }
+            disk_name: 
+              default: { get_attribute: [SOURCE, gcp_name] }
