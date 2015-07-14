@@ -20,6 +20,7 @@ import Crypto
 import httplib2
 from googleapiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
+from cloudify.decorators import operation
 
 from compute import constants
 
@@ -110,3 +111,8 @@ class GCPError(Exception):
     """
     def __init__(self, message):
         super(GCPError, self).__init__(message)
+
+
+@operation
+def dummy_operation(**kwargs):
+    pass
