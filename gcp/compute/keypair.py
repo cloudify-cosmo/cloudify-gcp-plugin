@@ -48,7 +48,6 @@ class KeyPair(GoogleCloudPlatform):
         self.public_key = ''
         self.private_key = ''
 
-    @check_response
     def create(self):
         """
         Create keypair: private and public key.
@@ -58,7 +57,6 @@ class KeyPair(GoogleCloudPlatform):
         self.private_key = key.exportKey('PEM')
         self.public_key = key.exportKey('OpenSSH')
 
-    @check_response
     def save_private_key(self):
         """
         Save private key to given path.
