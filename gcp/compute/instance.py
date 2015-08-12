@@ -289,14 +289,15 @@ class Instance(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(gcp_config, instance_type, image_id, properties, **kwargs):
+def create(gcp_config, instance_type, image_id, properties, name, **kwargs):
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     script = properties.get('startup_script')
     if script:
         script = ctx.download_resource(script)
+    instance_name = name or ctx.instance.id
     instance = Instance(gcp_config,
                         ctx.logger,
-                        name=ctx.instance.id,
+                        name=instance_name,
                         image=image_id,
                         machine_type=instance_type,
                         external_ip=properties.get('externalIP', False),

@@ -78,8 +78,8 @@ class Disk(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(gcp_config, image, **kwargs):
-    name = utils.get_gcp_resource_name(ctx.instance.id)
+def create(gcp_config, image, name, **kwargs):
+    name = name or utils.get_gcp_resource_name(ctx.instance.id)
     disk = Disk(gcp_config,
                 ctx.logger,
                 image=image,
