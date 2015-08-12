@@ -289,7 +289,8 @@ class Instance(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(gcp_config, instance_type, image_id, properties, name, **kwargs):
+def create(instance_type, image_id, properties, name, **kwargs):
+    gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     script = properties.get('startup_script')
     if script:
@@ -314,7 +315,8 @@ def create(gcp_config, instance_type, image_id, properties, name, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def delete(gcp_config, **kwargs):
+def delete(**kwargs):
+    gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get(constants.NAME, None)
     if not name:
         return
@@ -328,7 +330,8 @@ def delete(gcp_config, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def add_instance_tag(gcp_config, instance_name, tag, **kwargs):
+def add_instance_tag(instance_name, tag, **kwargs):
+    gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
@@ -338,7 +341,8 @@ def add_instance_tag(gcp_config, instance_name, tag, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def remove_instance_tag(gcp_config, instance_name, tag, **kwargs):
+def remove_instance_tag(instance_name, tag, **kwargs):
+    gcp_config = utils.get_gcp_config()
     if not instance_name:
         return
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
@@ -350,7 +354,8 @@ def remove_instance_tag(gcp_config, instance_name, tag, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def add_external_ip(gcp_config, instance_name, **kwargs):
+def add_external_ip(instance_name, **kwargs):
+    gcp_config = utils.get_gcp_config()
     # check if the instance has no external ips, only one is supported so far
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
@@ -362,9 +367,10 @@ def add_external_ip(gcp_config, instance_name, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def remove_external_ip(gcp_config, instance_name, **kwargs):
+def remove_external_ip(instance_name, **kwargs):
     if not instance_name:
         return
+    gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
@@ -374,7 +380,8 @@ def remove_external_ip(gcp_config, instance_name, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def attach_disk(gcp_config, instance_name, disk, **kwargs):
+def attach_disk(instance_name, disk, **kwargs):
+    gcp_config = utils.get_gcp_config()
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=instance_name)
@@ -383,7 +390,8 @@ def attach_disk(gcp_config, instance_name, disk, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def detach_disk(gcp_config, instance_name, disk_name, **kwargs):
+def detach_disk(instance_name, disk_name, **kwargs):
+    gcp_config = utils.get_gcp_config()
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=instance_name)

@@ -12,6 +12,7 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+import os.path
 
 MAX_GCP_NAME = 63
 ID_HASH_CONST = 6
@@ -27,7 +28,6 @@ CHUNKSIZE = 2 * 1024 * 1024
 
 NAME = 'gcp_name'
 DISK = 'gcp_disk'
-GCP_CONFIG = 'gcp_config'
 ID = 'id'
 TARGET_TAGS = 'targetTags'
 SOURCE_TAGS = 'sourceTags'
@@ -39,3 +39,12 @@ AGENTS_SECURITY_GROUP = 'agents_security_group'
 SECURITY_GROUPS = [MANAGEMENT_SECURITY_GROUP,
                    MANAGER_AGENT_SECURITY_GROUP,
                    AGENTS_SECURITY_GROUP]
+
+GCP_CONFIG = 'gcp_config'
+AUTH = 'auth'
+PROJECT = 'project'
+ZONE = 'zone'
+NETWORK = 'network'
+
+MANAGER_HOMEDIR = os.path.join(os.sep, 'tmp', 'home')
+GCP_DEFAULT_CONFIG_PATH = os.path.join(MANAGER_HOMEDIR, 'gcp_config.json')

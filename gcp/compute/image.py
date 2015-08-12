@@ -83,7 +83,8 @@ class Image(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(gcp_config, image_name, image_path, **kwargs):
+def create(image_name, image_path, **kwargs):
+    gcp_config = utils.get_gcp_config()
     image = Image(gcp_config, ctx.logger, image_name)
     local_path = ctx.download_resource(image_path)
     image.upload_and_create(local_path)
@@ -92,7 +93,8 @@ def create(gcp_config, image_name, image_path, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def delete(gcp_config, **kwargs):
+def delete(**kwargs):
+    gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get(constants.NAME, None)
     image = Image(gcp_config, ctx.logger, name)
     image.delete()

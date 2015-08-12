@@ -142,13 +142,13 @@ class KeyPair(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(gcp_config,
-           user,
+def create(user,
            private_key_path,
            external,
            private_existing_key_path='',
            public_existing_key_path='',
            **kwargs):
+    gcp_config = utils.get_gcp_config()
     keypair = KeyPair(gcp_config,
                       ctx.logger,
                       user,
@@ -167,7 +167,8 @@ def create(gcp_config,
 
 @operation
 @utils.throw_cloudify_exceptions
-def delete(gcp_config, user, private_key_path, **kwargs):
+def delete(user, private_key_path, **kwargs):
+    gcp_config = utils.get_gcp_config()
     keypair = KeyPair(gcp_config,
                       ctx.logger,
                       user,

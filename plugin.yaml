@@ -51,8 +51,6 @@ node_types:
         start:
           implementation: gcp_plugin.gcp.compute.instance.create
           inputs:
-            gcp_config:
-              default: { get_property: [SELF, gcp_config]}
             properties:
               default: { get_property: [SELF, instance_additional_settings]}
             instance_type:
@@ -63,9 +61,6 @@ node_types:
               default: { get_property: [SELF, name]}
         delete:
           implementation: gcp_plugin.gcp.compute.instance.delete
-          inputs:
-            gcp_config:
-              default: { get_property: [SELF, gcp_config] }
 
   cloudify.gcp.nodes.Volume:
     derived_from: cloudify.nodes.Volume
@@ -93,17 +88,12 @@ node_types:
         create:
           implementation: gcp_plugin.gcp.compute.disk.create
           inputs:
-            gcp_config:
-              default: { get_property: [SELF, gcp_config] }
             image:
               default: { get_property: [SELF, image] }
             name:
               default: { get_property: [SELF, name] }
         delete:
           implementation: gcp_plugin.gcp.compute.disk.delete
-          inputs:
-            gcp_config:
-              default: { get_property: [SELF, gcp_config]}
 
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.Network
@@ -122,15 +112,10 @@ node_types:
         create:
           implementation: gcp_plugin.gcp.compute.network.create
           inputs:
-            gcp_config:
-              default: { get_property: [SELF, gcp_config] }
             network:
               default: {}
         delete:
           implementation: gcp_plugin.gcp.compute.network.delete
-          inputs:
-            gcp_config:
-              default: { get_property: [SELF, gcp_config]}
 
   cloudify.gcp.nodes.FirewallRule:
     derived_from: cloudify.nodes.Root
@@ -149,17 +134,10 @@ node_types:
         create:
           implementation: gcp_plugin.gcp.compute.firewall.create
           inputs:
-            gcp_config:
-              default: { get_property: [SELF, gcp_config]}
             firewall_rule:
               default: {}
         delete:
           implementation: gcp_plugin.gcp.compute.firewall.delete
-          inputs:
-            gcp_config:
-              default: { get_property: [SELF, gcp_config]}
-            firewall_rule:
-              default: {}
 
   cloudify.gcp.nodes.SecurityGroup:
     derived_from: cloudify.nodes.SecurityGroup
@@ -183,15 +161,10 @@ node_types:
         create: 
           implementation: gcp_plugin.gcp.compute.firewall.create_security_group
           inputs: 
-            gcp_config:
-              default: { get_property: [SELF, gcp_config] }
             rules:
               default: { get_property: [SELF, rules] }
         delete:          
           implementation: gcp_plugin.gcp.compute.firewall.delete_security_group
-          inputs:
-            gcp_config:
-              default: { get_property: [SELF, gcp_config] }
 
   cloudify.gcp.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
@@ -232,8 +205,6 @@ node_types:
         create:
           implementation: gcp_plugin.gcp.compute.keypair.create
           inputs:
-            gcp_config: 
-              default: { get_property: [SELF, gcp_config] }
             user: 
               default: { get_property: [SELF, user] }
             private_key_path: 
@@ -247,8 +218,6 @@ node_types:
         delete:
           implementation: gcp_plugin.gcp.compute.keypair.delete
           inputs:
-            gcp_config: 
-              default: { get_property: [SELF, gcp_config] }
             user: 
               default: { get_property: [SELF, user] }
             private_key_path: 
@@ -304,8 +273,6 @@ relationships:
         establish:
           implementation: gcp_plugin.gcp.compute.instance.add_instance_tag
           inputs:
-            gcp_config:
-              default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
             tag:
@@ -313,8 +280,6 @@ relationships:
         unlink:
           implementation: gcp_plugin.gcp.compute.instance.remove_instance_tag
           inputs:
-            gcp_config:
-              default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
             tag:
@@ -327,15 +292,11 @@ relationships:
         establish:
           implementation: gcp_plugin.gcp.compute.instance.add_external_ip
           inputs:
-            gcp_config:
-              default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
         unlink:
           implementation: gcp_plugin.gcp.compute.instance.remove_external_ip
           inputs:
-            gcp_config:
-              default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
 
@@ -353,8 +314,6 @@ relationships:
         establish:
           implementation: gcp_plugin.gcp.compute.instance.attach_disk
           inputs:
-            gcp_config:
-              default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_attribute: [TARGET, gcp_name] }
             disk: 
@@ -362,8 +321,6 @@ relationships:
         unlink:
           implementation: gcp_plugin.gcp.compute.instance.detach_disk
           inputs:
-            gcp_config:
-              default: { get_property: [SOURCE, gcp_config] }
             instance_name: 
               default: { get_property: [TARGET, gcp_name] }
             disk_name: 
