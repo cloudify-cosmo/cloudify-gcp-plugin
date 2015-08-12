@@ -41,6 +41,11 @@ node_types:
         description: >
           Additional instance settings.
         default: {}
+      name:
+        description: >
+          Optional instance name. By default it will be instance id.
+        type: string
+        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -54,6 +59,8 @@ node_types:
               default: { get_property: [SELF, instance_type]}
             image_id:
               default: { get_property: [SELF, image_id]}
+            name:
+              default: { get_property: [SELF, name]}
         delete:
           implementation: gcp_plugin.gcp.compute.instance.delete
           inputs:
@@ -76,6 +83,11 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
         default: {}
+      name:
+        description: >
+          Optional disk name. By default it will be disk id.
+        type: string
+        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -85,6 +97,8 @@ node_types:
               default: { get_property: [SELF, gcp_config] }
             image:
               default: { get_property: [SELF, image] }
+            name:
+              default: { get_property: [SELF, name] }
         delete:
           implementation: gcp_plugin.gcp.compute.disk.delete
           inputs:
@@ -330,7 +344,7 @@ relationships:
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
-          implementation: gcp_plugin.gcp.compute.instance.add_boot_disk
+          implementation: gcp_plugin.gcp.compute.disk.add_boot_disk
 
   cloudify.gcp.relationships.instance_connected_to_disk:
     derived_from: cloudify.relationships.connected_to
