@@ -253,17 +253,12 @@ node_types:
         create:
           implementation: gcp_plugin.gcp.compute.image.create
           inputs:
-            gcp_config: 
-              default: { get_property: [SELF, gcp_config] }
             image_name:
               default: ''
             image_path:
               default: ''
         delete:
           implementation: gcp_plugin.gcp.compute.image.delete
-          inputs:
-            gcp_config: 
-              default: { get_property: [SELF, gcp_config] }
 
 relationships:
   cloudify.gcp.relationships.instance_connected_to_security_group:
