@@ -88,12 +88,24 @@ class Network(GoogleCloudPlatform):
 @utils.throw_cloudify_exceptions
 def create(network, **kwargs):
     gcp_config = utils.get_gcp_config()
-    network['name'] = utils.get_gcp_resource_name(network['name'])
+    network['name'] = get_network_name(network)
     network = Network(gcp_config,
                       ctx.logger,
                       network=network)
-    network.create()
+    create_network(network)
     ctx.instance.runtime_properties[constants.NAME] = network.name
+
+
+def get_network_name(network):
+    if utils.should_use_external_resource():
+        return utils.assure_resource_id_correct()
+    else:
+        return network['name']
+
+
+def create_network(network):
+    if not utils.should_use_external_resource():
+        network.create()
 
 
 @operation
@@ -106,5 +118,10 @@ def delete(**kwargs):
     network = Network(gcp_config,
                       ctx.logger,
                       network={'name': name})
-    network.delete()
+    delete_network(network)
     ctx.instance.runtime_properties.pop(constants.NAME, None)
+
+
+def delete_network(network):
+    if not utils.should_use_external_resource():
+        network.delete()

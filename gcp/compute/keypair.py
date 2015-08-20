@@ -144,7 +144,6 @@ class KeyPair(GoogleCloudPlatform):
 @utils.throw_cloudify_exceptions
 def create(user,
            private_key_path,
-           external,
            private_existing_key_path='',
            public_existing_key_path='',
            **kwargs):
@@ -153,16 +152,24 @@ def create(user,
                       ctx.logger,
                       user,
                       private_key_path)
-    if external:
-        keypair.private_key = ctx.get_resource(private_existing_key_path)
-        keypair.public_key = ctx.get_resource(public_existing_key_path)
-    else:
-        keypair.create()
+    create_keypair(keypair,
+                   private_existing_key_path,
+                   public_existing_key_path)
     keypair.add_project_ssh_key(user, keypair.public_key)
     ctx.instance.runtime_properties[constants.PRIVATE_KEY] = \
         keypair.private_key
     ctx.instance.runtime_properties[constants.PUBLIC_KEY] = keypair.public_key
     keypair.save_private_key()
+
+
+def create_keypair(keypair,
+                   private_existing_key_path,
+                   public_existing_key_path):
+    if utils.should_use_external_resource():
+        keypair.private_key = ctx.get_resource(private_existing_key_path)
+        keypair.public_key = ctx.get_resource(public_existing_key_path)
+    else:
+        keypair.create()
 
 
 @operation

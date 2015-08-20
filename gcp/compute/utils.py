@@ -66,6 +66,18 @@ def get_gcp_resource_name(name):
     return final_name.lower()
 
 
+def assure_resource_id_correct():
+    resource_id = ctx.node.properties.get(constants.RESOURCE_ID)
+    if not resource_id:
+        raise NonRecoverableError('Resource id is missing.')
+
+    if resource_id != get_gcp_resource_name(resource_id):
+        raise NonRecoverableError('{} cannot be used as resource id.'
+                                  .format(resource_id))
+
+    return resource_id
+
+
 def get_firewall_rule_name(network, firewall):
     """
     Prefix firewall rule name with network name
@@ -100,6 +112,10 @@ def get_gcp_config():
     else:
         gcp_config = ctx.provider_context['resources'][constants.GCP_CONFIG]
         return deepcopy(gcp_config)
+
+
+def should_use_external_resource():
+    return ctx.node.properties.get(constants.USE_EXTERNAL_RESOURCE, False)
 
 
 def get_manager_provider_config():
