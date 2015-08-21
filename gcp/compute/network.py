@@ -19,6 +19,7 @@ from cloudify.decorators import operation
 from gcp.compute import constants
 from gcp.compute import utils
 from gcp.gcp import GoogleCloudPlatform
+from gcp.gcp import check_response
 
 
 class Network(GoogleCloudPlatform):
@@ -40,6 +41,7 @@ class Network(GoogleCloudPlatform):
             utils.get_gcp_resource_name(network['name']))
         self.network = network
 
+    @check_response
     def create(self):
         """
         Create GCP network.
@@ -52,6 +54,7 @@ class Network(GoogleCloudPlatform):
         return self.discovery.networks().insert(project=self.project,
                                                 body=self.to_dict()).execute()
 
+    @check_response
     def delete(self):
         """
         Delete GCP network.
@@ -66,6 +69,7 @@ class Network(GoogleCloudPlatform):
             project=self.project,
             network=self.name).execute()
 
+    @check_response
     def get(self):
         """
         Get GCP network details.
@@ -78,6 +82,7 @@ class Network(GoogleCloudPlatform):
             project=self.project,
             network=self.name).execute()
 
+    @check_response
     def list(self):
         """
         List networks.
