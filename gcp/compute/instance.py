@@ -161,6 +161,9 @@ class Instance(GoogleCloudPlatform):
     def get(self):
         """
         Get GCP instance details.
+
+        :return: REST response with operation responsible for the instance
+        details retrieval
         """
         self.logger.info('Get instance {0} details'.format(self.name))
 
@@ -290,16 +293,15 @@ class Instance(GoogleCloudPlatform):
 @operation
 @utils.throw_cloudify_exceptions
 def create(instance_type, image_id, properties, name, **kwargs):
-    name = get_instance_name(name)
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     script = properties.get('startup_script')
     if script:
         script = ctx.download_resource(script)
-    #name = name or utils.get_gcp_resource_name(ctx.instance.id)
+    instance_name = get_instance_name(name)
     instance = Instance(gcp_config,
                         ctx.logger,
-                        name=name,
+                        name=instance_name,
                         image=image_id,
                         machine_type=instance_type,
                         external_ip=properties.get('externalIP', False),
@@ -321,9 +323,9 @@ def get_instance_name(name):
         return name or utils.get_gcp_resource_name(ctx.instance.id)
 
 
+@utils.create_resource
 def create_instance(instance):
-    if not utils.should_use_external_resource():
-        instance.create()
+    instance.create()
 
 
 @operation

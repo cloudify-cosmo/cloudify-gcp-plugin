@@ -66,6 +66,18 @@ class Network(GoogleCloudPlatform):
             project=self.project,
             network=self.name).execute()
 
+    def get(self):
+        """
+        Get GCP network details.
+
+        :return: REST response with operation responsible for the network
+        details retrieval
+        """
+        self.logger.info('Get network {0} details'.format(self.name))
+        return self.discovery.networks().get(
+            project=self.project,
+            network=self.name).execute()
+
     def list(self):
         """
         List networks.
@@ -103,9 +115,9 @@ def get_network_name(network):
         return network['name']
 
 
+@utils.create_resource
 def create_network(network):
-    if not utils.should_use_external_resource():
-        network.create()
+    network.create()
 
 
 @operation

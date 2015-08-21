@@ -84,6 +84,20 @@ class FirewallRule(GoogleCloudPlatform):
             firewall=self.firewall['name']).execute()
 
     @check_response
+    def get(self):
+        """
+        Get GCP firewall rule details.
+
+        :return: REST response with operation responsible for the firewall
+        rule details retrieval
+        """
+        self.logger.info('Get firewall rule {0} details'.format(self.name))
+
+        return self.discovery.firewalls().get(
+            project=self.project,
+            firewall=self.firewall['name']).execute()
+
+    @check_response
     def update(self):
         """
         Update GCP firewall rule.
@@ -136,9 +150,9 @@ def set_firewall_rule_name(firewall_rule, network_name):
                                                              firewall_rule)
 
 
+@utils.create_resource
 def create_firewall(firewall):
-    if not utils.should_use_external_resource():
-        firewall.create()
+    firewall.create()
 
 
 @operation

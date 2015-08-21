@@ -19,7 +19,7 @@ from functools import wraps
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 
-from gcp.gcp import GCPError
+from gcp.gcp import GCPError, GCPHttpError, is_missing_resource_error
 from gcp.compute import constants
 
 
@@ -66,6 +66,10 @@ def get_gcp_resource_name(name):
     return final_name.lower()
 
 
+def should_use_external_resource():
+    return ctx.node.properties.get(constants.USE_EXTERNAL_RESOURCE, False)
+
+
 def assure_resource_id_correct():
     resource_id = ctx.node.properties.get(constants.RESOURCE_ID)
     if not resource_id:
@@ -76,6 +80,25 @@ def assure_resource_id_correct():
                                   .format(resource_id))
 
     return resource_id
+
+
+def create_resource(func):
+    def _decorator(resource, *args, **kwargs):
+        if should_use_external_resource():
+            try:
+                resource.get()
+            except GCPHttpError as error:
+                if is_missing_resource_error(error):
+                    name = ctx.node.properties.get(constants.RESOURCE_ID)
+                    raise NonRecoverableError(
+                        'Resource {} defined as external, but does not exist.'.
+                        format(name))
+                else:
+                    raise error
+        else:
+            return func(resource, *args, **kwargs)
+
+    return wraps(func)(_decorator)
 
 
 def get_firewall_rule_name(network, firewall):
@@ -112,10 +135,6 @@ def get_gcp_config():
     else:
         gcp_config = ctx.provider_context['resources'][constants.GCP_CONFIG]
         return deepcopy(gcp_config)
-
-
-def should_use_external_resource():
-    return ctx.node.properties.get(constants.USE_EXTERNAL_RESOURCE, False)
 
 
 def get_manager_provider_config():

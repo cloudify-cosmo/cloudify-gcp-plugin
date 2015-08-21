@@ -199,11 +199,6 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing keypair that is referenced by this node.
-        default: ''
       private_key_path:
         description: >
           The path where the key should be saved on the machine. If this is a bootstrap

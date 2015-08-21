@@ -60,6 +60,11 @@ class Image(GoogleCloudPlatform):
         self.create()
 
     @check_response
+    def get(self):
+        return self.discovery.images().get(project=self.project,
+                                           name=self.name).execute()
+
+    @check_response
     def delete(self):
         return self.discovery.images().delete(project=self.project,
                                               name=self.name).execute()
@@ -99,9 +104,9 @@ def get_image_name(image_name):
         return image_name
 
 
+@utils.create_resource
 def upload_image(image, local_path):
-    if not utils.should_use_external_resource():
-        image.upload_and_create(local_path)
+    image.upload_and_create(local_path)
 
 
 @operation

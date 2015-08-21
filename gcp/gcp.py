@@ -19,6 +19,7 @@ import json
 import Crypto
 import httplib2
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from oauth2client.client import SignedJwtAssertionCredentials
 from cloudify.decorators import operation
 
@@ -111,6 +112,13 @@ class GCPError(Exception):
     """
     def __init__(self, message):
         super(GCPError, self).__init__(message)
+
+
+GCPHttpError = HttpError
+
+
+def is_missing_resource_error(error):
+    return isinstance(error, GCPHttpError) and error.resp.status == 404
 
 
 @operation

@@ -98,9 +98,9 @@ def get_disk_name(name):
         return name or utils.get_gcp_resource_name(ctx.instance.id)
 
 
+@utils.create_resource
 def create_disk(disk):
-    if not utils.should_use_external_resource():
-        disk.create()
+    disk.create()
 
 
 @operation
