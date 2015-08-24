@@ -173,6 +173,7 @@ def create_keypair(keypair,
 
 
 @operation
+@utils.retry_on_failure('Retrying deleting keypair')
 @utils.throw_cloudify_exceptions
 def delete(user, private_key_path, **kwargs):
     gcp_config = utils.get_gcp_config()

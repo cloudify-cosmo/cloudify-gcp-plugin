@@ -121,6 +121,10 @@ def is_missing_resource_error(error):
     return isinstance(error, GCPHttpError) and error.resp.status == 404
 
 
+def is_resource_used_error(error):
+    return isinstance(error, GCPHttpError) and error.resp.status == 400
+
+
 @operation
 def dummy_operation(**kwargs):
     pass

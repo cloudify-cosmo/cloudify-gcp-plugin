@@ -329,6 +329,7 @@ def create_instance(instance):
 
 
 @operation
+@utils.retry_on_failure('Retrying deleting instance')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()

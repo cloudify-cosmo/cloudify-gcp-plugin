@@ -126,6 +126,7 @@ def create_network(network):
 
 
 @operation
+@utils.retry_on_failure('Retrying deleting network')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()

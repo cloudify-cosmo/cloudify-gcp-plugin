@@ -110,6 +110,7 @@ def upload_image(image, local_path):
 
 
 @operation
+@utils.retry_on_failure('Retrying deleting image')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()

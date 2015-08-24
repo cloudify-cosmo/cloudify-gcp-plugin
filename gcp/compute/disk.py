@@ -104,6 +104,7 @@ def create_disk(disk):
 
 
 @operation
+@utils.retry_on_failure('Retrying deleting disk')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
