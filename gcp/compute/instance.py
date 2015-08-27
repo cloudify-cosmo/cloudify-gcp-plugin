@@ -161,6 +161,9 @@ class Instance(GoogleCloudPlatform):
     def get(self):
         """
         Get GCP instance details.
+
+        :return: REST response with operation responsible for the instance
+        details retrieval
         """
         self.logger.info('Get instance {0} details'.format(self.name))
 
@@ -295,7 +298,7 @@ def create(instance_type, image_id, properties, name, **kwargs):
     script = properties.get('startup_script')
     if script:
         script = ctx.download_resource(script)
-    instance_name = name or ctx.instance.id
+    instance_name = get_instance_name(name)
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=instance_name,
@@ -303,17 +306,30 @@ def create(instance_type, image_id, properties, name, **kwargs):
                         machine_type=instance_type,
                         external_ip=properties.get('externalIP', False),
                         startup_script=script)
+    ctx.instance.runtime_properties[constants.NAME] = instance.name
     if ctx.node.properties['install_agent']:
         add_to_security_groups(instance)
     disk = ctx.instance.runtime_properties.get(constants.DISK)
     if disk:
         instance.disks = [disk]
-    instance.create()
-    ctx.instance.runtime_properties[constants.NAME] = instance.name
+    create_instance(instance)
     set_ip(instance)
 
 
+def get_instance_name(name):
+    if utils.should_use_external_resource():
+        return utils.assure_resource_id_correct()
+    else:
+        return name or utils.get_gcp_resource_name(ctx.instance.id)
+
+
+@utils.create_resource
+def create_instance(instance):
+    instance.create()
+
+
 @operation
+@utils.retry_on_failure('Retrying deleting instance')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
@@ -323,9 +339,15 @@ def delete(**kwargs):
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=name)
-    instance.delete()
+    delete_instance(instance)
+
     ctx.instance.runtime_properties.pop(constants.DISK, None)
     ctx.instance.runtime_properties.pop(constants.NAME, None)
+
+
+def delete_instance(instance):
+    if not utils.should_use_external_resource():
+        instance.delete()
 
 
 @operation

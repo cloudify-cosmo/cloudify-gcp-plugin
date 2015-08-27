@@ -39,6 +39,8 @@ AGENTS_SECURITY_GROUP = 'agents_security_group'
 SECURITY_GROUPS = [MANAGEMENT_SECURITY_GROUP,
                    MANAGER_AGENT_SECURITY_GROUP,
                    AGENTS_SECURITY_GROUP]
+USE_EXTERNAL_RESOURCE = 'use_external_resource'
+RESOURCE_ID = 'resource_id'
 
 GCP_CONFIG = 'gcp_config'
 AUTH = 'auth'
@@ -48,3 +50,5 @@ NETWORK = 'network'
 
 MANAGER_HOMEDIR = os.path.join(os.sep, 'tmp', 'home')
 GCP_DEFAULT_CONFIG_PATH = os.path.join(MANAGER_HOMEDIR, 'gcp_config.json')
+
+RETRY_DEFAULT_DELAY = 30

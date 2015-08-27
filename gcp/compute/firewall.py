@@ -84,6 +84,20 @@ class FirewallRule(GoogleCloudPlatform):
             firewall=self.firewall['name']).execute()
 
     @check_response
+    def get(self):
+        """
+        Get GCP firewall rule details.
+
+        :return: REST response with operation responsible for the firewall
+        rule details retrieval
+        """
+        self.logger.info('Get firewall rule {0} details'.format(self.name))
+
+        return self.discovery.firewalls().get(
+            project=self.project,
+            firewall=self.firewall['name']).execute()
+
+    @check_response
     def update(self):
         """
         Update GCP firewall rule.
@@ -118,18 +132,31 @@ class FirewallRule(GoogleCloudPlatform):
 def create(firewall_rule, **kwargs):
     gcp_config = utils.get_gcp_config()
     network_name = utils.get_gcp_resource_name(gcp_config['network'])
-    firewall_rule['name'] = utils.get_firewall_rule_name(network_name,
-                                                         firewall_rule)
+    set_firewall_rule_name(firewall_rule, network_name)
     firewall = FirewallRule(gcp_config,
                             ctx.logger,
                             firewall=firewall_rule,
                             network=network_name)
 
-    firewall.create()
+    create_firewall(firewall)
     ctx.instance.runtime_properties[constants.NAME] = firewall.name
 
 
+def set_firewall_rule_name(firewall_rule, network_name):
+    if utils.should_use_external_resource():
+        firewall_rule['name'] = utils.assure_resource_id_correct()
+    else:
+        firewall_rule['name'] = utils.get_firewall_rule_name(network_name,
+                                                             firewall_rule)
+
+
+@utils.create_resource
+def create_firewall(firewall):
+    firewall.create()
+
+
 @operation
+@utils.retry_on_failure('Retrying deleting firewall rule')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
@@ -141,32 +168,46 @@ def delete(**kwargs):
                             ctx.logger,
                             firewall={'name': firewall_name},
                             network=network_name)
-    firewall.delete()
+    delete_firewall(firewall)
     ctx.instance.runtime_properties.pop(constants.NAME, None)
+
+
+def delete_firewall(firewall):
+    if not utils.should_use_external_resource():
+        firewall.delete()
 
 
 @operation
 @utils.throw_cloudify_exceptions
 def create_security_group(rules, **kwargs):
     gcp_config = utils.get_gcp_config()
-    firewall = utils.create_firewall_structure_from_rules(
+    firewall_structure = create_firewall_structure_from_rules(
         gcp_config['network'],
         rules)
     ctx.instance.runtime_properties[constants.TARGET_TAGS] = \
-        firewall[constants.TARGET_TAGS]
+        firewall_structure[constants.TARGET_TAGS]
     ctx.instance.runtime_properties[constants.SOURCE_TAGS] = \
-        firewall[constants.SOURCE_TAGS]
+        firewall_structure[constants.SOURCE_TAGS]
     firewall = FirewallRule(gcp_config,
                             ctx.logger,
-                            firewall,
+                            firewall_structure,
                             gcp_config['network'])
-    firewall.create()
     ctx.instance.runtime_properties[constants.NAME] = firewall.name
+    create_firewall(firewall)
+
+
+def create_firewall_structure_from_rules(network, rules):
+    firewall_structure = utils.create_firewall_structure_from_rules(
+        network,
+        rules)
+    if utils.should_use_external_resource():
+        firewall_structure['name'] = utils.assure_resource_id_correct()
+    return firewall_structure
 
 
 @operation
 @utils.throw_cloudify_exceptions
 def delete_security_group(**kwargs):
+    delete(**kwargs)
     ctx.instance.runtime_properties.pop(constants.TARGET_TAGS, None)
     ctx.instance.runtime_properties.pop(constants.SOURCE_TAGS, None)
-    delete(**kwargs)

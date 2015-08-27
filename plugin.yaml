@@ -22,6 +22,11 @@ node_types:
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing instance that is referenced by this node.
+        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -70,6 +75,11 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing volume that is referenced by this node.
+        default: ''
       image:
         description: >
           The image of the Volume.
@@ -103,6 +113,11 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing network that is referenced by this node.
+        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
@@ -125,6 +140,11 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing firewall rule that is referenced by this node.
+        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
@@ -147,6 +167,11 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing security group that is referenced by this node.
+        default: ''
       rules:
         description: >
           You need to pass in either source_tags list OR cidr_ip list,
@@ -213,8 +238,6 @@ node_types:
               default: { get_property: [SELF, private_existing_key_path] }
             public_existing_key_path: 
               default: { get_property: [SELF, public_existing_key_path] }
-            external:
-              default: { get_property: [SELF, use_external_resource] }
         delete:
           implementation: gcp_plugin.gcp.compute.keypair.delete
           inputs:
@@ -244,6 +267,11 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing image that is referenced by this node.
+        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.

@@ -19,7 +19,8 @@ from functools import wraps
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 
-from gcp.gcp import GCPError
+from gcp.gcp import GCPError, GCPHttpError
+from gcp.gcp import is_missing_resource_error, is_resource_used_error
 from gcp.compute import constants
 
 
@@ -64,6 +65,57 @@ def get_gcp_resource_name(name):
             final_name[-constants.ID_HASH_CONST:])
     # convert string to lowercase
     return final_name.lower()
+
+
+def should_use_external_resource():
+    return ctx.node.properties.get(constants.USE_EXTERNAL_RESOURCE, False)
+
+
+def assure_resource_id_correct():
+    resource_id = ctx.node.properties.get(constants.RESOURCE_ID)
+    if not resource_id:
+        raise NonRecoverableError('Resource id is missing.')
+
+    if resource_id != get_gcp_resource_name(resource_id):
+        raise NonRecoverableError('{} cannot be used as resource id.'
+                                  .format(resource_id))
+
+    return resource_id
+
+
+def create_resource(func):
+    def _decorator(resource, *args, **kwargs):
+        if should_use_external_resource():
+            try:
+                resource.get()
+            except GCPHttpError as error:
+                if is_missing_resource_error(error):
+                    name = ctx.node.properties.get(constants.RESOURCE_ID)
+                    raise NonRecoverableError(
+                        'Resource {} defined as external, but does not exist.'.
+                        format(name))
+                else:
+                    raise error
+        else:
+            return func(resource, *args, **kwargs)
+
+    return wraps(func)(_decorator)
+
+
+def retry_on_failure(msg, delay=constants.RETRY_DEFAULT_DELAY):
+    def _retry_on_failure(func):
+        def _decorator(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except GCPHttpError as error:
+                if is_resource_used_error(error):
+                    ctx.operation.retry(msg, delay)
+                else:
+                    raise error
+
+        return wraps(func)(_decorator)
+
+    return _retry_on_failure
 
 
 def get_firewall_rule_name(network, firewall):

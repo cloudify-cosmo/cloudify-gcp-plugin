@@ -19,6 +19,7 @@ from cloudify.decorators import operation
 from gcp.compute import constants
 from gcp.compute import utils
 from gcp.gcp import GoogleCloudPlatform
+from gcp.gcp import check_response
 
 
 class Network(GoogleCloudPlatform):
@@ -40,6 +41,7 @@ class Network(GoogleCloudPlatform):
             utils.get_gcp_resource_name(network['name']))
         self.network = network
 
+    @check_response
     def create(self):
         """
         Create GCP network.
@@ -52,6 +54,7 @@ class Network(GoogleCloudPlatform):
         return self.discovery.networks().insert(project=self.project,
                                                 body=self.to_dict()).execute()
 
+    @check_response
     def delete(self):
         """
         Delete GCP network.
@@ -66,6 +69,20 @@ class Network(GoogleCloudPlatform):
             project=self.project,
             network=self.name).execute()
 
+    @check_response
+    def get(self):
+        """
+        Get GCP network details.
+
+        :return: REST response with operation responsible for the network
+        details retrieval
+        """
+        self.logger.info('Get network {0} details'.format(self.name))
+        return self.discovery.networks().get(
+            project=self.project,
+            network=self.name).execute()
+
+    @check_response
     def list(self):
         """
         List networks.
@@ -88,15 +105,28 @@ class Network(GoogleCloudPlatform):
 @utils.throw_cloudify_exceptions
 def create(network, **kwargs):
     gcp_config = utils.get_gcp_config()
-    network['name'] = utils.get_gcp_resource_name(network['name'])
+    network['name'] = get_network_name(network)
     network = Network(gcp_config,
                       ctx.logger,
                       network=network)
-    network.create()
+    create_network(network)
     ctx.instance.runtime_properties[constants.NAME] = network.name
 
 
+def get_network_name(network):
+    if utils.should_use_external_resource():
+        return utils.assure_resource_id_correct()
+    else:
+        return network['name']
+
+
+@utils.create_resource
+def create_network(network):
+    network.create()
+
+
 @operation
+@utils.retry_on_failure('Retrying deleting network')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
@@ -106,5 +136,10 @@ def delete(**kwargs):
     network = Network(gcp_config,
                       ctx.logger,
                       network={'name': name})
-    network.delete()
+    delete_network(network)
     ctx.instance.runtime_properties.pop(constants.NAME, None)
+
+
+def delete_network(network):
+    if not utils.should_use_external_resource():
+        network.delete()

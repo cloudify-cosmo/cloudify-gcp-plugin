@@ -60,6 +60,11 @@ class Image(GoogleCloudPlatform):
         self.create()
 
     @check_response
+    def get(self):
+        return self.discovery.images().get(project=self.project,
+                                           name=self.name).execute()
+
+    @check_response
     def delete(self):
         return self.discovery.images().delete(project=self.project,
                                               name=self.name).execute()
@@ -85,13 +90,27 @@ class Image(GoogleCloudPlatform):
 @utils.throw_cloudify_exceptions
 def create(image_name, image_path, **kwargs):
     gcp_config = utils.get_gcp_config()
-    image = Image(gcp_config, ctx.logger, image_name)
+    name = get_image_name(image_name)
+    image = Image(gcp_config, ctx.logger, name)
     local_path = ctx.download_resource(image_path)
-    image.upload_and_create(local_path)
+    upload_image(image, local_path)
     ctx.instance.runtime_properties[constants.NAME] = image.name
 
 
+def get_image_name(image_name):
+    if utils.should_use_external_resource():
+        return utils.assure_resource_id_correct()
+    else:
+        return image_name
+
+
+@utils.create_resource
+def upload_image(image, local_path):
+    image.upload_and_create(local_path)
+
+
 @operation
+@utils.retry_on_failure('Retrying deleting image')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
@@ -99,3 +118,8 @@ def delete(**kwargs):
     image = Image(gcp_config, ctx.logger, name)
     image.delete()
     ctx.instance.runtime_properties.pop(constants.NAME, None)
+
+
+def delete_image(image):
+    if not utils.should_use_external_resource():
+        image.delete()
