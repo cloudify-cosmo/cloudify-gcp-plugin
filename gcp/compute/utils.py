@@ -13,6 +13,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import re
+from copy import deepcopy
 from functools import wraps
 
 from cloudify import ctx
@@ -80,10 +81,25 @@ def get_firewall_rule_name(network, firewall):
 def throw_cloudify_exceptions(func):
     def _decorator(*args, **kwargs):
         try:
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         except GCPError as e:
             raise NonRecoverableError(e.message)
     return wraps(func)(_decorator)
+
+
+def get_gcp_config():
+    def _get_gcp_config_from_properties():
+        try:
+            return ctx.node.properties[constants.GCP_CONFIG]
+        except NonRecoverableError:
+            return ctx.source.node.properties[constants.GCP_CONFIG]
+
+    gcp_config_from_properties = _get_gcp_config_from_properties()
+    if gcp_config_from_properties:
+        return gcp_config_from_properties
+    else:
+        gcp_config = ctx.provider_context['resources'][constants.GCP_CONFIG]
+        return deepcopy(gcp_config)
 
 
 def get_manager_provider_config():

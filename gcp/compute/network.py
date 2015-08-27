@@ -86,7 +86,8 @@ class Network(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(gcp_config, network, **kwargs):
+def create(network, **kwargs):
+    gcp_config = utils.get_gcp_config()
     network['name'] = utils.get_gcp_resource_name(network['name'])
     network = Network(gcp_config,
                       ctx.logger,
@@ -97,7 +98,8 @@ def create(gcp_config, network, **kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def delete(gcp_config, **kwargs):
+def delete(**kwargs):
+    gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get(constants.NAME, None)
     if not name:
         return
