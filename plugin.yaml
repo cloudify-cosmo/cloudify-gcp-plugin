@@ -93,6 +93,11 @@ node_types:
           Optional disk name. By default it will be disk id.
         type: string
         default: ''
+      size:
+        description: >
+          Size of the Volume in GB.
+        type: integer
+        default: 10
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -102,6 +107,8 @@ node_types:
               default: { get_property: [SELF, image] }
             name:
               default: { get_property: [SELF, name] }
+            size:
+              default: { get_property: [SELF, size] }
         delete:
           implementation: gcp_plugin.gcp.compute.disk.delete
 
