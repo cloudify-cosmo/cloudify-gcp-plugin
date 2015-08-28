@@ -402,7 +402,7 @@ def add_ssh_key(**kwargs):
     user = ctx.target.instance.runtime_properties[constants.USER]
     key_user_string = utils.get_key_user_string(key, user)
     previous_keys = ctx.source.instance.runtime_properties.get('sshKey', '')
-    ctx.source.instance.runtime_properties['sshKey'] = \
+    ctx.source.instance.runtime_properties[constants.SSHKEY] = \
         previous_keys + '\n' + key_user_string if previous_keys else key_user_string
 
 
