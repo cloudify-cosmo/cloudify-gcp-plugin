@@ -129,11 +129,12 @@ class Instance(GoogleCloudPlatform):
         """
         # each tag should be RFC1035 compliant
         self.logger.info(
-            'Set tags {0} to instance {1}'.format(str(self.tags), self.name))
-
-        self.tags.extend(tags)
+            'Set tags {0} to instance {1}'.format(str(tags), self.name))
+        tag_dict = self.get()['tags']
+        self.tags = tag_dict['items']
+        self.tags = self.tags.extend(tags)
         self.tags = list(set(self.tags))
-        fingerprint = self.get()['tags']['fingerprint']
+        fingerprint = tag_dict['fingerprint']
         return self.discovery.instances().setTags(
             project=self.project,
             zone=self.zone,
@@ -361,6 +362,8 @@ def delete_instance(instance):
 @operation
 @utils.throw_cloudify_exceptions
 def add_instance_tag(instance_name, tag, **kwargs):
+    if not tag:
+        return
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
