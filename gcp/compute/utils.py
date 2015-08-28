@@ -190,3 +190,13 @@ def create_firewall_structure_from_rules(network, rules):
         if cidr and cidr not in firewall['sourceRanges']:
             firewall['sourceRanges'].append(cidr)
     return firewall
+
+
+def get_key_user_string(user, key):
+    return '{0}:{1}'.format(user, key)
+
+
+def get_agent_ssh_key_string():
+    key = ctx.provider_context['resources']['cloudify-agent']['public-key']
+    user = ctx.provider_context['cloudify']['cloudify-agent']['user']
+    return get_key_user_string(user, key)

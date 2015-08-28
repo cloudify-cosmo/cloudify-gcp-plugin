@@ -83,14 +83,14 @@ class KeyPair(GoogleCloudPlatform):
         common_instance_metadata = self.get_common_instance_metadata()
         if common_instance_metadata.get('items') is None:
             item = [{self.KEY_NAME: self.KEY_VALUE,
-                    'value': '{0}:{1}'.format(user, ssh_key)}]
+                    'value': utils.get_key_user_string(user, ssh_key)}]
             common_instance_metadata['items'] = item
         else:
             item = utils.get_item_from_gcp_response(
                 self.KEY_NAME,
                 self.KEY_VALUE,
                 common_instance_metadata)
-            key = '{0}:{1}'.format(user, ssh_key)
+            key = utils.get_key_user_string(user, ssh_key)
             if key not in item['value']:
                 item['value'] = '{0}\n{1}'.format(item['value'], key)
         self.logger.info(
@@ -117,7 +117,7 @@ class KeyPair(GoogleCloudPlatform):
                 self.KEY_NAME,
                 self.KEY_VALUE,
                 common_instance_metadata)
-            key = '{0}:{1}'.format(self.user, self.public_key)
+            key = utils.get_key_user_string(self.user, self.public_key)
             self.logger.info(
                 'Remove sshKey {1} from project {0} metadata'.format(
                     key,
@@ -155,7 +155,8 @@ def create(user,
     create_keypair(keypair,
                    private_existing_key_path,
                    public_existing_key_path)
-    keypair.add_project_ssh_key(user, keypair.public_key)
+    #keypair.add_project_ssh_key(user, keypair.public_key)
+    ctx.instance.runtime_properties[constants.USER] = user
     ctx.instance.runtime_properties[constants.PRIVATE_KEY] = \
         keypair.private_key
     ctx.instance.runtime_properties[constants.PUBLIC_KEY] = keypair.public_key
@@ -182,7 +183,7 @@ def delete(user, private_key_path, **kwargs):
                       user,
                       private_key_path)
     keypair.public_key = ctx.instance.runtime_properties[constants.PUBLIC_KEY]
-    keypair.remove_project_ssh_key()
+    #keypair.remove_project_ssh_key()
     keypair.remove_private_key()
     ctx.instance.runtime_properties.pop(constants.PRIVATE_KEY, None)
     ctx.instance.runtime_properties.pop(constants.PUBLIC_KEY, None)

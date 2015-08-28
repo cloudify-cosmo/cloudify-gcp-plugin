@@ -17,6 +17,7 @@ from cloudify.decorators import operation
 
 from gcp.compute import constants
 from gcp.compute import utils
+from gcp.compute.keypair import KeyPair
 from gcp.gcp import GoogleCloudPlatform
 from gcp.gcp import check_response
 from gcp.gcp import GCPError
@@ -61,6 +62,12 @@ class Instance(GoogleCloudPlatform):
         self.tags = tags.append(self.name) if tags else [self.name]
         self.externalIP = external_ip
         self.disks = []
+        self.sshKeys = self.get_instance_ssh_keys()
+
+    def get_instance_ssh_keys(self):
+        agent_key = utils.get_agent_ssh_key_string()
+        other_keys = ctx.instance.runtime_properties[constants.SSHKEY]
+        return other_keys + '\n' + agent_key if other_keys else agent_key
 
     @check_response
     def create(self):
@@ -271,7 +278,8 @@ class Instance(GoogleCloudPlatform):
                      'https://www.googleapis.com/auth/logging.write']}],
             'metadata': {
                 'items': [
-                    {'key': 'bucket', 'value': self.project}]
+                    {'key': 'bucket', 'value': self.project},
+                    {KeyPair.KEY_NAME: KeyPair.KEY_VALUE, 'value': self.sshKeys}]
             }
         }
         if not self.disks:
@@ -385,6 +393,17 @@ def add_external_ip(instance_name, **kwargs):
                         name=instance_name)
     instance.add_access_config()
     set_ip(instance, relationship=True)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def add_ssh_key(**kwargs):
+    key = ctx.target.instance.runtime_properties[constants.PUBLIC_KEY]
+    user = ctx.target.instance.runtime_properties[constants.USER]
+    key_user_string = utils.get_key_user_string(key, user)
+    previous_keys = ctx.source.instance.runtime_properties.get('sshKey', '')
+    ctx.source.instance.runtime_properties['sshKey'] = \
+        previous_keys + '\n' + key_user_string if previous_keys else key_user_string
 
 
 @operation
