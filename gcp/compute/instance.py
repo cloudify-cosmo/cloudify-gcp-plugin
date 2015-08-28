@@ -62,7 +62,6 @@ class Instance(GoogleCloudPlatform):
         self.tags = tags.append(self.name) if tags else [self.name]
         self.externalIP = external_ip
         self.disks = []
-        self.sshKeys = self.get_instance_ssh_keys()
 
     def get_instance_ssh_keys(self):
         agent_key = utils.get_agent_ssh_key_string()
@@ -279,7 +278,7 @@ class Instance(GoogleCloudPlatform):
             'metadata': {
                 'items': [
                     {'key': 'bucket', 'value': self.project},
-                    {KeyPair.KEY_NAME: KeyPair.KEY_VALUE, 'value': self.sshKeys}]
+                    {KeyPair.KEY_NAME: KeyPair.KEY_VALUE, 'value': self.get_instance_ssh_keys()}]
             }
         }
         if not self.disks:
