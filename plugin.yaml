@@ -332,9 +332,9 @@ relationships:
 
   cloudify.gcp.relationships.instance_connected_to_keypair:
     derived_from: cloudify.relationships.connected_to
-    source_interfaces:
+    target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish:
+        preconfigure:
           implementation: gcp_plugin.gcp.compute.instance.add_ssh_key
           inputs:
             instance_name:
