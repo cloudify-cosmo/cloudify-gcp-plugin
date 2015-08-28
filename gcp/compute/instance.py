@@ -294,6 +294,7 @@ class Instance(GoogleCloudPlatform):
                 if item['name'] == self.ACCESS_CONFIG:
                     item['accessConfigs'] = [{'type': self.ACCESS_CONFIG_TYPE,
                                               'name': self.ACCESS_CONFIG}]
+        ctx.logger.info('Instance dict: {0}'.format(str(body)))
         return body
 
 
@@ -399,7 +400,7 @@ def add_external_ip(instance_name, **kwargs):
 def add_ssh_key(**kwargs):
     key = ctx.target.instance.runtime_properties[constants.PUBLIC_KEY]
     user = ctx.target.instance.runtime_properties[constants.USER]
-    key_user_string = utils.get_key_user_string(key, user)
+    key_user_string = utils.get_key_user_string(user, key)
     previous_keys = ctx.source.instance.runtime_properties.get(constants.SSHKEY, '')
     ctx.source.instance.runtime_properties[constants.SSHKEY] = \
         previous_keys + '\n' + key_user_string if previous_keys else key_user_string
