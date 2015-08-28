@@ -65,7 +65,7 @@ class Instance(GoogleCloudPlatform):
 
     def get_instance_ssh_keys(self):
         agent_key = utils.get_agent_ssh_key_string()
-        other_keys = ctx.instance.runtime_properties[constants.SSHKEY]
+        other_keys = ctx.instance.runtime_properties.get(constants.SSHKEY)
         return other_keys + '\n' + agent_key if other_keys else agent_key
 
     @check_response
@@ -404,6 +404,15 @@ def add_ssh_key(**kwargs):
     previous_keys = ctx.source.instance.runtime_properties.get(constants.SSHKEY)
     ctx.source.instance.runtime_properties[constants.SSHKEY] = \
         previous_keys + '\n' + key_user_string if previous_keys else key_user_string
+    ctx.logger.info('sshKeys are: {0}'
+                    .format(ctx.source.instance.runtime_properties[constants.SSHKEY]))
+
+
+@operation
+def contained_in(**kwargs):
+    key = ctx.target.instance.runtime_properties[constants.SSHKEY]
+    ctx.source.instance.runtime_properties[constants.SSHKEY] = key
+    ctx.logger.info('Copied ssh keys to the node')
 
 
 @operation
@@ -444,13 +453,16 @@ def set_ip(instance, relationship=False):
     item = utils.get_item_from_gcp_response('name',
                                             instance.name,
                                             instances)
-    if relationship:
-        ctx.target.instance.runtime_properties['gcp_resource_id'] = \
-            item['networkInterfaces'][0]['accessConfigs'][0]['natIP']
-    else:
-        ctx.instance.runtime_properties['ip'] = \
-            item['networkInterfaces'][0]['networkIP']
-    # only with one default network interface
+    try:
+        if relationship:
+            ctx.target.instance.runtime_properties['gcp_resource_id'] = \
+                item['networkInterfaces'][0]['accessConfigs'][0]['natIP']
+        else:
+            ctx.instance.runtime_properties['ip'] = \
+                item['networkInterfaces'][0]['networkIP']
+        # only with one default network interface
+    except (TypeError, KeyError):
+        ctx.operation.retry('The instance has not yet created network interface', 10)
 
 
 def add_to_security_groups(instance):
