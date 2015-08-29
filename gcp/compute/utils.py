@@ -79,7 +79,6 @@ def assure_resource_id_correct():
     if resource_id != get_gcp_resource_name(resource_id):
         raise NonRecoverableError('{} cannot be used as resource id.'
                                   .format(resource_id))
-
     return resource_id
 
 
@@ -92,8 +91,8 @@ def create_resource(func):
                 if is_missing_resource_error(error):
                     name = ctx.node.properties.get(constants.RESOURCE_ID)
                     raise NonRecoverableError(
-                        'Resource {} defined as external, but does not exist.'.
-                            format(name))
+                        'Resource {0} defined as external, but does not exist. Error: {1}'.
+                            format(name, str(error)))
                 else:
                     raise error
         else:
