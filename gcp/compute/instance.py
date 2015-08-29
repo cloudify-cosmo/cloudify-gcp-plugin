@@ -131,8 +131,8 @@ class Instance(GoogleCloudPlatform):
         self.logger.info(
             'Set tags {0} to instance {1}'.format(str(tags), self.name))
         tag_dict = self.get()['tags']
-        self.tags = tag_dict['items']
-        self.tags = self.tags.extend(tags)
+        self.tags = tag_dict.get('items')
+        self.tags.extend(tags)
         self.tags = list(set(self.tags))
         fingerprint = tag_dict['fingerprint']
         return self.discovery.instances().setTags(
