@@ -84,28 +84,12 @@ class Instance(GoogleCloudPlatform):
         e.g. the file is not under the given path or it has wrong permissions
         """
         self.logger.info(
-            'Create instance {0}, zone {1}, project {2}'.format(
-                self.name,
-                self.zone,
-                self.project))
-
-        body = self.to_dict()
-        if self.startup_script is not None:
-            try:
-                with open(self.startup_script, 'r') as script:
-                    item = {
-                        'key': 'startup-script',
-                        'value': script.read()
-                    }
-                    body['metadata']['items'].append(item)
-            except IOError as e:
-                self.logger.error(str(e))
-                raise GCPError(str(e))
+            'Create instance with parameters: {0}'.format(self.to_dict()))
 
         return self.discovery.instances().insert(
             project=self.project,
             zone=self.zone,
-            body=body).execute()
+            body=self.to_dict()).execute()
 
     @check_response
     def delete(self):
@@ -285,6 +269,10 @@ class Instance(GoogleCloudPlatform):
                     {KeyPair.KEY_NAME: KeyPair.KEY_VALUE, 'value': self.get_instance_ssh_keys()}]
             }
         }
+        if self.startup_script:
+            body['metadata']['items'].append(
+                {'key': 'startup-script', 'value': self.startup_script})
+
         if not self.disks:
             self.disks = [{'boot': True,
                            'autoDelete': True,
@@ -298,9 +286,7 @@ class Instance(GoogleCloudPlatform):
                 if item['name'] == self.ACCESS_CONFIG:
                     item['accessConfigs'] = [{'type': self.ACCESS_CONFIG_TYPE,
                                               'name': self.ACCESS_CONFIG}]
-        ctx.logger.info('Instance dict: {0}'.format(str(body)))
         return body
-
 
 @operation
 @utils.throw_cloudify_exceptions
@@ -313,10 +299,18 @@ def create(instance_type,
            **kwargs):
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
-    if startup_script:
-        script = ctx.download_resource(startup_script)
+    script = ''
+    if not startup_script:
+        startup_script = ctx.instance.runtime_properties.get('startup_script')
+    #TODO: make it pythonistic
+
+    ctx.logger.info('The script is {0}'.format(str(startup_script)))
+    if startup_script and startup_script.get('type') == 'file':
+        script = ctx.get_resource(startup_script.get('script'))
+    elif startup_script and startup_script.get('type') == 'string':
+        script = startup_script.get('script')
     else:
-        script = ctx.instance.runtime_properties.get('startup_script')
+        GCPError('Not supported startup_script type, supported are [file, string]')
     instance_name = get_instance_name(name)
     instance = Instance(gcp_config,
                         ctx.logger,

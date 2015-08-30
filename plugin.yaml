@@ -57,7 +57,9 @@ node_types:
           implementation: gcp_plugin.gcp.compute.instance.create
           inputs:
             startup_script:
-              default: ''
+              default:
+                  type: ''
+                  string: ''
             external_ip:
               default: false
             instance_type:
