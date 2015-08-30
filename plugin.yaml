@@ -56,14 +56,18 @@ node_types:
         start:
           implementation: gcp_plugin.gcp.compute.instance.create
           inputs:
-            properties:
-              default: { get_property: [SELF, instance_additional_settings]}
+            startup_script:
+              default: ''
+            external_ip:
+              default: false
             instance_type:
               default: { get_property: [SELF, instance_type]}
             image_id:
               default: { get_property: [SELF, image_id]}
             name:
               default: { get_property: [SELF, name]}
+            scopes:
+              default: ''
         delete:
           implementation: gcp_plugin.gcp.compute.instance.delete
 

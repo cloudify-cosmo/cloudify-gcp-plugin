@@ -28,6 +28,8 @@ class Instance(GoogleCloudPlatform):
     ACCESS_CONFIG_TYPE = 'ONE_TO_ONE_NAT'
     NETWORK_INTERFACE = 'nic0'
     STANDARD_MACHINE_TYPE = 'n1-standard-1'
+    DEFAULT_SCOPES = ['https://www.googleapis.com/auth/devstorage.read_write',
+                     'https://www.googleapis.com/auth/logging.write']
 
     def __init__(self,
                  config,
@@ -37,7 +39,8 @@ class Instance(GoogleCloudPlatform):
                  machine_type=None,
                  startup_script=None,
                  external_ip=False,
-                 tags=None):
+                 tags=None,
+                 scopes=None):
         """
         Create Instance object
 
@@ -62,6 +65,7 @@ class Instance(GoogleCloudPlatform):
         self.tags = tags.append(self.name) if tags else [self.name]
         self.externalIP = external_ip
         self.disks = []
+        self.scopes = scopes or self.DEFAULT_SCOPES
 
     def get_instance_ssh_keys(self):
         agent_key = utils.get_agent_ssh_key_string()
@@ -273,9 +277,8 @@ class Instance(GoogleCloudPlatform):
                 {'network': 'global/networks/{0}'.format(self.network)}],
             'serviceAccounts': [
                 {'email': 'default',
-                 'scopes': [
-                     'https://www.googleapis.com/auth/devstorage.read_write',
-                     'https://www.googleapis.com/auth/logging.write']}],
+                 'scopes': self.scopes
+                 }],
             'metadata': {
                 'items': [
                     {'key': 'bucket', 'value': self.project},
@@ -301,21 +304,28 @@ class Instance(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(instance_type, image_id, properties, name, **kwargs):
-    ctx.logger.info('Create instance: {0}'.format(str(properties)))
+def create(instance_type,
+           image_id,
+           name,
+           external_ip,
+           startup_script,
+           scopes,
+           **kwargs):
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
-    script = properties.get('startup_script')
-    if script:
-        script = ctx.download_resource(script)
+    if startup_script:
+        script = ctx.download_resource(startup_script)
+    else:
+        script = ctx.instance.runtime_properties.get('startup_script')
     instance_name = get_instance_name(name)
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=instance_name,
                         image=image_id,
                         machine_type=instance_type,
-                        external_ip=properties.get('externalIP', False),
-                        startup_script=script)
+                        external_ip=external_ip,
+                        startup_script=script,
+                        scopes=scopes)
     ctx.instance.runtime_properties[constants.NAME] = instance.name
     if ctx.node.properties['install_agent']:
         add_to_security_groups(instance)
