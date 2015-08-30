@@ -302,6 +302,7 @@ class Instance(GoogleCloudPlatform):
 @operation
 @utils.throw_cloudify_exceptions
 def create(instance_type, image_id, properties, name, **kwargs):
+    ctx.logger.info('Create instance: {0}'.format(str(properties)))
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     script = properties.get('startup_script')
