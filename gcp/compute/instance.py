@@ -17,6 +17,7 @@ from cloudify.decorators import operation
 
 from gcp.compute import constants
 from gcp.compute import utils
+from gcp.compute.keypair import KeyPair
 from gcp.gcp import GoogleCloudPlatform
 from gcp.gcp import check_response
 from gcp.gcp import GCPError
@@ -27,6 +28,8 @@ class Instance(GoogleCloudPlatform):
     ACCESS_CONFIG_TYPE = 'ONE_TO_ONE_NAT'
     NETWORK_INTERFACE = 'nic0'
     STANDARD_MACHINE_TYPE = 'n1-standard-1'
+    DEFAULT_SCOPES = ['https://www.googleapis.com/auth/devstorage.read_write',
+                     'https://www.googleapis.com/auth/logging.write']
 
     def __init__(self,
                  config,
@@ -36,7 +39,8 @@ class Instance(GoogleCloudPlatform):
                  machine_type=None,
                  startup_script=None,
                  external_ip=False,
-                 tags=None):
+                 tags=None,
+                 scopes=None):
         """
         Create Instance object
 
@@ -61,6 +65,12 @@ class Instance(GoogleCloudPlatform):
         self.tags = tags.append(self.name) if tags else [self.name]
         self.externalIP = external_ip
         self.disks = []
+        self.scopes = scopes or self.DEFAULT_SCOPES
+
+    def get_instance_ssh_keys(self):
+        agent_key = utils.get_agent_ssh_key_string()
+        other_keys = ctx.instance.runtime_properties.get(constants.SSHKEY)
+        return other_keys + '\n' + agent_key if other_keys else agent_key
 
     @check_response
     def create(self):
@@ -74,28 +84,12 @@ class Instance(GoogleCloudPlatform):
         e.g. the file is not under the given path or it has wrong permissions
         """
         self.logger.info(
-            'Create instance {0}, zone {1}, project {2}'.format(
-                self.name,
-                self.zone,
-                self.project))
-
-        body = self.to_dict()
-        if self.startup_script is not None:
-            try:
-                with open(self.startup_script, 'r') as script:
-                    item = {
-                        'key': 'startup-script',
-                        'value': script.read()
-                    }
-                    body['metadata']['items'].append(item)
-            except IOError as e:
-                self.logger.error(str(e))
-                raise GCPError(str(e))
+            'Create instance with parameters: {0}'.format(self.to_dict()))
 
         return self.discovery.instances().insert(
             project=self.project,
             zone=self.zone,
-            body=body).execute()
+            body=self.to_dict()).execute()
 
     @check_response
     def delete(self):
@@ -123,11 +117,12 @@ class Instance(GoogleCloudPlatform):
         """
         # each tag should be RFC1035 compliant
         self.logger.info(
-            'Set tags {0} to instance {1}'.format(str(self.tags), self.name))
-
+            'Set tags {0} to instance {1}'.format(str(tags), self.name))
+        tag_dict = self.get()['tags']
+        self.tags = tag_dict.get('items')
         self.tags.extend(tags)
         self.tags = list(set(self.tags))
-        fingerprint = self.get()['tags']['fingerprint']
+        fingerprint = tag_dict['fingerprint']
         return self.discovery.instances().setTags(
             project=self.project,
             zone=self.zone,
@@ -266,14 +261,18 @@ class Instance(GoogleCloudPlatform):
                 {'network': 'global/networks/{0}'.format(self.network)}],
             'serviceAccounts': [
                 {'email': 'default',
-                 'scopes': [
-                     'https://www.googleapis.com/auth/devstorage.read_write',
-                     'https://www.googleapis.com/auth/logging.write']}],
+                 'scopes': self.scopes
+                 }],
             'metadata': {
                 'items': [
-                    {'key': 'bucket', 'value': self.project}]
+                    {'key': 'bucket', 'value': self.project},
+                    {KeyPair.KEY_NAME: KeyPair.KEY_VALUE, 'value': self.get_instance_ssh_keys()}]
             }
         }
+        if self.startup_script:
+            body['metadata']['items'].append(
+                {'key': 'startup-script', 'value': self.startup_script})
+
         if not self.disks:
             self.disks = [{'boot': True,
                            'autoDelete': True,
@@ -289,23 +288,38 @@ class Instance(GoogleCloudPlatform):
                                               'name': self.ACCESS_CONFIG}]
         return body
 
-
 @operation
 @utils.throw_cloudify_exceptions
-def create(instance_type, image_id, properties, name, **kwargs):
+def create(instance_type,
+           image_id,
+           name,
+           external_ip,
+           startup_script,
+           scopes,
+           **kwargs):
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
-    script = properties.get('startup_script')
-    if script:
-        script = ctx.download_resource(script)
+    script = ''
+    if not startup_script:
+        startup_script = ctx.instance.runtime_properties.get('startup_script')
+    #TODO: make it pythonistic
+
+    ctx.logger.info('The script is {0}'.format(str(startup_script)))
+    if startup_script and startup_script.get('type') == 'file':
+        script = ctx.get_resource(startup_script.get('script'))
+    elif startup_script and startup_script.get('type') == 'string':
+        script = startup_script.get('script')
+    else:
+        GCPError('Not supported startup_script type, supported are [file, string]')
     instance_name = get_instance_name(name)
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=instance_name,
                         image=image_id,
                         machine_type=instance_type,
-                        external_ip=properties.get('externalIP', False),
-                        startup_script=script)
+                        external_ip=external_ip,
+                        startup_script=script,
+                        scopes=scopes)
     ctx.instance.runtime_properties[constants.NAME] = instance.name
     if ctx.node.properties['install_agent']:
         add_to_security_groups(instance)
@@ -353,6 +367,8 @@ def delete_instance(instance):
 @operation
 @utils.throw_cloudify_exceptions
 def add_instance_tag(instance_name, tag, **kwargs):
+    if not tag:
+        return
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
@@ -385,6 +401,26 @@ def add_external_ip(instance_name, **kwargs):
                         name=instance_name)
     instance.add_access_config()
     set_ip(instance, relationship=True)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def add_ssh_key(**kwargs):
+    key = ctx.target.instance.runtime_properties[constants.PUBLIC_KEY]
+    user = ctx.target.instance.runtime_properties[constants.USER]
+    key_user_string = utils.get_key_user_string(user, key + ' ' + user)
+    previous_keys = ctx.source.instance.runtime_properties.get(constants.SSHKEY)
+    ctx.source.instance.runtime_properties[constants.SSHKEY] = \
+        previous_keys + '\n' + key_user_string if previous_keys else key_user_string
+    ctx.logger.info('sshKeys are: {0}'
+                    .format(ctx.source.instance.runtime_properties[constants.SSHKEY]))
+
+
+@operation
+def contained_in(**kwargs):
+    key = ctx.target.instance.runtime_properties[constants.SSHKEY]
+    ctx.source.instance.runtime_properties[constants.SSHKEY] = key
+    ctx.logger.info('Copied ssh keys to the node')
 
 
 @operation
@@ -425,13 +461,16 @@ def set_ip(instance, relationship=False):
     item = utils.get_item_from_gcp_response('name',
                                             instance.name,
                                             instances)
-    if relationship:
-        ctx.target.instance.runtime_properties['gcp_resource_id'] = \
-            item['networkInterfaces'][0]['accessConfigs'][0]['natIP']
-    else:
-        ctx.instance.runtime_properties['ip'] = \
-            item['networkInterfaces'][0]['networkIP']
-    # only with one default network interface
+    try:
+        if relationship:
+            ctx.target.instance.runtime_properties['gcp_resource_id'] = \
+                item['networkInterfaces'][0]['accessConfigs'][0]['natIP']
+        else:
+            ctx.instance.runtime_properties['ip'] = \
+                item['networkInterfaces'][0]['networkIP']
+        # only with one default network interface
+    except (TypeError, KeyError):
+        ctx.operation.retry('The instance has not yet created network interface', 10)
 
 
 def add_to_security_groups(instance):

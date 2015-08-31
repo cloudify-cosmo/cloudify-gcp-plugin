@@ -208,6 +208,6 @@ def create_firewall_structure_from_rules(network, rules):
 @operation
 @utils.throw_cloudify_exceptions
 def delete_security_group(**kwargs):
-    delete(**kwargs)
     ctx.instance.runtime_properties.pop(constants.TARGET_TAGS, None)
     ctx.instance.runtime_properties.pop(constants.SOURCE_TAGS, None)
+    delete(**kwargs)

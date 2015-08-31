@@ -79,7 +79,6 @@ def assure_resource_id_correct():
     if resource_id != get_gcp_resource_name(resource_id):
         raise NonRecoverableError('{} cannot be used as resource id.'
                                   .format(resource_id))
-
     return resource_id
 
 
@@ -92,8 +91,8 @@ def create_resource(func):
                 if is_missing_resource_error(error):
                     name = ctx.node.properties.get(constants.RESOURCE_ID)
                     raise NonRecoverableError(
-                        'Resource {} defined as external, but does not exist.'.
-                        format(name))
+                        'Resource {0} defined as external, but does not exist. Error: {1}'.
+                            format(name, str(error)))
                 else:
                     raise error
         else:
@@ -136,6 +135,7 @@ def throw_cloudify_exceptions(func):
             return func(*args, **kwargs)
         except GCPError as e:
             raise NonRecoverableError(e.message)
+
     return wraps(func)(_decorator)
 
 
@@ -185,8 +185,20 @@ def create_firewall_structure_from_rules(network, rules):
             if tag not in firewall[constants.TARGET_TAGS]:
                 firewall[constants.TARGET_TAGS].append(tag)
         firewall['allowed'].extend([{'IPProtocol': rule.get('ip_protocol'),
-                                    'ports': [rule.get('port', [])]}])
+                                     'ports': [rule.get('port', [])]}])
         cidr = rule.get('cidr_ip')
         if cidr and cidr not in firewall['sourceRanges']:
             firewall['sourceRanges'].append(cidr)
     return firewall
+
+
+def get_key_user_string(user, key):
+    return '{0}:{1}'.format(user, key)
+
+
+def get_agent_ssh_key_string():
+    try:
+        return ctx.provider_context['resources']['cloudify-agent']['public-key']
+    except KeyError as e:
+        # means that we are bootstrapping the manager
+        return ''
