@@ -265,8 +265,16 @@ node_types:
       use_external_resource:
         description: >
           Indicate whether the resource exists or if Cloudify should create the resource.
+          If set to true, this node will be static IP, otherwise ephemeral IP.
         type: boolean
         default: false
+      ip_address:
+        description: >
+          Address of this external IP. This should be address of already existing,
+          unattached static IP. It will be used only if "use_external_resource"
+          is set to true.
+        type: string
+        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.

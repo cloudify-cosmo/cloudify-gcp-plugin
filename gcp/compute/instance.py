@@ -29,7 +29,7 @@ class Instance(GoogleCloudPlatform):
     NETWORK_INTERFACE = 'nic0'
     STANDARD_MACHINE_TYPE = 'n1-standard-1'
     DEFAULT_SCOPES = ['https://www.googleapis.com/auth/devstorage.read_write',
-                     'https://www.googleapis.com/auth/logging.write']
+                      'https://www.googleapis.com/auth/logging.write']
 
     def __init__(self,
                  config,
@@ -168,11 +168,13 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone).execute()
 
     @check_response
-    def add_access_config(self):
+    def add_access_config(self, ip_address=''):
         """
         Set GCP instance external IP.
         Zone operation.
 
+        :param ip_address: ip address of external IP, if not set new IP
+        address assigned
         :return: REST response with operation responsible for the instance
         external IP setting process and its status
         """
@@ -181,6 +183,9 @@ class Instance(GoogleCloudPlatform):
         body = {'kind': 'compute#accessConfig',
                 'name': self.ACCESS_CONFIG,
                 'type': self.ACCESS_CONFIG_TYPE}
+        if ip_address:
+            body['natIP'] = ip_address
+
         return self.discovery.instances().addAccessConfig(
             project=self.project,
             instance=self.name,
@@ -287,6 +292,7 @@ class Instance(GoogleCloudPlatform):
                     item['accessConfigs'] = [{'type': self.ACCESS_CONFIG_TYPE,
                                               'name': self.ACCESS_CONFIG}]
         return body
+
 
 @operation
 @utils.throw_cloudify_exceptions
@@ -396,10 +402,18 @@ def add_external_ip(instance_name, **kwargs):
     gcp_config = utils.get_gcp_config()
     # check if the instance has no external ips, only one is supported so far
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
+    ip_node = ctx.target.node
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=instance_name)
-    instance.add_access_config()
+    if ip_node.properties[constants.USE_EXTERNAL_RESOURCE]:
+        ip_address = ip_node.properties['ip_address']
+        if not ip_address:
+            raise GCPError('{} is set, but ip_address is not set'
+                           .format(constants.USE_EXTERNAL_RESOURCE))
+        instance.add_access_config(ip_address)
+    else:
+        instance.add_access_config()
     set_ip(instance, relationship=True)
 
 
