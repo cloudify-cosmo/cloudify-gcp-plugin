@@ -40,7 +40,8 @@ class Instance(GoogleCloudPlatform):
                  startup_script=None,
                  external_ip=False,
                  tags=None,
-                 scopes=None):
+                 scopes=None,
+                 user_data=None):
         """
         Create Instance object
 
@@ -66,11 +67,7 @@ class Instance(GoogleCloudPlatform):
         self.externalIP = external_ip
         self.disks = []
         self.scopes = scopes or self.DEFAULT_SCOPES
-
-    def get_instance_ssh_keys(self):
-        agent_key = utils.get_agent_ssh_key_string()
-        other_keys = ctx.instance.runtime_properties.get(constants.SSHKEY)
-        return other_keys + '\n' + agent_key if other_keys else agent_key
+        self.user_data = user_data
 
     @check_response
     def create(self):
@@ -255,6 +252,14 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone).execute()
 
     def to_dict(self):
+        def add_key_value_to_metadata(key, value, body):
+            body['metadata']['items'].append({'key': key, 'value': value})
+
+        def get_instance_ssh_keys():
+            agent_key = utils.get_agent_ssh_key_string()
+            other_keys = ctx.instance.runtime_properties.get(constants.SSHKEY)
+            return other_keys + '\n' + agent_key if other_keys else agent_key
+
         body = {
             'name': self.name,
             'description': 'Cloudify generated instance',
@@ -269,14 +274,15 @@ class Instance(GoogleCloudPlatform):
                  'scopes': self.scopes
                  }],
             'metadata': {
-                'items': [
-                    {'key': 'bucket', 'value': self.project},
-                    {KeyPair.KEY_NAME: KeyPair.KEY_VALUE, 'value': self.get_instance_ssh_keys()}]
+                'items': [{'key': 'bucket', 'value': self.project}]
             }
         }
+
+        add_key_value_to_metadata(KeyPair.KEY_VALUE, get_instance_ssh_keys(), body)
         if self.startup_script:
-            body['metadata']['items'].append(
-                {'key': 'startup-script', 'value': self.startup_script})
+            add_key_value_to_metadata('startup-script', self.startup_script, body)
+        if self.user_data:
+            add_key_value_to_metadata('user-data', self.user_data, body)
 
         if not self.disks:
             self.disks = [{'boot': True,
@@ -302,6 +308,7 @@ def create(instance_type,
            external_ip,
            startup_script,
            scopes,
+           user_data,
            **kwargs):
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
@@ -315,8 +322,7 @@ def create(instance_type,
         script = ctx.get_resource(startup_script.get('script'))
     elif startup_script and startup_script.get('type') == 'string':
         script = startup_script.get('script')
-    else:
-        GCPError('Not supported startup_script type, supported are [file, string]')
+
     instance_name = get_instance_name(name)
     instance = Instance(gcp_config,
                         ctx.logger,
@@ -325,7 +331,8 @@ def create(instance_type,
                         machine_type=instance_type,
                         external_ip=external_ip,
                         startup_script=script,
-                        scopes=scopes)
+                        scopes=scopes,
+                        user_data=user_data)
     ctx.instance.runtime_properties[constants.NAME] = instance.name
     if ctx.node.properties['install_agent']:
         add_to_security_groups(instance)
