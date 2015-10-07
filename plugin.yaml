@@ -75,6 +75,46 @@ node_types:
         delete:
           implementation: gcp_plugin.gcp.compute.instance.delete
 
+  cloudify.gcp.nodes.InstanceGroup:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing instance that is referenced by this node.
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Optional instance name. By default it will be instance group id.
+        type: string
+        default: ''
+      named_ports:
+        description: >
+          A list of named ports defined for this instance group, the expected
+          format is: [{name: 'name', port: 1234}, ... ].
+        default: []
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: gcp_plugin.gcp.compute.instance_group.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            named_ports:
+              default: { get_property: [SELF, named_ports]}
+        delete:
+          implementation: gcp_plugin.gcp.compute.instance_group.delete
+
   cloudify.gcp.nodes.Volume:
     derived_from: cloudify.nodes.Volume
     properties:
@@ -389,3 +429,22 @@ relationships:
               default: { get_property: [TARGET, gcp_name] }
             disk_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
+
+  cloudify.gcp.relationships.instance_group_contains:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.gcp.compute.instance_group.add_to_instance_group
+          inputs:
+            instance_group_name:
+              default: { get_attribute: [SOURCE, gcp_name] }
+            instance_name:
+              default: { get_attribute: [TARGET, gcp_name] }
+        unlink:
+          implementation: gcp_plugin.gcp.compute.instance_group.remove_from_instance_group
+          inputs:
+            instance_group_name:
+              default: { get_attribute: [SOURCE, gcp_name] }
+            instance_name:
+              default: { get_attribute: [TARGET, gcp_name] }
