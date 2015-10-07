@@ -35,7 +35,8 @@ class KeyPair(GoogleCloudPlatform):
                  config,
                  logger,
                  user,
-                 private_key_path):
+                 private_key_path,
+                 public_key_path):
         """
         Create KeyPair object
 
@@ -47,6 +48,7 @@ class KeyPair(GoogleCloudPlatform):
         super(KeyPair, self).__init__(config, logger, None)
         self.user = user
         self.private_key_path = private_key_path
+        self.public_key_path = public_key_path
         self.public_key = ''
         self.private_key = ''
 
@@ -144,31 +146,28 @@ class KeyPair(GoogleCloudPlatform):
 @utils.throw_cloudify_exceptions
 def create(user,
            private_key_path,
-           private_existing_key_path='',
-           public_existing_key_path='',
+           public_key_path,
            **kwargs):
     gcp_config = utils.get_gcp_config()
     keypair = KeyPair(gcp_config,
                       ctx.logger,
                       user,
-                      private_key_path)
-    create_keypair(keypair,
-                   private_existing_key_path,
-                   public_existing_key_path)
+                      private_key_path,
+                      public_key_path)
+    create_keypair(keypair)
     # keypair.add_project_ssh_key()
     ctx.instance.runtime_properties[constants.USER] = user
     ctx.instance.runtime_properties[constants.PRIVATE_KEY] = \
         keypair.private_key
     ctx.instance.runtime_properties[constants.PUBLIC_KEY] = keypair.public_key
-    keypair.save_private_key()
+    if not utils.should_use_external_resource():
+        keypair.save_private_key()
 
 
-def create_keypair(keypair,
-                   private_existing_key_path,
-                   public_existing_key_path):
+def create_keypair(keypair):
     if utils.should_use_external_resource():
-        keypair.private_key = ctx.get_resource(private_existing_key_path)
-        keypair.public_key = ctx.get_resource(public_existing_key_path)
+        keypair.private_key = ctx.get_resource(keypair.private_key_path)
+        keypair.public_key = ctx.get_resource(keypair.public_key_path)
     else:
         keypair.create()
 
@@ -181,7 +180,8 @@ def delete(user, private_key_path, **kwargs):
     keypair = KeyPair(gcp_config,
                       ctx.logger,
                       user,
-                      private_key_path)
+                      private_key_path,
+                      None)
     keypair.public_key = ctx.instance.runtime_properties[constants.PUBLIC_KEY]
     #keypair.remove_project_ssh_key()
     if not utils.should_use_external_resource():
