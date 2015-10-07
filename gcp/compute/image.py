@@ -71,7 +71,8 @@ class Image(GoogleCloudPlatform):
 
     def list_objects(self):
         storage = self.create_discovery(discovery=constants.STORAGE_DISCOVERY,
-                                        scope=constants.STORAGE_SCOPE_RW)
+                                        scope=constants.STORAGE_SCOPE_RW,
+                                        api_version=constants.API_V1)
         response = storage.objects().list(bucket=self.project).execute()
         return response.get('items')
 

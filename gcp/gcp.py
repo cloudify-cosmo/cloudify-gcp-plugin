@@ -48,15 +48,19 @@ class GoogleCloudPlatform(object):
     """
 
     def __init__(self, config, logger, name, scope=constants.COMPUTE_SCOPE,
-                 discovery=constants.COMPUTE_DISCOVERY):
+                 discovery=constants.COMPUTE_DISCOVERY,
+                 api_version=constants.API_V1):
         """
         GoogleCloudPlatform class constructor.
         Create API discovery object that will be making GCP REST API calls.
 
         :param config: dictionary with project properties: path to auth file,
         project and zone
-        :param scope: scope string of GCP connection
         :param logger: logger object that the class methods will be logging to
+        :param name: name of GCP resource represented by this object
+        :param scope: scope string of GCP connection
+        :param discovery: name of Google service
+        :param api_version: version of used API to communicate with GCP
         :return:
         """
         self.auth = config['auth']
@@ -65,14 +69,16 @@ class GoogleCloudPlatform(object):
         self.scope = scope
         self.name = name
         self.logger = logger.getChild('GCP')
-        self.discovery = self.create_discovery(discovery, self.scope)
+        self.discovery = self.create_discovery(discovery, self.scope, api_version)
+        self.api_version = api_version
 
-    def create_discovery(self, discovery, scope):
+    def create_discovery(self, discovery, scope, api_version):
         """
         Create Google Cloud API discovery object and perform authentication.
 
         :param discovery: name of the API discovery to be created
         :param scope: scope the API discovery will have
+        :param api_version: version of the API
         :return: discovery object
         :raise: GCPError if there is a problem with service account JSON file:
         e.g. the file is not under the given path or it has wrong permissions
@@ -87,7 +93,7 @@ class GoogleCloudPlatform(object):
                 scope=scope)
             http = httplib2.Http()
             credentials.authorize(http)
-            return build(discovery, 'v1', http=http)
+            return build(discovery, api_version, http=http)
         except IOError as e:
             self.logger.error(str(e))
             raise GCPError(str(e))
