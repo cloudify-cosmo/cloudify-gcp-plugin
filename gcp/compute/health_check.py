@@ -117,24 +117,17 @@ class HttpsHealthCheck(HealthCheck):
 @operation
 @utils.throw_cloudify_exceptions
 def create(name, health_check_type, additional_settings, **kwargs):
-    name = get_health_check_name(name)
+    name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     health_check = health_check_of_type(health_check_type,
                                         config=gcp_config,
                                         logger=ctx.logger,
                                         name=name,
                                         additional_settings=additional_settings)
-    create_health_check(health_check)
+    utils.create(health_check)
     ctx.instance.runtime_properties[constants.NAME] = name
     ctx.instance.runtime_properties[constants.HEALTH_CHECK_TYPE] = \
         health_check_type
-
-
-def get_health_check_name(name):
-    if utils.should_use_external_resource():
-        return utils.assure_resource_id_correct()
-    else:
-        return name or utils.get_gcp_resource_name(ctx.instance.id)
 
 
 def health_check_of_type(health_check_type, **kwargs):
@@ -145,11 +138,6 @@ def health_check_of_type(health_check_type, **kwargs):
     else:
         raise NonRecoverableError(
             'Unexpected type of health check: {}'.format(health_check_type))
-
-
-@utils.create_resource
-def create_health_check(health_check):
-    health_check.create()
 
 
 @operation
@@ -166,11 +154,6 @@ def delete(**kwargs):
                                             config=gcp_config,
                                             logger=ctx.logger,
                                             name=name)
-        delete_health_check(health_check)
+        utils.delete_if_not_external(health_check)
         ctx.instance.runtime_properties.pop(constants.NAME, None)
         ctx.instance.runtime_properties.pop(constants.HEALTH_CHECK_TYPE, None)
-
-
-def delete_health_check(health_check):
-    if not utils.should_use_external_resource():
-        health_check.delete()

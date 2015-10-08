@@ -138,7 +138,7 @@ def create(firewall_rule, **kwargs):
                             firewall=firewall_rule,
                             network=network_name)
 
-    create_firewall(firewall)
+    utils.create(firewall)
     ctx.instance.runtime_properties[constants.NAME] = firewall.name
 
 
@@ -148,11 +148,6 @@ def set_firewall_rule_name(firewall_rule, network_name):
     else:
         firewall_rule['name'] = utils.get_firewall_rule_name(network_name,
                                                              firewall_rule)
-
-
-@utils.create_resource
-def create_firewall(firewall):
-    firewall.create()
 
 
 @operation
@@ -168,13 +163,8 @@ def delete(**kwargs):
                             ctx.logger,
                             firewall={'name': firewall_name},
                             network=network_name)
-    delete_firewall(firewall)
+    utils.delete_if_not_external(firewall)
     ctx.instance.runtime_properties.pop(constants.NAME, None)
-
-
-def delete_firewall(firewall):
-    if not utils.should_use_external_resource():
-        firewall.delete()
 
 
 @operation
@@ -193,7 +183,7 @@ def create_security_group(rules, **kwargs):
                             firewall_structure,
                             gcp_config['network'])
     ctx.instance.runtime_properties[constants.NAME] = firewall.name
-    create_firewall(firewall)
+    utils.create(firewall)
 
 
 def create_firewall_structure_from_rules(network, rules):

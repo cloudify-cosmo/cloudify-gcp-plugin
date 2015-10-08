@@ -82,6 +82,13 @@ def assure_resource_id_correct():
     return resource_id
 
 
+def get_final_resource_name(name):
+    if should_use_external_resource():
+        return assure_resource_id_correct()
+    else:
+        return name or get_gcp_resource_name(ctx.instance.id)
+
+
 def create_resource(func):
     def _decorator(resource, *args, **kwargs):
         if should_use_external_resource():
@@ -92,13 +99,23 @@ def create_resource(func):
                     name = ctx.node.properties.get(constants.RESOURCE_ID)
                     raise NonRecoverableError(
                         'Resource {0} defined as external, but does not exist. Error: {1}'.
-                            format(name, str(error)))
+                        format(name, str(error)))
                 else:
                     raise error
         else:
             return func(resource, *args, **kwargs)
 
     return wraps(func)(_decorator)
+
+
+@create_resource
+def create(resource):
+    resource.create()
+
+
+def delete_if_not_external(resource):
+    if not should_use_external_resource():
+        resource.delete()
 
 
 def retry_on_failure(msg, delay=constants.RETRY_DEFAULT_DELAY):
@@ -199,6 +216,6 @@ def get_key_user_string(user, key):
 def get_agent_ssh_key_string():
     try:
         return ctx.provider_context['resources']['cloudify-agent']['public-key']
-    except KeyError as e:
+    except KeyError:
         # means that we are bootstrapping the manager
         return ''

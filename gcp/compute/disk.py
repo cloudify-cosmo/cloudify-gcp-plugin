@@ -79,29 +79,17 @@ class Disk(GoogleCloudPlatform):
 @operation
 @utils.throw_cloudify_exceptions
 def create(image, name, size, **kwargs):
-    name = get_disk_name(name)
+    name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     disk = Disk(gcp_config,
                 ctx.logger,
                 image=image,
                 name=name,
                 size_gb=size)
-    create_disk(disk)
+    utils.create(disk)
     ctx.instance.runtime_properties[constants.NAME] = name
     ctx.instance.runtime_properties[constants.DISK] = \
         disk.disk_to_insert_instance_dict(name)
-
-
-def get_disk_name(name):
-    if utils.should_use_external_resource():
-        return utils.assure_resource_id_correct()
-    else:
-        return name or utils.get_gcp_resource_name(ctx.instance.id)
-
-
-@utils.create_resource
-def create_disk(disk):
-    disk.create()
 
 
 @operation
@@ -113,14 +101,9 @@ def delete(**kwargs):
     disk = Disk(gcp_config,
                 ctx.logger,
                 name=name)
-    delete_disk(disk)
+    utils.delete_if_not_external(disk)
     ctx.instance.runtime_properties.pop(constants.DISK, None)
     ctx.instance.runtime_properties.pop(constants.NAME, None)
-
-
-def delete_disk(disk):
-    if not utils.should_use_external_resource():
-        disk.delete()
 
 
 @operation

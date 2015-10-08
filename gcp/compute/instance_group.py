@@ -91,27 +91,15 @@ class InstanceGroup(GoogleCloudPlatform):
 @operation
 @utils.throw_cloudify_exceptions
 def create(name, named_ports, **kwargs):
-    name = get_instance_group_name(name)
+    name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     instance_group = InstanceGroup(gcp_config,
                                    ctx.logger,
                                    name=name,
                                    named_ports=named_ports)
 
-    create_instance_group(instance_group)
+    utils.create(instance_group)
     ctx.instance.runtime_properties[constants.NAME] = name
-
-
-def get_instance_group_name(name):
-    if utils.should_use_external_resource():
-        return utils.assure_resource_id_correct()
-    else:
-        return name or utils.get_gcp_resource_name(ctx.instance.id)
-
-
-@utils.create_resource
-def create_instance_group(instance_group):
-    instance_group.create()
 
 
 @operation
@@ -123,13 +111,8 @@ def delete(**kwargs):
     instance_group = InstanceGroup(gcp_config,
                                    ctx.logger,
                                    name=name)
-    delete_instance_group(instance_group)
+    utils.delete_if_not_external(instance_group)
     ctx.instance.runtime_properties.pop(constants.NAME, None)
-
-
-def delete_instance_group(instance_group):
-    if not utils.should_use_external_resource():
-        instance_group.delete()
 
 
 @operation

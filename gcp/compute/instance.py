@@ -323,7 +323,7 @@ def create(instance_type,
     elif startup_script and startup_script.get('type') == 'string':
         script = startup_script.get('script')
 
-    instance_name = get_instance_name(name)
+    instance_name = utils.get_final_resource_name(name)
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=instance_name,
@@ -339,20 +339,8 @@ def create(instance_type,
     disk = ctx.instance.runtime_properties.get(constants.DISK)
     if disk:
         instance.disks = [disk]
-    create_instance(instance)
+    utils.create(instance)
     set_ip(instance)
-
-
-def get_instance_name(name):
-    if utils.should_use_external_resource():
-        return utils.assure_resource_id_correct()
-    else:
-        return name or utils.get_gcp_resource_name(ctx.instance.id)
-
-
-@utils.create_resource
-def create_instance(instance):
-    instance.create()
 
 
 @operation
@@ -366,15 +354,10 @@ def delete(**kwargs):
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=name)
-    delete_instance(instance)
+    utils.delete_if_not_external(instance)
 
     ctx.instance.runtime_properties.pop(constants.DISK, None)
     ctx.instance.runtime_properties.pop(constants.NAME, None)
-
-
-def delete_instance(instance):
-    if not utils.should_use_external_resource():
-        instance.delete()
 
 
 @operation
