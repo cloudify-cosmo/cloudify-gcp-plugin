@@ -53,8 +53,8 @@ class HealthCheck(GoogleCloudPlatform):
             'description': 'Cloudify generated {0}'.format(self.name_keyword),
             'name': self.name
         }
-        gcp_settings = {self.GCP_TRANSLATION[key]: value for key, value
-                        in self.additional_settings.iteritems()}
+        gcp_settings = {self.GCP_TRANSLATION[key]: value
+                        for key, value in self.additional_settings.iteritems()}
         body.update(gcp_settings)
         return body
 
@@ -81,6 +81,10 @@ class HealthCheck(GoogleCloudPlatform):
         return self._gcp_health_checks().delete(**kwargs).execute()
 
     @abstractmethod
+    def get_self_url(self):
+        pass
+
+    @abstractmethod
     def _gcp_health_checks(self):
         pass
 
@@ -96,6 +100,10 @@ class HttpHealthCheck(HealthCheck):
             config, logger, name, api_version,
             'httpHealthCheck', additional_settings)
 
+    def get_self_url(self):
+        return '{0}/projects/{1}/global/httpHealthChecks/{2}'.format(
+            self.api_version, self.project, self.name)
+
     def _gcp_health_checks(self):
         return self.discovery.httpHealthChecks()
 
@@ -109,6 +117,10 @@ class HttpsHealthCheck(HealthCheck):
         super(HttpsHealthCheck, self).__init__(
             config, logger, name, constants.API_BETA,
             'httpsHealthCheck', additional_settings)
+
+    def get_self_url(self):
+        return '{0}/projects/{1}/global/httpsHealthChecks/{2}'.format(
+            self.api_version, self.project, self.name)
 
     def _gcp_health_checks(self):
         return self.discovery.httpsHealthChecks()
@@ -128,16 +140,8 @@ def create(name, health_check_type, additional_settings, **kwargs):
     ctx.instance.runtime_properties[constants.NAME] = name
     ctx.instance.runtime_properties[constants.HEALTH_CHECK_TYPE] = \
         health_check_type
-
-
-def health_check_of_type(health_check_type, **kwargs):
-    if health_check_type == 'http':
-        return HttpHealthCheck(**kwargs)
-    elif health_check_type == 'https':
-        return HttpsHealthCheck(**kwargs)
-    else:
-        raise NonRecoverableError(
-            'Unexpected type of health check: {}'.format(health_check_type))
+    ctx.instance.runtime_properties[constants.SELF_URL] = \
+        health_check.get_self_url()
 
 
 @operation
@@ -157,3 +161,14 @@ def delete(**kwargs):
         utils.delete_if_not_external(health_check)
         ctx.instance.runtime_properties.pop(constants.NAME, None)
         ctx.instance.runtime_properties.pop(constants.HEALTH_CHECK_TYPE, None)
+        ctx.instance.runtime_properties.pop(constants.SELF_URL, None)
+
+
+def health_check_of_type(health_check_type, **kwargs):
+    if health_check_type == 'http':
+        return HttpHealthCheck(**kwargs)
+    elif health_check_type == 'https':
+        return HttpsHealthCheck(**kwargs)
+    else:
+        raise NonRecoverableError(
+            'Unexpected type of health check: {}'.format(health_check_type))

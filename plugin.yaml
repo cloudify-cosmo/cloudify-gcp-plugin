@@ -87,7 +87,7 @@ node_types:
       resource_id:
         description: >
           If "use_external_resource" is set to true, this field will be used as a name
-          of existing instance that is referenced by this node.
+          of existing instance group that is referenced by this node.
         default: ''
       gcp_config:
         description: >
@@ -105,7 +105,7 @@ node_types:
         default: []
     interfaces:
       cloudify.interfaces.lifecycle:
-        start:
+        create:
           implementation: gcp_plugin.gcp.compute.instance_group.create
           inputs:
             name:
@@ -114,55 +114,6 @@ node_types:
               default: { get_property: [SELF, named_ports]}
         delete:
           implementation: gcp_plugin.gcp.compute.instance_group.delete
-
-  cloudify.gcp.nodes.HealthCheck:
-    derived_from: cloudify.nodes.Root
-    properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing instance that is referenced by this node.
-        default: ''
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
-      name:
-        description: >
-          Optional health check name. By default it will be health check id.
-        type: string
-        default: ''
-      health_check_type:
-        description: >
-          This field indicates if this health check is a HTTP or HTTPS based
-          health check. Possible values are: 'http' and 'https'.
-        type: string
-        default: 'http'
-      additional_settings:
-        description: >
-          Optional additional settings. Possible fields in dictionary are:
-          port, request_path, timeout_sec, check_interval_sec,
-          healthy_threshold, unhealthy_threshold.
-        default: {}
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        start:
-          implementation: gcp_plugin.gcp.compute.health_check.create
-          inputs:
-            name:
-              default: { get_property: [SELF, name]}
-            health_check_type:
-              default: { get_property: [SELF, health_check_type]}
-            additional_settings:
-              default: { get_property: [SELF, additional_settings]}
-        delete:
-          implementation: gcp_plugin.gcp.compute.health_check.delete
 
   cloudify.gcp.nodes.Volume:
     derived_from: cloudify.nodes.Volume
@@ -399,6 +350,102 @@ node_types:
               default: ''
         delete:
           implementation: gcp_plugin.gcp.compute.image.delete
+
+  cloudify.gcp.nodes.HealthCheck:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing health check that is referenced by this node.
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Optional health check name. By default it will be health check id.
+        type: string
+        default: ''
+      health_check_type:
+        description: >
+          This field indicates if this health check is a HTTP or HTTPS based
+          health check. Possible values are: 'http' and 'https'.
+        type: string
+        default: 'http'
+      additional_settings:
+        description: >
+          Optional additional settings. Possible fields in dictionary are:
+          port, request_path, timeout_sec, check_interval_sec,
+          healthy_threshold, unhealthy_threshold.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.gcp.compute.health_check.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            health_check_type:
+              default: { get_property: [SELF, health_check_type]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
+        delete:
+          implementation: gcp_plugin.gcp.compute.health_check.delete
+
+  cloudify.gcp.nodes.BackendService:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing backend service that is referenced by this node.
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Optional health check name. By default it will be backend service id.
+        type: string
+        default: ''
+      health_check:
+        description: >
+          URL of a health check assigned to this backend service.
+        type: string
+        default: ''
+      additional_settings:
+        description: >
+          Optional additional settings. Possible fields in dictionary are:
+          port_name, protocol, timeout_sec.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.gcp.compute.backend_service.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            health_check:
+              default: { get_property: [SELF, health_check]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
+        delete:
+          implementation: gcp_plugin.gcp.compute.backend_service.delete
 
 relationships:
 

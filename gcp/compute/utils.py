@@ -110,7 +110,7 @@ def create_resource(func):
 
 @create_resource
 def create(resource):
-    resource.create()
+    return resource.create()
 
 
 def delete_if_not_external(resource):
