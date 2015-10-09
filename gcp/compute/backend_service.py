@@ -35,11 +35,13 @@ class BackendService(GoogleCloudPlatform):
                  logger,
                  name,
                  health_check=None,
-                 additional_settings=None):
+                 additional_settings=None,
+                 backends=None):
         super(BackendService, self).__init__(config, logger, name,
                                              api_version=constants.API_BETA)
         self.health_check = health_check
         self.additional_settings = copy(additional_settings) or {}
+        self.backends = backends or []
 
     def to_dict(self):
         body = {
@@ -53,6 +55,11 @@ class BackendService(GoogleCloudPlatform):
                         for key, value in self.additional_settings.iteritems()}
         body.update(gcp_settings)
         return body
+
+    def backend_to_dict(self, group_self_url):
+        return {
+            'group': group_self_url
+        }
 
     @check_response
     def get(self):
@@ -72,6 +79,27 @@ class BackendService(GoogleCloudPlatform):
             project=self.project,
             backendService=self.name).execute()
 
+    @check_response
+    def set_backends(self, backends):
+        body = {
+            'backends': backends
+        }
+        self.backends = backends
+        return self.discovery.backendServices().patch(
+            project=self.project,
+            backendService=self.name,
+            body=body).execute()
+
+    def add_backend(self, current_backends, group_self_url):
+        new_backend = self.backend_to_dict(group_self_url)
+        backends = current_backends + [new_backend]
+        return self.set_backends(backends)
+
+    def remove_backend(self, current_backends, group_self_url):
+        backends = filter(lambda backend: backend['group'] == group_self_url,
+                          current_backends)
+        return self.set_backends(backends)
+
 
 @operation
 @utils.throw_cloudify_exceptions
@@ -85,6 +113,7 @@ def create(name, health_check, additional_settings, **kwargs):
                                      additional_settings)
     utils.create(backend_service)
     ctx.instance.runtime_properties[constants.NAME] = name
+    ctx.instance.runtime_properties[constants.BACKENDS] = []
 
 
 @operation
@@ -99,3 +128,31 @@ def delete(**kwargs):
                                          name=name)
         utils.delete_if_not_external(backend_service)
         ctx.instance.runtime_properties.pop(constants.NAME, None)
+        ctx.instance.runtime_properties.pop(constants.BACKENDS, None)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def add_backend(backend_service_name, group_self_url, **kwargs):
+    __modify_backends(backend_service_name,
+                      group_self_url,
+                      BackendService.add_backend)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def remove_backend(backend_service_name, group_self_url, **kwargs):
+    __modify_backends(backend_service_name,
+                      group_self_url,
+                      BackendService.remove_backend)
+
+
+def __modify_backends(backend_service_name, group_self_url, modify_function):
+    gcp_config = utils.get_gcp_config()
+    backend_service = BackendService(gcp_config,
+                                     ctx.logger,
+                                     backend_service_name)
+    backends = ctx.source.instance.runtime_properties[constants.BACKENDS]
+    modify_function(backend_service, backends, group_self_url)
+    ctx.source.instance.runtime_properties[constants.BACKENDS] = \
+        backend_service.backends

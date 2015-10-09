@@ -544,3 +544,22 @@ relationships:
               default: { get_attribute: [SOURCE, gcp_name] }
             instance_name:
               default: { get_attribute: [TARGET, gcp_name] }
+
+  cloudify.gcp.relationships.uses_as_backend:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.gcp.compute.backend_service.add_backend
+          inputs:
+            backend_service_name:
+              default: { get_attribute: [SOURCE, gcp_name] }
+            group_self_url:
+              default: { get_attribute: [TARGET, self_url] }
+        unlink:
+          implementation: gcp_plugin.gcp.compute.backend_service.remove_backend
+          inputs:
+            backend_service_name:
+              default: { get_attribute: [SOURCE, gcp_name] }
+            group_self_url:
+              default: { get_attribute: [TARGET, self_url] }

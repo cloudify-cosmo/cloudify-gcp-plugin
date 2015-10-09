@@ -50,6 +50,10 @@ class InstanceGroup(GoogleCloudPlatform):
             ]
         }
 
+    def get_self_url(self):
+        return 'compute/{0}/projects/{1}/zones/{2}/instanceGroups/{3}'.format(
+            self.api_version, self.project, self.zone, self.name)
+
     @check_response
     def get(self):
         return self.discovery.instanceGroups().get(
@@ -100,6 +104,8 @@ def create(name, named_ports, **kwargs):
 
     utils.create(instance_group)
     ctx.instance.runtime_properties[constants.NAME] = name
+    ctx.instance.runtime_properties[constants.SELF_URL] = \
+        instance_group.get_self_url()
 
 
 @operation
@@ -114,6 +120,7 @@ def delete(**kwargs):
                                        name=name)
         utils.delete_if_not_external(instance_group)
         ctx.instance.runtime_properties.pop(constants.NAME, None)
+        ctx.instance.runtime_properties.pop(constants.SELF_URL, None)
 
 
 @operation
