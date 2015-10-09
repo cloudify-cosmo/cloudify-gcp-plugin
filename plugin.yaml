@@ -447,6 +447,46 @@ node_types:
         delete:
           implementation: gcp_plugin.gcp.compute.backend_service.delete
 
+  cloudify.gcp.nodes.UrlMap:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing URL map that is referenced by this node.
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Optional health check name. By default it will be URL map id.
+        type: string
+        default: ''
+      default_service:
+        description: >
+          URL of a backend service to which this URL map will redirect traffic by default.
+        type: string
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.gcp.compute.url_map.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            default_service:
+              default: { get_property: [SELF, default_service]}
+        delete:
+          implementation: gcp_plugin.gcp.compute.url_map.delete
+
 relationships:
 
   cloudify.gcp.relationships.contained_in_compute:

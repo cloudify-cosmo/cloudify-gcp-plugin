@@ -61,6 +61,9 @@ class BackendService(GoogleCloudPlatform):
             'group': group_self_url
         }
 
+    def get_self_url(self):
+        return 'global/backendServices/{0}'.format(self.name)
+
     @check_response
     def get(self):
         return self.discovery.backendServices().get(
@@ -113,6 +116,8 @@ def create(name, health_check, additional_settings, **kwargs):
                                      additional_settings)
     utils.create(backend_service)
     ctx.instance.runtime_properties[constants.NAME] = name
+    ctx.instance.runtime_properties[constants.SELF_URL] = \
+        backend_service.get_self_url()
     ctx.instance.runtime_properties[constants.BACKENDS] = []
 
 
@@ -128,6 +133,7 @@ def delete(**kwargs):
                                          name=name)
         utils.delete_if_not_external(backend_service)
         ctx.instance.runtime_properties.pop(constants.NAME, None)
+        ctx.instance.runtime_properties.pop(constants.SELF_URL, None)
         ctx.instance.runtime_properties.pop(constants.BACKENDS, None)
 
 
