@@ -36,7 +36,8 @@ class BackendService(GoogleCloudPlatform):
                  name,
                  health_check=None,
                  additional_settings=None):
-        super(BackendService, self).__init__(config, logger, name)
+        super(BackendService, self).__init__(config, logger, name,
+                                             api_version=constants.API_BETA)
         self.health_check = health_check
         self.additional_settings = copy(additional_settings) or {}
 
