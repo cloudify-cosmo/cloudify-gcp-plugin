@@ -544,6 +544,65 @@ node_types:
         delete:
           implementation: gcp_plugin.gcp.compute.target_proxy.delete
 
+  cloudify.gcp.nodes.GlobalForwardingRule:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing global forwarding rule that is referenced by this node.
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Optional global forwarding rule name. By default it will be
+          global forwarding rule id.
+        type: string
+        default: ''
+      target_proxy:
+        description: >
+          URL of a target proxy (http or https) that will receive traffic
+          coming from specified IP address.
+        type: string
+        default: ''
+      port_range:
+        description: >
+          Port number used by this forwarding rule. If packets are redirected to
+          HTTP proxy, then possible values are 80 and 8080, in case of HTTPS proxy
+          the only accepted value is 443.
+        type: string
+        default: '80'
+      ip_address:
+        description: >
+          IP address associated with this forwarding rule. This address
+          should be reserved earlier.
+        type: string
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.gcp.compute.forwarding_rule.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            target_proxy:
+              default: { get_property: [SELF, target_proxy]}
+            port_range:
+              default: { get_property: [SELF, port_range]}
+            ip_address:
+              default: { get_property: [SELF, ip_address]}
+        delete:
+          implementation: gcp_plugin.gcp.compute.forwarding_rule.delete
+
 relationships:
 
   cloudify.gcp.relationships.contained_in_compute:

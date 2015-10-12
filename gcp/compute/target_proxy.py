@@ -54,6 +54,10 @@ class TargetProxy(GoogleCloudPlatform):
         return self._gcp_target_proxies().delete(**self_data).execute()
 
     @abstractmethod
+    def get_self_url(self):
+        pass
+
+    @abstractmethod
     def gcp_get_dict(self):
         pass
 
@@ -75,6 +79,9 @@ class TargetHttpProxy(TargetProxy):
                  url_map=None):
         super(TargetHttpProxy, self).__init__(config, logger, name,
                                               api_version, url_map)
+
+    def get_self_url(self):
+        return 'global/targetHttpProxies/{0}'.format(self.name)
 
     def gcp_get_dict(self):
         return {
@@ -103,6 +110,9 @@ class TargetHttpsProxy(TargetProxy):
         super(TargetHttpsProxy, self).__init__(config, logger, name,
                                                constants.API_BETA, url_map)
         self.ssl_certificate = ssl_certificate
+
+    def get_self_url(self):
+        return 'global/targetHttpsProxies/{0}'.format(self.name)
 
     def gcp_get_dict(self):
         return {
@@ -142,6 +152,8 @@ def create(name, target_proxy_type, url_map, ssl_certificate, **kwargs):
     ctx.instance.runtime_properties[constants.NAME] = name
     ctx.instance.runtime_properties[constants.TARGET_PROXY_TYPE] = \
         target_proxy_type
+    ctx.instance.runtime_properties[constants.SELF_URL] = \
+        target_proxy.get_self_url()
 
 
 @operation
@@ -161,6 +173,7 @@ def delete(**kwargs):
         utils.delete_if_not_external(target_proxy)
         ctx.instance.runtime_properties.pop(constants.NAME, None)
         ctx.instance.runtime_properties.pop(constants.TARGET_PROXY_TYPE, None)
+        ctx.instance.runtime_properties.pop(constants.SELF_URL, None)
 
 
 def target_proxy_of_type(target_proxy_type, **kwargs):
