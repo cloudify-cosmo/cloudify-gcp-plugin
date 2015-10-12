@@ -79,6 +79,8 @@ def create(name, default_service, **kwargs):
 @utils.retry_on_failure('Retrying deleting URL map')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
+    import time
+    time.sleep(3)  # TODO: figure out something better
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get(constants.NAME, None)
     if name:
