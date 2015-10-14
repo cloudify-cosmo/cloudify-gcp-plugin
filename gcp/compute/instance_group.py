@@ -30,6 +30,7 @@ class InstanceGroup(GoogleCloudPlatform):
         super(InstanceGroup, self).__init__(config, logger, name)
         self.network = config['network']
         self.named_ports = named_ports or []
+        self.self_url = None
 
     def to_dict(self):
         body = {
@@ -51,8 +52,9 @@ class InstanceGroup(GoogleCloudPlatform):
         }
 
     def get_self_url(self):
-        return 'compute/{0}/projects/{1}/zones/{2}/instanceGroups/{3}'.format(
-            self.api_version, self.project, self.zone, self.name)
+        if not self.self_url:
+            self.self_url = self.get()['selfLink']
+        return self.self_url
 
     @check_response
     def get(self):
