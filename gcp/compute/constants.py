@@ -58,6 +58,8 @@ PROJECT = 'project'
 ZONE = 'zone'
 NETWORK = 'network'
 
+GCP_OP_DONE = 'DONE'
+
 MANAGER_HOMEDIR = os.path.join(os.sep, 'tmp', 'home')
 GCP_DEFAULT_CONFIG_PATH = os.path.join(MANAGER_HOMEDIR, 'gcp_config.json')
 

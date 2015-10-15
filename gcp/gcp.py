@@ -66,6 +66,7 @@ class GoogleCloudPlatform(object):
         self.auth = config['auth']
         self.project = config['project']
         self.zone = config['zone']
+        self.config = config
         self.scope = scope
         self.name = name
         self.logger = logger.getChild('GCP')

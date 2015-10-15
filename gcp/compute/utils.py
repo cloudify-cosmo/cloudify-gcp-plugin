@@ -13,13 +13,16 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import re
+import time
+
 from copy import deepcopy
 from functools import wraps
 
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 
-from gcp.gcp import GCPError, GCPHttpError
+from gcp.gcp import GCPError, GCPHttpError, GoogleCloudPlatform
+from gcp.gcp import check_response
 from gcp.gcp import is_missing_resource_error, is_resource_used_error
 from gcp.compute import constants
 
@@ -116,6 +119,18 @@ def create(resource):
 def delete_if_not_external(resource):
     if not should_use_external_resource():
         resource.delete()
+
+
+def sync_operation(func):
+    def _decorator(resource, *args, **kwargs):
+        response = func(resource, *args, **kwargs)
+        operation = response_to_operation(
+            response, resource.config, resource.logger)
+        while not operation.has_finished():
+            time.sleep(1)
+        return operation.last_response
+
+    return wraps(func)(_decorator)
 
 
 def retry_on_failure(msg, delay=constants.RETRY_DEFAULT_DELAY):
@@ -219,3 +234,46 @@ def get_agent_ssh_key_string():
     except KeyError:
         # means that we are bootstrapping the manager
         return ''
+
+
+def response_to_operation(response, config, logger):
+    operation_name = response['name']
+
+    if 'zone' in response:
+        return ZoneOperation(config, logger, operation_name)
+    elif 'region' in response:
+        raise NonRecoverableError('RegionOperation is not implemented')
+    else:
+        return GlobalOperation(config, logger, operation_name)
+
+
+class GlobalOperation(GoogleCloudPlatform):
+    def __init__(self, config, logger, name):
+        super(GlobalOperation, self).__init__(config, logger, name)
+        self.last_response = None
+        self.last_status = None
+
+    def has_finished(self):
+        if self.last_status != constants.GCP_OP_DONE:
+            self.get()
+
+        return self.last_status == constants.GCP_OP_DONE
+
+    @check_response
+    def get(self):
+        self.last_response = self._get()
+        self.last_status = self.last_response['status']
+        return self.last_response
+
+    def _get(self):
+        return self.discovery.globalOperations().get(
+            project=self.project,
+            operation=self.name).execute()
+
+
+class ZoneOperation(GlobalOperation):
+    def _get(self):
+        return self.discovery.zoneOperations().get(
+            project=self.project,
+            zone=self.zone,
+            operation=self.name).execute()

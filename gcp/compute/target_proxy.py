@@ -49,6 +49,7 @@ class TargetProxy(GoogleCloudPlatform):
             body=self.to_dict()).execute()
 
     @check_response
+    @utils.sync_operation
     def delete(self):
         self_data = self.gcp_get_dict()
         return self._gcp_target_proxies().delete(**self_data).execute()
