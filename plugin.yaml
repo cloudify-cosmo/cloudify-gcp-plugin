@@ -313,6 +313,40 @@ node_types:
           A dictionary of values to pass to authenticate with the GCP API.
         default: {}
 
+  cloudify.gcp.nodes.StaticIP:
+    derived_from: cloudify.nodes.VirtualIP
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+          If set to true, this node will be already existing static IP address, otherwise
+          it will be reserved static IP address.
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing static ip that is referenced by this node.
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Optional static ip name. By default it will be static ip id.
+        type: string
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.gcp.compute.static_ip.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+        delete:
+          implementation: gcp_plugin.gcp.compute.static_ip.delete
+
   cloudify.gcp.nodes.Image:
     derived_from: cloudify.nodes.Root
     properties:
