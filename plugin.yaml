@@ -673,9 +673,9 @@ relationships:
             disk_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
 
-  cloudify.gcp.relationships.instance_connected_to_instance_group:
-    derived_from: cloudify.relationships.connected_to
-    target_interfaces:
+  cloudify.gcp.relationships.instance_contained_in_instance_group:
+    derived_from: cloudify.relationships.contained_in
+    source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         establish:
           implementation: gcp_plugin.gcp.compute.instance_group.add_to_instance_group
