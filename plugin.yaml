@@ -549,7 +549,7 @@ node_types:
         default: ''
       ssl_certificate:
         description: >
-          Name (not URL) of a SSL certificate associated with this target proxy.
+          URL of a SSL certificate associated with this target proxy.
           Can and must be used only with https type proxy.
         type: string
         default: ''
@@ -568,6 +568,53 @@ node_types:
               default: { get_property: [SELF, ssl_certificate]}
         delete:
           implementation: gcp_plugin.gcp.compute.target_proxy.delete
+
+  cloudify.gcp.nodes.SslCertificate:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      resource_id:
+        description: >
+          If "use_external_resource" is set to true, this field will be used as a name
+          of existing SSL certificate that is referenced by this node.
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Optional SSL certificate name. By default it will be SSL certificate id.
+        type: string
+        default: ''
+      private_key:
+        description: >
+          Private key in PEM format used to generate this SSL certificate.
+        type: string
+        default: ''
+      certificate:
+        description: >
+          Certificate (self-signed or obtained from CA) in PEM format.
+        type: string
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.gcp.compute.ssl_certificate.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            private_key:
+              default: { get_property: [SELF, private_key]}
+            certificate:
+              default: { get_property: [SELF, certificate]}
+        delete:
+          implementation: gcp_plugin.gcp.compute.ssl_certificate.delete
 
   cloudify.gcp.nodes.GlobalForwardingRule:
     derived_from: cloudify.nodes.Root

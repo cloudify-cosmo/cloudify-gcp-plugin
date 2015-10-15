@@ -121,15 +121,12 @@ class TargetHttpsProxy(TargetProxy):
         }
 
     def to_dict(self):
-        def certificate_name_to_url(name):
-            return 'global/sslCertificates/{0}'.format(self.ssl_certificate)
-
         return {
             'description': 'Cloudify generated TargetHttpsProxy',
             'name': self.name,
             'urlMap': self.url_map,
             'sslCertificates': [
-                certificate_name_to_url(self.ssl_certificate)
+                self.ssl_certificate
             ]
         }
 
