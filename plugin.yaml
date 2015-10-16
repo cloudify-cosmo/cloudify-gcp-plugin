@@ -594,14 +594,18 @@ node_types:
         default: ''
       private_key:
         description: >
-          Private key in PEM format used to generate this SSL certificate.
-        type: string
-        default: ''
+          Dictionary describing private key in PEM format used to generate this SSL certificate.
+          Expected format is:
+            type: text|file
+            data: Private key in PEM format if text, otherwise path to a file with private key
+        default: {}
       certificate:
         description: >
           Certificate (self-signed or obtained from CA) in PEM format.
-        type: string
-        default: ''
+          Expected format is:
+            type: text|file
+            data: Certificate in PEM format if text, otherwise path to a file with certificate
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
