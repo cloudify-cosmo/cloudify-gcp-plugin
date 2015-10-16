@@ -31,6 +31,7 @@ API_BETA = 'beta'
 
 NAME = 'gcp_name'
 DISK = 'gcp_disk'
+GCP_ZONE = 'gcp_zone'
 HEALTH_CHECK_TYPE = 'gcp_health_check_type'
 TARGET_PROXY_TYPE = 'gcp_target_proxy_type'
 BACKENDS = 'gcp_backends'

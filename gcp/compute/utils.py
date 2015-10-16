@@ -180,10 +180,28 @@ def get_gcp_config():
 
     gcp_config_from_properties = _get_gcp_config_from_properties()
     if gcp_config_from_properties:
-        return gcp_config_from_properties
+        gcp_config = gcp_config_from_properties
     else:
-        gcp_config = ctx.provider_context['resources'][constants.GCP_CONFIG]
-        return deepcopy(gcp_config)
+        config = ctx.provider_context['resources'][constants.GCP_CONFIG]
+        gcp_config = deepcopy(config)
+
+    return update_zone(gcp_config)
+
+
+def update_zone(gcp_config):
+    def _get_zone_from_runtime_properties():
+        try:
+            return ctx.instance.runtime_properties.get(constants.GCP_ZONE)
+        except NonRecoverableError:
+            src = ctx.source.instance.runtime_properties
+            tar = ctx.target.instance.runtime_properties
+            return src.get(constants.GCP_ZONE) or tar.get(constants.GCP_ZONE)
+
+    non_default_zone = _get_zone_from_runtime_properties()
+    if non_default_zone:
+        gcp_config['zone'] = non_default_zone
+
+    return gcp_config
 
 
 def get_manager_provider_config():

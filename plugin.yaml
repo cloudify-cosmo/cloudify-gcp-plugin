@@ -51,6 +51,12 @@ node_types:
           Optional instance name. By default it will be instance id.
         type: string
         default: ''
+      zone:
+        description: >
+          Optional zone name. If not given, this instance will be deployed
+          in default zone.
+        type: string
+        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -68,6 +74,8 @@ node_types:
               default: { get_property: [SELF, image_id]}
             name:
               default: { get_property: [SELF, name]}
+            zone:
+              default: { get_property: [SELF, zone]}
             scopes:
               default: ''
             user_data:

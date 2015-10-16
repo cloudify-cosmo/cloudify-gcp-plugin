@@ -305,11 +305,14 @@ class Instance(GoogleCloudPlatform):
 def create(instance_type,
            image_id,
            name,
+           zone,
            external_ip,
            startup_script,
            scopes,
            user_data,
            **kwargs):
+    if zone:
+        ctx.instance.runtime_properties[constants.GCP_ZONE] = zone
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     script = ''
@@ -349,15 +352,15 @@ def create(instance_type,
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get(constants.NAME, None)
-    if not name:
-        return
-    instance = Instance(gcp_config,
-                        ctx.logger,
-                        name=name)
-    utils.delete_if_not_external(instance)
+    if name:
+        instance = Instance(gcp_config,
+                            ctx.logger,
+                            name=name)
+        utils.delete_if_not_external(instance)
 
-    ctx.instance.runtime_properties.pop(constants.DISK, None)
-    ctx.instance.runtime_properties.pop(constants.NAME, None)
+        ctx.instance.runtime_properties.pop(constants.DISK, None)
+        ctx.instance.runtime_properties.pop(constants.NAME, None)
+        ctx.instance.runtime_properties.pop(constants.GCP_ZONE, None)
 
 
 @operation
