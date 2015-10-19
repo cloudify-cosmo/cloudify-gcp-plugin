@@ -103,33 +103,6 @@ class KeyPair(GoogleCloudPlatform):
             project=self.project,
             body=common_instance_metadata).execute()
 
-    @check_response
-    def remove_project_ssh_key(self):
-        """
-        Update project SSH private key. Remove new key to project's
-        common instance metadata.
-        Global operation.
-
-        :return: REST response with operation responsible for the sshKeys
-        addition to project metadata process and its status
-        """
-        common_instance_metadata = self.get_common_instance_metadata()
-        if common_instance_metadata.get('items') is not None:
-            item = utils.get_item_from_gcp_response(
-                self.KEY_NAME,
-                self.KEY_VALUE,
-                common_instance_metadata)
-            key = utils.get_key_user_string(self.user, self.public_key)
-            self.logger.info(
-                'Remove sshKey {1} from project {0} metadata'.format(
-                    key,
-                    self.project))
-            if key in item['value']:
-                item['value'] = item['value'].replace(key, '')
-        return self.discovery.projects().setCommonInstanceMetadata(
-            project=self.project,
-            body=common_instance_metadata).execute()
-
     def remove_private_key(self):
         """
         Remove private key from file system.
@@ -155,7 +128,6 @@ def create(user,
                       private_key_path,
                       public_key_path)
     create_keypair(keypair)
-    # keypair.add_project_ssh_key()
     ctx.instance.runtime_properties[constants.USER] = user
     ctx.instance.runtime_properties[constants.PRIVATE_KEY] = \
         keypair.private_key
@@ -167,7 +139,7 @@ def create(user,
 def create_keypair(keypair):
     if utils.should_use_external_resource():
         keypair.private_key = ctx.get_resource(keypair.private_key_path)
-        keypair.public_key = ctx.get_resource(keypair.public_key_path)
+        keypair.public_key = ctx.get_resource(public_public_key_path)
     else:
         keypair.create()
 
@@ -183,7 +155,6 @@ def delete(user, private_key_path, **kwargs):
                       private_key_path,
                       None)
     keypair.public_key = ctx.instance.runtime_properties[constants.PUBLIC_KEY]
-    #keypair.remove_project_ssh_key()
     if not utils.should_use_external_resource():
         keypair.remove_private_key()
     ctx.instance.runtime_properties.pop(constants.PRIVATE_KEY, None)

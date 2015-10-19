@@ -35,7 +35,7 @@ setup(
         "Crypto"
     ],
     test_requires=[
-        "cloudify-dsl-parser>=3.2rc1",
+        "cloudify-dsl-parser==3.2",
         "nose"
     ]
 )
