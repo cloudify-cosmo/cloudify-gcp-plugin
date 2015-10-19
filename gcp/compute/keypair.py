@@ -139,7 +139,7 @@ def create(user,
 def create_keypair(keypair):
     if utils.should_use_external_resource():
         keypair.private_key = ctx.get_resource(keypair.private_key_path)
-        keypair.public_key = ctx.get_resource(public_public_key_path)
+        keypair.public_key = ctx.get_resource(keypair.public_key_path)
     else:
         keypair.create()
 
