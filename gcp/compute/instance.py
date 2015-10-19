@@ -41,7 +41,8 @@ class Instance(GoogleCloudPlatform):
                  external_ip=False,
                  tags=None,
                  scopes=None,
-                 user_data=None):
+                 user_data=None,
+                 ssh_keys=None):
         """
         Create Instance object
 
@@ -68,6 +69,7 @@ class Instance(GoogleCloudPlatform):
         self.disks = []
         self.scopes = scopes or self.DEFAULT_SCOPES
         self.user_data = user_data
+        self.ssh_keys = ssh_keys or []
 
     @check_response
     def create(self):
@@ -255,11 +257,6 @@ class Instance(GoogleCloudPlatform):
         def add_key_value_to_metadata(key, value, body):
             body['metadata']['items'].append({'key': key, 'value': value})
 
-        def get_instance_ssh_keys():
-            agent_key = utils.get_agent_ssh_key_string()
-            other_keys = ctx.instance.runtime_properties.get(constants.SSHKEY)
-            return other_keys + '\n' + agent_key if other_keys else agent_key
-
         body = {
             'name': self.name,
             'description': 'Cloudify generated instance',
@@ -278,7 +275,8 @@ class Instance(GoogleCloudPlatform):
             }
         }
 
-        add_key_value_to_metadata(KeyPair.KEY_VALUE, get_instance_ssh_keys(), body)
+        ssh_keys_str = '\n'.join(self.ssh_keys)
+        add_key_value_to_metadata(KeyPair.KEY_VALUE, ssh_keys_str, body)
         if self.startup_script:
             add_key_value_to_metadata('startup-script', self.startup_script, body)
         if self.user_data:
@@ -325,6 +323,7 @@ def create(instance_type,
         script = ctx.get_resource(startup_script.get('script'))
     elif startup_script and startup_script.get('type') == 'string':
         script = startup_script.get('script')
+    ssh_keys = get_ssh_keys()
 
     instance_name = utils.get_final_resource_name(name)
     instance = Instance(gcp_config,
@@ -335,7 +334,8 @@ def create(instance_type,
                         external_ip=external_ip,
                         startup_script=script,
                         scopes=scopes,
-                        user_data=user_data)
+                        user_data=user_data,
+                        ssh_keys=ssh_keys)
     ctx.instance.runtime_properties[constants.NAME] = instance.name
     if ctx.node.properties['install_agent']:
         add_to_security_groups(instance)
@@ -415,19 +415,13 @@ def add_external_ip(instance_name, **kwargs):
 def add_ssh_key(**kwargs):
     key = ctx.target.instance.runtime_properties[constants.PUBLIC_KEY]
     user = ctx.target.instance.runtime_properties[constants.USER]
-    key_user_string = utils.get_key_user_string(user, key + ' ' + user)
-    previous_keys = ctx.source.instance.runtime_properties.get(constants.SSHKEY)
-    ctx.source.instance.runtime_properties[constants.SSHKEY] = \
-        previous_keys + '\n' + key_user_string if previous_keys else key_user_string
-    ctx.logger.info('sshKeys are: {0}'
-                    .format(ctx.source.instance.runtime_properties[constants.SSHKEY]))
+    key_user_string = utils.get_key_user_string(user, key)
+    properties = ctx.source.instance.runtime_properties
 
-
-@operation
-def contained_in(**kwargs):
-    key = ctx.target.instance.runtime_properties[constants.SSHKEY]
-    ctx.source.instance.runtime_properties[constants.SSHKEY] = key
-    ctx.logger.info('Copied ssh keys to the node')
+    instance_keys = properties.get(constants.SSH_KEYS, [])
+    instance_keys.append(key_user_string)
+    properties[constants.SSH_KEYS] = instance_keys
+    ctx.logger.info('Adding key: {0}'.format(key_user_string))
 
 
 @operation
@@ -485,3 +479,14 @@ def add_to_security_groups(instance):
     instance.tags.extend(
         provider_config[constants.AGENTS_SECURITY_GROUP]
         .get(constants.SOURCE_TAGS))
+
+
+def get_ssh_keys():
+    instance_keys = ctx.instance.runtime_properties.get(constants.SSH_KEYS, [])
+    if utils.is_manager_instance():
+        all_keys = instance_keys
+    else:
+        agent_key = \
+            ctx.provider_context['resources']['cloudify-agent']['public-key']
+        all_keys = [agent_key] + instance_keys
+    return list(set(all_keys))
