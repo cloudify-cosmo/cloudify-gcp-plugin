@@ -10,7 +10,7 @@ plugins:
     # URL to archive containing the plugin or name of directory containing
     # the plugin if it is included in the the blueprint directory under the
     # "plugins" directory.
-    source: https://github.com/szpotona/cloudify-gcp-plugin/archive/b3.zip
+    source: https://github.com/szpotona/cloudify-gcp-plugin/archive/master.zip
 
 node_types:
   cloudify.gcp.nodes.Instance:
@@ -766,8 +766,8 @@ relationships:
             disk_name: 
               default: { get_attribute: [SOURCE, gcp_name] }
 
-  cloudify.gcp.relationships.instance_contained_in_instance_group:
-    derived_from: cloudify.relationships.contained_in
+  cloudify.gcp.relationships.instance_connected_to_instance_group:
+    derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         establish:
