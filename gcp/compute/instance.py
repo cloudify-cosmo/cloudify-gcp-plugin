@@ -484,4 +484,4 @@ def add_to_security_groups(instance):
     provider_config = utils.get_manager_provider_config()
     instance.tags.extend(
         provider_config[constants.AGENTS_SECURITY_GROUP]
-        .get(constants.TARGET_TAGS))
+        .get(constants.SOURCE_TAGS))
