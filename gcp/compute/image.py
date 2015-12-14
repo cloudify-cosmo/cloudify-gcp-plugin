@@ -69,6 +69,10 @@ class Image(GoogleCloudPlatform):
         return self.discovery.images().delete(project=self.project,
                                               name=self.name).execute()
 
+    def list(self):
+        image_list = self.discovery.images().list(project=self.project).execute()
+        return image_list['items']
+
     def list_objects(self):
         storage = self.create_discovery(discovery=constants.STORAGE_DISCOVERY,
                                         scope=constants.STORAGE_SCOPE_RW,

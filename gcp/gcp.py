@@ -72,6 +72,7 @@ class GoogleCloudPlatform(object):
         self.logger = logger.getChild('GCP')
         self.discovery = self.create_discovery(discovery, self.scope, api_version)
         self.api_version = api_version
+        self.body = {}
 
     def create_discovery(self, discovery, scope, api_version):
         """
@@ -111,6 +112,12 @@ class GoogleCloudPlatform(object):
         metadata = self.discovery.projects().get(
             project=self.project).execute()
         return metadata['commonInstanceMetadata']
+
+    def update_model(self):
+        """
+        Update instance model with response body.
+        """
+        pass
 
 
 class GCPError(Exception):

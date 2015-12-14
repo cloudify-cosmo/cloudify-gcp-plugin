@@ -40,6 +40,7 @@ class Network(GoogleCloudPlatform):
             logger,
             utils.get_gcp_resource_name(network['name']))
         self.network = network
+        self.iprange = None
 
     @check_response
     def create(self):
@@ -93,12 +94,16 @@ class Network(GoogleCloudPlatform):
         return self.discovery.networks().list(
             project=self.project).execute()
 
+    def update_body(self):
+        self.iprange = self.body['IPv4Range']
+
     def to_dict(self):
         body = {
             'description': 'Cloudify generated network',
             'name': self.name
         }
-        return body
+        self.body.update(body)
+        return self.body
 
 
 @operation
@@ -111,6 +116,8 @@ def create(network, **kwargs):
                       network=network)
     utils.create(network)
     ctx.instance.runtime_properties[constants.NAME] = network.name
+    # will be updated only if the resource is created before
+    ctx.instance.runtime_properties['ip_range'] = network.iprange
 
 
 @operation

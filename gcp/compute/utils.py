@@ -96,7 +96,8 @@ def create_resource(func):
     def _decorator(resource, *args, **kwargs):
         if should_use_external_resource():
             try:
-                resource.get()
+                resource.body = resource.get()
+                resource.update_model()
             except GCPHttpError as error:
                 if is_missing_resource_error(error):
                     name = ctx.node.properties.get(constants.RESOURCE_ID)
