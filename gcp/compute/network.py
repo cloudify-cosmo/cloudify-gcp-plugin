@@ -94,7 +94,7 @@ class Network(GoogleCloudPlatform):
         return self.discovery.networks().list(
             project=self.project).execute()
 
-    def update_body(self):
+    def update_model(self):
         self.iprange = self.body['IPv4Range']
 
     def to_dict(self):
