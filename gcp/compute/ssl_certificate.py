@@ -53,6 +53,11 @@ class SslCertificate(GoogleCloudPlatform):
             sslCertificate=self.name).execute()
 
     @check_response
+    def list(self):
+        return self.discovery.sslCertificates().list(
+            project=self.project).execute()
+
+    @check_response
     @utils.sync_operation
     def create(self):
         return self.discovery.sslCertificates().insert(

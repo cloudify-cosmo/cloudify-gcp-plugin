@@ -71,6 +71,11 @@ class BackendService(GoogleCloudPlatform):
             backendService=self.name).execute()
 
     @check_response
+    def list(self):
+        return self.discovery.backendServices().list(
+            project=self.project).execute()
+
+    @check_response
     def create(self):
         return self.discovery.backendServices().insert(
             project=self.project,

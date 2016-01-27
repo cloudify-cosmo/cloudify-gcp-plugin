@@ -62,12 +62,12 @@ class Image(GoogleCloudPlatform):
     @check_response
     def get(self):
         return self.discovery.images().get(project=self.project,
-                                           name=self.name).execute()
+                                           image=self.name).execute()
 
     @check_response
     def delete(self):
         return self.discovery.images().delete(project=self.project,
-                                              name=self.name).execute()
+                                              image=self.name).execute()
 
     def list(self):
         image_list = self.discovery.images().list(project=self.project).execute()
@@ -97,13 +97,13 @@ def create(image_name, image_path, **kwargs):
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(image_name)
     image = Image(gcp_config, ctx.logger, name)
-    local_path = ctx.download_resource(image_path)
-    upload_image(image, local_path)
+    upload_image(image, image_path)
     ctx.instance.runtime_properties[constants.NAME] = image.name
 
 
 @utils.create_resource
-def upload_image(image, local_path):
+def upload_image(image, image_path):
+    local_path = ctx.download_resource(image_path)
     image.upload_and_create(local_path)
 
 

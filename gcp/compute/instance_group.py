@@ -64,6 +64,12 @@ class InstanceGroup(GoogleCloudPlatform):
             instanceGroup=self.name).execute()
 
     @check_response
+    def list(self):
+        return self.discovery.instanceGroups().list(
+            project=self.project,
+            zone=self.zone).execute()
+
+    @check_response
     def create(self):
         return self.discovery.instanceGroups().insert(
             project=self.project,

@@ -43,6 +43,10 @@ class TargetProxy(GoogleCloudPlatform):
         return self._gcp_target_proxies().get(**self_data).execute()
 
     @check_response
+    def list(self):
+        return self._gcp_target_proxies().list(project=self.project).execute()
+
+    @check_response
     def create(self):
         return self._gcp_target_proxies().insert(
             project=self.project,

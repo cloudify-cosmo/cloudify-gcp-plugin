@@ -62,6 +62,12 @@ class Disk(GoogleCloudPlatform):
             disk=self.name).execute()
 
     @check_response
+    def list(self):
+        return self.discovery.disks().list(
+            project=self.project,
+            zone=self.zone).execute()
+
+    @check_response
     def create(self):
         return self.discovery.disks().insert(
             project=self.project,

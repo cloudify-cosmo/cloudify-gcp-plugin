@@ -73,6 +73,10 @@ class HealthCheck(GoogleCloudPlatform):
             body=self.to_dict()).execute()
 
     @check_response
+    def list(self):
+        return self._gcp_health_checks().list(project=self.project).execute()
+
+    @check_response
     def delete(self):
         kwargs = {
             'project': self.project,

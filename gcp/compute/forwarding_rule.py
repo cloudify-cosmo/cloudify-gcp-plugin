@@ -51,6 +51,11 @@ class GlobalForwardingRule(GoogleCloudPlatform):
             forwardingRule=self.name).execute()
 
     @check_response
+    def list(self):
+        return self.discovery.globalForwardingRules().list(
+            project=self.project).execute()
+
+    @check_response
     def create(self):
         return self.discovery.globalForwardingRules().insert(
             project=self.project,
