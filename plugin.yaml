@@ -372,15 +372,19 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
         default: {}
+      image_name:
+        default: ''
+      image_path:
+        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: gcp_plugin.gcp.compute.image.create
           inputs:
             image_name:
-              default: ''
+              default: { get_property: [ SELF, image_name ] }
             image_path:
-              default: ''
+              default: { get_property: [ SELF, image_path ] }
         delete:
           implementation: gcp_plugin.gcp.compute.image.delete
 
