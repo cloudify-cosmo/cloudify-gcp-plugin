@@ -57,6 +57,12 @@ node_types:
           in default zone.
         type: string
         default: ''
+       tags:
+        description: >
+          Optional tags. If not given, this instance will have a tag only with
+          its name.
+        type: string
+        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -78,8 +84,8 @@ node_types:
               default: { get_property: [SELF, zone]}
             scopes:
               default: ''
-            user_data:
-              default: ''
+            tags:
+              default: { get_property: [SELF, tags]}
         delete:
           implementation: gcp_plugin.gcp.compute.instance.delete
 
