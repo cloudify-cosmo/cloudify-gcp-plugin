@@ -41,7 +41,6 @@ class Instance(GoogleCloudPlatform):
                  external_ip=False,
                  tags=None,
                  scopes=None,
-                 user_data=None,
                  ssh_keys=None):
         """
         Create Instance object
@@ -68,7 +67,6 @@ class Instance(GoogleCloudPlatform):
         self.externalIP = external_ip
         self.disks = []
         self.scopes = scopes or self.DEFAULT_SCOPES
-        self.user_data = user_data
         self.ssh_keys = ssh_keys or []
 
     @check_response
@@ -278,9 +276,9 @@ class Instance(GoogleCloudPlatform):
         ssh_keys_str = '\n'.join(self.ssh_keys)
         add_key_value_to_metadata(KeyPair.KEY_VALUE, ssh_keys_str, body)
         if self.startup_script:
-            add_key_value_to_metadata('startup-script', self.startup_script, body)
-        if self.user_data:
-            add_key_value_to_metadata('user-data', self.user_data, body)
+            add_key_value_to_metadata('startup-script',
+                                      self.startup_script,
+                                      body)
 
         if not self.disks:
             self.disks = [{'boot': True,
@@ -307,7 +305,7 @@ def create(instance_type,
            external_ip,
            startup_script,
            scopes,
-           user_data,
+           tags,
            **kwargs):
     if zone:
         ctx.instance.runtime_properties[constants.GCP_ZONE] = zone
@@ -316,7 +314,6 @@ def create(instance_type,
     script = ''
     if not startup_script:
         startup_script = ctx.instance.runtime_properties.get('startup_script')
-    #TODO: make it pythonistic
 
     ctx.logger.info('The script is {0}'.format(str(startup_script)))
     if startup_script and startup_script.get('type') == 'file':
@@ -334,7 +331,7 @@ def create(instance_type,
                         external_ip=external_ip,
                         startup_script=script,
                         scopes=scopes,
-                        user_data=user_data,
+                        tags=tags,
                         ssh_keys=ssh_keys)
     ctx.instance.runtime_properties[constants.NAME] = instance.name
     add_to_security_groups(instance)
