@@ -480,10 +480,8 @@ def add_to_security_groups(instance):
 
 def get_ssh_keys():
     instance_keys = ctx.instance.runtime_properties.get(constants.SSH_KEYS, [])
-    if utils.is_manager_instance():
-        all_keys = instance_keys
-    else:
+    if not utils.is_manager_instance():
         agent_key = \
             ctx.provider_context['resources']['cloudify-agent']['public-key']
-        all_keys = [agent_key] + instance_keys
-    return list(set(all_keys))
+        instance_keys.extend(agent_key)
+    return list(set(instance_keys))
