@@ -251,16 +251,13 @@ def get_key_user_string(user, public_key):
     cleaned_user = re.sub(r'\s+', ' ', user).strip()
     cleaned_public_key = re.sub(r'\s+', ' ', public_key).strip()
 
-    if cleaned_public_key.count(' ') == 1:
-        keytype, key_blob = cleaned_public_key.split(' ')
-        comment = cleaned_user
-    elif cleaned_public_key.count(' ') == 2:
-        keytype, key_blob, comment = cleaned_public_key.split(' ')
+    if cleaned_public_key.count(' ') >= 1:
+        keytype, key_blob = cleaned_public_key.split(' ')[:2]
     else:
         raise NonRecoverableError('Incorrect format of public key')
     protocol = '{0}:{1}'.format(cleaned_user, keytype)
 
-    return '{0} {1} {2}'.format(protocol, key_blob, comment)
+    return '{0} {1} {2}'.format(protocol, key_blob, cleaned_user)
 
 
 def get_agent_ssh_key_string():
