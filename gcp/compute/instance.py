@@ -454,6 +454,13 @@ def detach_disk(instance_name, disk_name, **kwargs):
     instance.detach_disk(disk_name)
 
 
+@operation
+def contained_in(**kwargs):
+    key = ctx.target.instance.runtime_properties[constants.SSH_KEYS]
+    ctx.source.instance.runtime_properties[constants.SSH_KEYS] = key
+    ctx.logger.info('Copied ssh keys to the node')
+
+
 def set_ip(instance, relationship=False):
     instances = instance.list()
     item = utils.get_item_from_gcp_response('name',
@@ -485,3 +492,4 @@ def get_ssh_keys():
             ctx.provider_context['resources']['cloudify-agent']['public-key']
         instance_keys.extend(agent_key)
     return list(set(instance_keys))
+
