@@ -334,7 +334,8 @@ def create(instance_type,
                         tags=tags,
                         ssh_keys=ssh_keys)
     ctx.instance.runtime_properties[constants.NAME] = instance.name
-    add_to_security_groups(instance)
+    if not utils.is_manager_instance():
+        add_to_security_groups(instance)
     disk = ctx.instance.runtime_properties.get(constants.DISK)
     if disk:
         instance.disks = [disk]
