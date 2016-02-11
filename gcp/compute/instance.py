@@ -63,7 +63,7 @@ class Instance(GoogleCloudPlatform):
         self.machine_type = machine_type
         self.network = config['network']
         self.startup_script = startup_script
-        self.tags = tags.append(self.name) if tags else [self.name]
+        self.tags = tags + self.name if tags else [self.name]
         self.externalIP = external_ip
         self.disks = []
         self.scopes = scopes or self.DEFAULT_SCOPES
