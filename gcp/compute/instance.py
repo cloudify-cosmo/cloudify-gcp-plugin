@@ -237,6 +237,9 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             deviceName=disk_name).execute()
 
+    def update_model(self):
+        self.tags = self.body['tags']['items']
+
     @check_response
     def list(self):
         """
@@ -365,12 +368,17 @@ def delete(**kwargs):
 def add_instance_tag(instance_name, tag, **kwargs):
     if not tag:
         return
+    tags_to_set = [utils.get_gcp_resource_name(t) for t in tag]
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=instance_name)
-    instance.set_tags([utils.get_gcp_resource_name(t) for t in tag])
+    instance.get()
+    if not all(t in tags_to_set for t in instance.tags):
+        instance.set_tags(tags_to_set)
+        ctx.operation.retry('Tags {0} to be set for instance {1}'.format(
+            str(tags_to_set), instance_name), constants.RETRY_DEFAULT_DELAY)
 
 
 @operation
