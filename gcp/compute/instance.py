@@ -159,10 +159,12 @@ class Instance(GoogleCloudPlatform):
         """
         self.logger.info('Get instance {0} details'.format(self.name))
 
-        return self.discovery.instances().get(
-            instance=self.name,
-            project=self.project,
-            zone=self.zone).execute()
+        instance = self.discovery.instances().get(instance=self.name,
+                                                  project=self.project,
+                                                  zone=self.zone).execute()
+        self.body = instance
+        self.update_model()
+        return instance
 
     @check_response
     def add_access_config(self, ip_address=''):
@@ -236,6 +238,9 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone,
             instance=self.name,
             deviceName=disk_name).execute()
+
+    def update_model(self):
+        self.tags = self.body['tags']['items']
 
     @check_response
     def list(self):
@@ -365,12 +370,18 @@ def delete(**kwargs):
 def add_instance_tag(instance_name, tag, **kwargs):
     if not tag:
         return
+    tags_to_set = [utils.get_gcp_resource_name(t) for t in tag]
     gcp_config = utils.get_gcp_config()
     gcp_config['network'] = utils.get_gcp_resource_name(gcp_config['network'])
     instance = Instance(gcp_config,
                         ctx.logger,
                         name=instance_name)
-    instance.set_tags([utils.get_gcp_resource_name(t) for t in tag])
+    instance.get()
+    ctx.logger.info('Instance after get: {0}, {1}'.format(instance.body, instance.tags))
+    if not all(t in instance.tags for t in tags_to_set):
+        instance.set_tags(tags_to_set)
+        ctx.operation.retry('Tags {0} to be set for instance {1}'.format(
+            str(tags_to_set), instance_name), constants.RETRY_DEFAULT_DELAY)
 
 
 @operation
