@@ -159,10 +159,12 @@ class Instance(GoogleCloudPlatform):
         """
         self.logger.info('Get instance {0} details'.format(self.name))
 
-        return self.discovery.instances().get(
-            instance=self.name,
-            project=self.project,
-            zone=self.zone).execute()
+        instance = self.discovery.instances().get(instance=self.name,
+                                                  project=self.project,
+                                                  zone=self.zone).execute()
+        self.body = instance
+        self.update_model()
+        return instance
 
     @check_response
     def add_access_config(self, ip_address=''):
