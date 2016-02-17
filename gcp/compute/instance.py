@@ -375,6 +375,7 @@ def add_instance_tag(instance_name, tag, **kwargs):
                         ctx.logger,
                         name=instance_name)
     instance.get()
+    ctx.logger.info('Instance after get: {0}, {1}'.format(instance.body, instance.tags))
     if not all(t in tags_to_set for t in instance.tags):
         instance.set_tags(tags_to_set)
         ctx.operation.retry('Tags {0} to be set for instance {1}'.format(
