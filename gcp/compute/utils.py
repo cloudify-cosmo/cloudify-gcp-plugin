@@ -243,6 +243,15 @@ def create_firewall_structure_from_rules(network, rules):
     return firewall
 
 
+def is_object_deleted(obj):
+    try:
+        obj.get()
+    except GCPHttpError as error:
+        if is_missing_resource_error(error):
+            return True
+    return False
+
+
 def is_manager_instance():
     return not ctx.provider_context
 

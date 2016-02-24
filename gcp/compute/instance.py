@@ -353,11 +353,15 @@ def delete(**kwargs):
         instance = Instance(gcp_config,
                             ctx.logger,
                             name=name)
-        utils.delete_if_not_external(instance)
-
-        ctx.instance.runtime_properties.pop(constants.DISK, None)
-        ctx.instance.runtime_properties.pop(constants.NAME, None)
-        ctx.instance.runtime_properties.pop(constants.GCP_ZONE, None)
+        if utils.should_use_external_resource() or \
+                utils.is_object_deleted(instance):
+            ctx.instance.runtime_properties.pop(constants.DISK, None)
+            ctx.instance.runtime_properties.pop(constants.NAME, None)
+            ctx.instance.runtime_properties.pop(constants.GCP_ZONE, None)
+        else:
+            utils.delete_if_not_external(instance)
+            ctx.operation.retry('Instance is not yet deleted. Retrying:',
+                                constants.RETRY_DEFAULT_DELAY)
 
 
 @operation
