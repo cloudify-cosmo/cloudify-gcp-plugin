@@ -401,7 +401,7 @@ def add_external_ip(instance_name, **kwargs):
                         ctx.logger,
                         name=instance_name)
     if ip_node.properties[constants.USE_EXTERNAL_RESOURCE]:
-        ip_address = ip_node.properties['ip_address']
+        ip_address = ip_node.properties.get('ip_address') or ctx.target.instance.runtime_properties.get(constants.IP)
         if not ip_address:
             raise GCPError('{} is set, but ip_address is not set'
                            .format(constants.USE_EXTERNAL_RESOURCE))
