@@ -10,7 +10,7 @@ plugins:
     # URL to archive containing the plugin or name of directory containing
     # the plugin if it is included in the the blueprint directory under the
     # "plugins" directory.
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/b3.2.1-3.zip
+    source: https://github.com/szpotona/cloudify-gcp-plugin/archive/b3.2.zip
 
 node_types:
   cloudify.gcp.nodes.Instance:
@@ -65,7 +65,7 @@ node_types:
         default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
-        start:
+        configure:
           implementation: gcp_plugin.gcp.compute.instance.create
           inputs:
             startup_script:
@@ -86,6 +86,11 @@ node_types:
               default: ''
             tags:
               default: { get_property: [SELF, tags]}
+        start:
+          implementation: gcp_plugin.gcp.compute.instance.start
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
         delete:
           implementation: gcp_plugin.gcp.compute.instance.delete
 

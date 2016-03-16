@@ -345,6 +345,16 @@ def create(instance_type,
     if disk:
         instance.disks = [disk]
     utils.create(instance)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def start(name,
+          **kwargs):
+    gcp_config = utils.get_gcp_config()
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=name)
     set_ip(instance)
 
 
