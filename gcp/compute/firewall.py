@@ -129,10 +129,10 @@ class FirewallRule(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(firewall_rule, **kwargs):
+def create(firewall_rule, name, **kwargs):
     gcp_config = utils.get_gcp_config()
     network_name = utils.get_gcp_resource_name(gcp_config['network'])
-    set_firewall_rule_name(firewall_rule, network_name)
+    set_firewall_rule_name(firewall_rule, network_name, name)
     firewall = FirewallRule(gcp_config,
                             ctx.logger,
                             firewall=firewall_rule,
@@ -142,9 +142,11 @@ def create(firewall_rule, **kwargs):
     ctx.instance.runtime_properties[constants.NAME] = firewall.name
 
 
-def set_firewall_rule_name(firewall_rule, network_name):
+def set_firewall_rule_name(firewall_rule, network_name, name):
     if utils.should_use_external_resource():
         firewall_rule['name'] = utils.assure_resource_id_correct()
+    elif name:
+        firewall_rule['name'] = utils.get_gcp_resource_name(name)
     else:
         firewall_rule['name'] = utils.get_firewall_rule_name(network_name,
                                                              firewall_rule)
@@ -169,11 +171,12 @@ def delete(**kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create_security_group(rules, **kwargs):
+def create_security_group(rules, name, **kwargs):
     gcp_config = utils.get_gcp_config()
     firewall_structure = create_firewall_structure_from_rules(
         gcp_config['network'],
-        rules)
+        rules,
+        name)
     ctx.instance.runtime_properties[constants.TARGET_TAGS] = \
         firewall_structure[constants.TARGET_TAGS]
     ctx.instance.runtime_properties[constants.SOURCE_TAGS] = \
@@ -186,12 +189,14 @@ def create_security_group(rules, **kwargs):
     utils.create(firewall)
 
 
-def create_firewall_structure_from_rules(network, rules):
+def create_firewall_structure_from_rules(network, rules, name):
     firewall_structure = utils.create_firewall_structure_from_rules(
         network,
         rules)
     if utils.should_use_external_resource():
         firewall_structure['name'] = utils.assure_resource_id_correct()
+    elif name:
+        firewall_structure['name'] = utils.get_gcp_resource_name(name)
     return firewall_structure
 
 
