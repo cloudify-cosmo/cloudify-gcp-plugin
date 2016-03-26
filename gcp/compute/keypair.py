@@ -155,7 +155,5 @@ def delete(user, private_key_path, **kwargs):
                       private_key_path,
                       None)
     keypair.public_key = ctx.instance.runtime_properties[constants.PUBLIC_KEY]
-    if not utils.should_use_external_resource():
-        keypair.remove_private_key()
     ctx.instance.runtime_properties.pop(constants.PRIVATE_KEY, None)
     ctx.instance.runtime_properties.pop(constants.PUBLIC_KEY, None)

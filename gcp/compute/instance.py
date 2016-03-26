@@ -41,7 +41,7 @@ class Instance(GoogleCloudPlatform):
                  external_ip=False,
                  tags=None,
                  scopes=None,
-                 user_data=None):
+                 ssh_keys=None):
         """
         Create Instance object
 
@@ -63,11 +63,11 @@ class Instance(GoogleCloudPlatform):
         self.machine_type = machine_type
         self.network = config['network']
         self.startup_script = startup_script
-        self.tags = tags.append(self.name) if tags else [self.name]
+        self.tags = tags + [self.name] if tags else [self.name]
         self.externalIP = external_ip
         self.disks = []
         self.scopes = scopes or self.DEFAULT_SCOPES
-        self.user_data = user_data
+        self.ssh_keys = ssh_keys or []
 
     @check_response
     def create(self):
@@ -255,11 +255,6 @@ class Instance(GoogleCloudPlatform):
         def add_key_value_to_metadata(key, value, body):
             body['metadata']['items'].append({'key': key, 'value': value})
 
-        def get_instance_ssh_keys():
-            agent_key = utils.get_agent_ssh_key_string()
-            other_keys = ctx.instance.runtime_properties.get(constants.SSHKEY)
-            return other_keys + '\n' + agent_key if other_keys else agent_key
-
         body = {
             'name': self.name,
             'description': 'Cloudify generated instance',
@@ -278,11 +273,12 @@ class Instance(GoogleCloudPlatform):
             }
         }
 
-        add_key_value_to_metadata(KeyPair.KEY_VALUE, get_instance_ssh_keys(), body)
+        ssh_keys_str = '\n'.join(self.ssh_keys)
+        add_key_value_to_metadata(KeyPair.KEY_VALUE, ssh_keys_str, body)
         if self.startup_script:
-            add_key_value_to_metadata('startup-script', self.startup_script, body)
-        if self.user_data:
-            add_key_value_to_metadata('user-data', self.user_data, body)
+            add_key_value_to_metadata('startup-script',
+                                      self.startup_script,
+                                      body)
 
         if not self.disks:
             self.disks = [{'boot': True,
@@ -309,7 +305,7 @@ def create(instance_type,
            external_ip,
            startup_script,
            scopes,
-           user_data,
+           tags,
            **kwargs):
     if zone:
         ctx.instance.runtime_properties[constants.GCP_ZONE] = zone
@@ -318,13 +314,13 @@ def create(instance_type,
     script = ''
     if not startup_script:
         startup_script = ctx.instance.runtime_properties.get('startup_script')
-    #TODO: make it pythonistic
 
     ctx.logger.info('The script is {0}'.format(str(startup_script)))
     if startup_script and startup_script.get('type') == 'file':
         script = ctx.get_resource(startup_script.get('script'))
     elif startup_script and startup_script.get('type') == 'string':
         script = startup_script.get('script')
+    ssh_keys = get_ssh_keys()
 
     instance_name = utils.get_final_resource_name(name)
     instance = Instance(gcp_config,
@@ -335,14 +331,25 @@ def create(instance_type,
                         external_ip=external_ip,
                         startup_script=script,
                         scopes=scopes,
-                        user_data=user_data)
+                        tags=tags,
+                        ssh_keys=ssh_keys)
     ctx.instance.runtime_properties[constants.NAME] = instance.name
-    if ctx.node.properties['install_agent']:
+    if not utils.is_manager_instance():
         add_to_security_groups(instance)
     disk = ctx.instance.runtime_properties.get(constants.DISK)
     if disk:
         instance.disks = [disk]
     utils.create(instance)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def start(name,
+          **kwargs):
+    gcp_config = utils.get_gcp_config()
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=name)
     set_ip(instance)
 
 
@@ -356,11 +363,15 @@ def delete(**kwargs):
         instance = Instance(gcp_config,
                             ctx.logger,
                             name=name)
-        utils.delete_if_not_external(instance)
-
-        ctx.instance.runtime_properties.pop(constants.DISK, None)
-        ctx.instance.runtime_properties.pop(constants.NAME, None)
-        ctx.instance.runtime_properties.pop(constants.GCP_ZONE, None)
+        if utils.should_use_external_resource() or \
+                utils.is_object_deleted(instance):
+            ctx.instance.runtime_properties.pop(constants.DISK, None)
+            ctx.instance.runtime_properties.pop(constants.NAME, None)
+            ctx.instance.runtime_properties.pop(constants.GCP_ZONE, None)
+        else:
+            utils.delete_if_not_external(instance)
+            ctx.operation.retry('Instance is not yet deleted. Retrying:',
+                                constants.RETRY_DEFAULT_DELAY)
 
 
 @operation
@@ -400,7 +411,7 @@ def add_external_ip(instance_name, **kwargs):
                         ctx.logger,
                         name=instance_name)
     if ip_node.properties[constants.USE_EXTERNAL_RESOURCE]:
-        ip_address = ip_node.properties['ip_address']
+        ip_address = ip_node.properties.get('ip_address') or ctx.target.instance.runtime_properties.get(constants.IP)
         if not ip_address:
             raise GCPError('{} is set, but ip_address is not set'
                            .format(constants.USE_EXTERNAL_RESOURCE))
@@ -415,19 +426,13 @@ def add_external_ip(instance_name, **kwargs):
 def add_ssh_key(**kwargs):
     key = ctx.target.instance.runtime_properties[constants.PUBLIC_KEY]
     user = ctx.target.instance.runtime_properties[constants.USER]
-    key_user_string = utils.get_key_user_string(user, key + ' ' + user)
-    previous_keys = ctx.source.instance.runtime_properties.get(constants.SSHKEY)
-    ctx.source.instance.runtime_properties[constants.SSHKEY] = \
-        previous_keys + '\n' + key_user_string if previous_keys else key_user_string
-    ctx.logger.info('sshKeys are: {0}'
-                    .format(ctx.source.instance.runtime_properties[constants.SSHKEY]))
+    key_user_string = utils.get_key_user_string(user, key)
+    properties = ctx.source.instance.runtime_properties
 
-
-@operation
-def contained_in(**kwargs):
-    key = ctx.target.instance.runtime_properties[constants.SSHKEY]
-    ctx.source.instance.runtime_properties[constants.SSHKEY] = key
-    ctx.logger.info('Copied ssh keys to the node')
+    instance_keys = properties.get(constants.SSH_KEYS, [])
+    instance_keys.append(key_user_string)
+    properties[constants.SSH_KEYS] = instance_keys
+    ctx.logger.info('Adding key: {0}'.format(key_user_string))
 
 
 @operation
@@ -463,6 +468,14 @@ def detach_disk(instance_name, disk_name, **kwargs):
     instance.detach_disk(disk_name)
 
 
+@operation
+@utils.throw_cloudify_exceptions
+def contained_in(**kwargs):
+    key = ctx.target.instance.runtime_properties[constants.SSH_KEYS]
+    ctx.source.instance.runtime_properties[constants.SSH_KEYS] = key
+    ctx.logger.info('Copied ssh keys to the node')
+
+
 def set_ip(instance, relationship=False):
     instances = instance.list()
     item = utils.get_item_from_gcp_response('name',
@@ -485,3 +498,12 @@ def add_to_security_groups(instance):
     instance.tags.extend(
         provider_config[constants.AGENTS_SECURITY_GROUP]
         .get(constants.SOURCE_TAGS))
+
+
+def get_ssh_keys():
+    instance_keys = ctx.instance.runtime_properties.get(constants.SSH_KEYS, [])
+    if not utils.is_manager_instance():
+        agent_key = \
+            ctx.provider_context['resources']['cloudify-agent']['public-key']
+        instance_keys.extend(agent_key)
+    return list(set(instance_keys))

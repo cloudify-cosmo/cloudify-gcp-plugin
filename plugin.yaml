@@ -10,7 +10,9 @@ plugins:
     # URL to archive containing the plugin or name of directory containing
     # the plugin if it is included in the the blueprint directory under the
     # "plugins" directory.
-    source: https://github.com/szpotona/cloudify-gcp-plugin/archive/master.zip
+    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.3.1-b0-1.0.zip
+    package-name: cloudify-gcp-plugin
+    package-version: 1.3.1.post1
 
 node_types:
   cloudify.gcp.nodes.Instance:
@@ -57,9 +59,15 @@ node_types:
           in default zone.
         type: string
         default: ''
+      tags:
+        description: >
+          Optional tags. If not given, this instance will have a tag only with
+          its name.
+        type: string
+        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
-        start:
+        configure:
           implementation: gcp_plugin.gcp.compute.instance.create
           inputs:
             startup_script:
@@ -78,8 +86,13 @@ node_types:
               default: { get_property: [SELF, zone]}
             scopes:
               default: ''
-            user_data:
-              default: ''
+            tags:
+              default: { get_property: [SELF, tags]}
+        start:
+          implementation: gcp_plugin.gcp.compute.instance.start
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
         delete:
           implementation: gcp_plugin.gcp.compute.instance.delete
 
@@ -208,6 +221,11 @@ node_types:
           If "use_external_resource" is set to true, this field will be used as a name
           of existing firewall rule that is referenced by this node.
         default: ''
+      name:
+        description: >
+          Optional security group name. By default it will be network name
+          plus node name.
+        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
@@ -219,6 +237,8 @@ node_types:
           inputs:
             firewall_rule:
               default: {}
+            name:
+              default: { get_property: [SELF, name] }
         delete:
           implementation: gcp_plugin.gcp.compute.firewall.delete
 
@@ -234,6 +254,11 @@ node_types:
         description: >
           If "use_external_resource" is set to true, this field will be used as a name
           of existing security group that is referenced by this node.
+        default: ''
+      name:
+        description: >
+          Optional security group name. By default it will be network name
+          plus node name.
         default: ''
       rules:
         description: >
@@ -251,6 +276,8 @@ node_types:
           inputs: 
             rules:
               default: { get_property: [SELF, rules] }
+            name:
+              default: { get_property: [SELF, name] }
         delete:          
           implementation: gcp_plugin.gcp.compute.firewall.delete_security_group
 
@@ -372,15 +399,19 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
         default: {}
+      image_name:
+        default: ''
+      image_path:
+        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: gcp_plugin.gcp.compute.image.create
           inputs:
             image_name:
-              default: ''
+              default: { get_property: [ SELF, image_name ] }
             image_path:
-              default: ''
+              default: { get_property: [ SELF, image_path ] }
         delete:
           implementation: gcp_plugin.gcp.compute.image.delete
 
@@ -689,13 +720,6 @@ node_types:
 
 relationships:
 
-  cloudify.gcp.relationships.contained_in_compute:
-    derived_from: cloudify.relationships.contained_in
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure:
-          implementation: gcp_plugin.gcp.compute.instance.contained_in
-
   cloudify.gcp.relationships.instance_connected_to_security_group:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
@@ -803,3 +827,10 @@ relationships:
               default: { get_attribute: [SOURCE, gcp_name] }
             group_self_url:
               default: { get_attribute: [TARGET, self_url] }
+
+  cloudify.gcp.relationships.contained_in_compute:
+    derived_from: cloudify.relationships.contained_in
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: gcp_plugin.gcp.compute.instance.contained_in

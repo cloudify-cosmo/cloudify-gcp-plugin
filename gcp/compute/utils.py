@@ -243,8 +243,30 @@ def create_firewall_structure_from_rules(network, rules):
     return firewall
 
 
-def get_key_user_string(user, key):
-    return '{0}:{1}'.format(user, key)
+def is_object_deleted(obj):
+    try:
+        obj.get()
+    except GCPHttpError as error:
+        if is_missing_resource_error(error):
+            return True
+    return False
+
+
+def is_manager_instance():
+    return not ctx.provider_context
+
+
+def get_key_user_string(user, public_key):
+    cleaned_user = re.sub(r'\s+', ' ', user).strip()
+    cleaned_public_key = re.sub(r'\s+', ' ', public_key).strip()
+
+    if cleaned_public_key.count(' ') >= 1:
+        keytype, key_blob = cleaned_public_key.split(' ')[:2]
+    else:
+        raise NonRecoverableError('Incorrect format of public key')
+    protocol = '{0}:{1}'.format(cleaned_user, keytype)
+
+    return '{0} {1} {2}'.format(protocol, key_blob, cleaned_user)
 
 
 def get_agent_ssh_key_string():
