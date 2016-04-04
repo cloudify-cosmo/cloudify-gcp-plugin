@@ -10,7 +10,7 @@ plugins:
     # URL to archive containing the plugin or name of directory containing
     # the plugin if it is included in the the blueprint directory under the
     # "plugins" directory.
-    source: https://github.com/szpotona/cloudify-gcp-plugin/archive/b3.3.1-a.zip
+    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/b3.zip
 
 node_types:
   cloudify.gcp.nodes.Instance:
@@ -65,7 +65,7 @@ node_types:
         default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
-        start:
+        configure:
           implementation: gcp_plugin.gcp.compute.instance.create
           inputs:
             startup_script:
@@ -86,6 +86,11 @@ node_types:
               default: ''
             tags:
               default: { get_property: [SELF, tags]}
+        start:
+          implementation: gcp_plugin.gcp.compute.instance.start
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
         delete:
           implementation: gcp_plugin.gcp.compute.instance.delete
 
@@ -214,6 +219,11 @@ node_types:
           If "use_external_resource" is set to true, this field will be used as a name
           of existing firewall rule that is referenced by this node.
         default: ''
+      name:
+        description: >
+          Optional security group name. By default it will be network name
+          plus node name.
+        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
@@ -225,6 +235,8 @@ node_types:
           inputs:
             firewall_rule:
               default: {}
+            name:
+              default: { get_property: [SELF, name] }
         delete:
           implementation: gcp_plugin.gcp.compute.firewall.delete
 
@@ -240,6 +252,11 @@ node_types:
         description: >
           If "use_external_resource" is set to true, this field will be used as a name
           of existing security group that is referenced by this node.
+        default: ''
+      name:
+        description: >
+          Optional security group name. By default it will be network name
+          plus node name.
         default: ''
       rules:
         description: >
@@ -257,6 +274,8 @@ node_types:
           inputs: 
             rules:
               default: { get_property: [SELF, rules] }
+            name:
+              default: { get_property: [SELF, name] }
         delete:          
           implementation: gcp_plugin.gcp.compute.firewall.delete_security_group
 

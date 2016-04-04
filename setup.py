@@ -28,14 +28,14 @@ setup(
     license='LICENSE',
     zip_safe=False,
     install_requires=[
-        "cloudify-plugins-common==3.2.1",
+        "cloudify-plugins-common>=3.3.1",
         "oauth2client==1.4.6",
         "google-api-python-client==1.4.0",
         "pyyaml",
         "Crypto"
     ],
     test_requires=[
-        "cloudify-dsl-parser==3.2   ",
+        "cloudify-dsl-parser>=3.3.1",
         "nose"
     ]
 )
