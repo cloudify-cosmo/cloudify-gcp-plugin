@@ -14,7 +14,6 @@
 #    * limitations under the License.
 
 from functools import wraps
-import json
 
 import Crypto
 import httplib2
@@ -87,11 +86,9 @@ class GoogleCloudPlatform(object):
         """
         Crypto.Random.atfork()
         try:
-            with open(self.auth) as f:
-                account_data = json.load(f)
             credentials = SignedJwtAssertionCredentials(
-                account_data['client_email'],
-                account_data['private_key'],
+                self.auth['client_email'],
+                self.auth['private_key'],
                 scope=scope)
             http = httplib2.Http()
             credentials.authorize(http)

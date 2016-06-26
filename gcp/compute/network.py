@@ -133,3 +133,7 @@ def delete(**kwargs):
                       network={'name': name})
     utils.delete_if_not_external(network)
     ctx.instance.runtime_properties.pop(constants.NAME, None)
+
+    if not utils.is_object_deleted(network):
+        ctx.operation.retry('Instance is not yet deleted. Retrying:',
+                            constants.RETRY_DEFAULT_DELAY)
