@@ -271,7 +271,7 @@ def get_key_user_string(user, public_key):
 
 def get_agent_ssh_key_string():
     try:
-        return ctx.provider_context['resources']['cloudify-agent']['public-key']
+        return ctx.provider_context['resources']['cloudify_agent']['public_key']
     except KeyError:
         # means that we are bootstrapping the manager
         return ''

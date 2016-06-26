@@ -170,6 +170,7 @@ def delete(**kwargs):
 
 
 @operation
+@utils.retry_on_failure('Retrying creating security group')
 @utils.throw_cloudify_exceptions
 def create_security_group(rules, name, **kwargs):
     gcp_config = utils.get_gcp_config()

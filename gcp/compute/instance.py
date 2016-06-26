@@ -80,9 +80,6 @@ class Instance(GoogleCloudPlatform):
         :raise: GCPError if there is any problem with startup script file:
         e.g. the file is not under the given path or it has wrong permissions
         """
-        self.logger.info(
-            'Create instance with parameters: {0}'.format(self.to_dict()))
-
         return self.discovery.instances().insert(
             project=self.project,
             zone=self.zone,
@@ -352,7 +349,6 @@ def start(name,
                         name=name)
     set_ip(instance)
 
-
 @operation
 @utils.retry_on_failure('Retrying deleting instance')
 @utils.throw_cloudify_exceptions
@@ -483,7 +479,7 @@ def set_ip(instance, relationship=False):
                                             instances)
     try:
         if relationship:
-            ctx.target.instance.runtime_properties['gcp_resource_id'] = \
+            ctx.target.instance.runtime_properties['ip'] = \
                 item['networkInterfaces'][0]['accessConfigs'][0]['natIP']
         else:
             ctx.instance.runtime_properties['ip'] = \
@@ -497,13 +493,13 @@ def add_to_security_groups(instance):
     provider_config = utils.get_manager_provider_config()
     instance.tags.extend(
         provider_config[constants.AGENTS_SECURITY_GROUP]
-        .get(constants.SOURCE_TAGS))
+        .get(constants.SOURCE_TAGS, {}))
 
 
 def get_ssh_keys():
     instance_keys = ctx.instance.runtime_properties.get(constants.SSH_KEYS, [])
     if not utils.is_manager_instance():
         agent_key = \
-            ctx.provider_context['resources']['cloudify-agent']['public-key']
-        instance_keys.extend(agent_key)
+            ctx.provider_context['resources']['cloudify_agent']['public_key']
+        instance_keys.append(agent_key)
     return list(set(instance_keys))
