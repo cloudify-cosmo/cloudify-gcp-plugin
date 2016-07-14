@@ -83,6 +83,10 @@ node_types:
             script: <path to script file>
         default:
           ''
+      additional_settings:
+        description: >
+          Additional instance settings.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -106,6 +110,8 @@ node_types:
               default: { get_property: [SELF, tags]}
             can_ip_forward:
               default: { get_property: [SELF, can_ip_forward]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         start:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.start
           inputs:
@@ -142,6 +148,10 @@ node_types:
           A list of named ports defined for this instance group, the expected
           format is: [{name: 'name', port: 1234}, ... ].
         default: []
+      additional_settings:
+        description: >
+          Additional setting for instance group
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -151,6 +161,8 @@ node_types:
               default: { get_property: [SELF, name]}
             named_ports:
               default: { get_property: [SELF, named_ports]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.instance_group.delete
 
@@ -180,6 +192,10 @@ node_types:
           Size of the Volume in GB.
         type: integer
         default: 10
+      additional_settings:
+        description: >
+          Additional setting for volume
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -191,6 +207,8 @@ node_types:
               default: { get_property: [SELF, name] }
             size:
               default: { get_property: [SELF, size] }
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.disk.delete
 
@@ -213,6 +231,10 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
         default: {}
+      additional_settings:
+        description: >
+          Additional setting for network
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -222,6 +244,8 @@ node_types:
               default: { get_property: [SELF, name] }
             auto_subnets:
               default: { get_property: [SELF, auto_subnets] }
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.network.delete
           inputs:
@@ -293,6 +317,10 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
         default: {}
+      additional_settings:
+        description: >
+          Additional setting for firewall
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -308,6 +336,8 @@ node_types:
               default: { get_property: [SELF, next_hop] }
             priority:
               default: { get_property: [SELF, priority] }
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.route.delete
           inputs:
@@ -351,6 +381,10 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
         default: {}
+      additional_settings:
+        description: >
+          Additional setting for firewall
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -364,6 +398,8 @@ node_types:
               default: { get_property: [SELF, sources] }
             target_tags:
               default: { get_property: [SELF, target_tags] }
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.firewall.delete
 
@@ -490,6 +526,10 @@ node_types:
           Optional static ip name. By default it will be static ip id.
         type: string
         default: ''
+      additional_settings:
+        description: >
+          Additional setting for static ip
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -497,6 +537,8 @@ node_types:
           inputs:
             name:
               default: { get_property: [SELF, name]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.address.delete
 
@@ -519,6 +561,8 @@ node_types:
           inputs:
             name:
               default: { get_property: [SELF, name]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
             region:
               default: { get_property: [SELF, region]}
 
@@ -538,6 +582,10 @@ node_types:
         default: ''
       image_path:
         default: ''
+      additional_settings:
+        description: >
+          Additional setting for image
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -547,6 +595,8 @@ node_types:
               default: { get_property: [ SELF, image_name ] }
             image_path:
               default: { get_property: [ SELF, image_path ] }
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.image.delete
 
@@ -659,6 +709,10 @@ node_types:
           URL of a backend service to which this URL map will redirect traffic by default.
         type: string
         default: ''
+      additional_settings:
+        description: >
+          Additional setting for url map
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -668,6 +722,8 @@ node_types:
               default: { get_property: [SELF, name]}
             default_service:
               default: { get_property: [SELF, default_service]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.url_map.delete
 
@@ -707,6 +763,10 @@ node_types:
           Can and must be used only with https type proxy.
         type: string
         default: ''
+      additional_settings:
+        description: >
+          Additional setting for target proxy
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -720,6 +780,8 @@ node_types:
               default: { get_property: [SELF, url_map]}
             ssl_certificate:
               default: { get_property: [SELF, ssl_certificate]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.target_proxy.delete
 
@@ -755,6 +817,10 @@ node_types:
             type: text|file
             data: Certificate in PEM format if text, otherwise path to a file with certificate
         default: {}
+      additional_settings:
+        description: >
+          Additional setting for target proxy
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -766,6 +832,8 @@ node_types:
               default: { get_property: [SELF, private_key]}
             certificate:
               default: { get_property: [SELF, certificate]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.ssl_certificate.delete
 
@@ -807,6 +875,10 @@ node_types:
           should be reserved earlier.
         type: string
         default: ''
+      additional_settings:
+        description: >
+          Additional setting for ssl certificate
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -820,6 +892,8 @@ node_types:
               default: { get_property: [SELF, port_range]}
             ip_address:
               default: { get_property: [SELF, ip_address]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.delete
       cloudify.interfaces.validation:
@@ -842,6 +916,10 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
         default: {}
+      additional_settings:
+        description: >
+          Additional settings
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -851,6 +929,8 @@ node_types:
               default: { get_property: [SELF, name]}
             dns_name:
               default: { get_property: [SELF, dns_name]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.dns.dns.delete
 

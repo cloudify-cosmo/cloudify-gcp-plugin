@@ -36,6 +36,7 @@ class TestGCPFirewall(TestGCP):
                 allowed={'tcp': 'pct'},
                 sources=['1', 'sauce'],
                 target_tags=None,
+                additional_settings={},
                 )
 
         mock_build.assert_called_once()
@@ -58,6 +59,7 @@ class TestGCPFirewall(TestGCP):
                 allowed={},
                 sources={},
                 target_tags=None,
+                additional_settings={},
                 )
 
         mock_build.assert_called_once()

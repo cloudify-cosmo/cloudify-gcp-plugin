@@ -41,6 +41,7 @@ class TestTargetProxy(TestGCP):
                 'http',
                 'url map',
                 ssl_certificate=None,
+                additional_settings={},
                 )
 
         mock_build.assert_called_once()
@@ -62,6 +63,7 @@ class TestTargetProxy(TestGCP):
                 'https',
                 'url map',
                 ssl_certificate='cert',
+                additional_settings={},
                 )
 
         mock_build.assert_called_once()

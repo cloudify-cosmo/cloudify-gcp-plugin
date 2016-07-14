@@ -27,6 +27,7 @@ class Image(GoogleCloudPlatform):
                  config,
                  logger,
                  name,
+                 additional_settings=None,
                  url=None,
                  id=None):
         """
@@ -37,7 +38,10 @@ class Image(GoogleCloudPlatform):
         :param url: image url in storage to be uploaded
         :param id: image_id
         """
-        super(Image, self).__init__(config, logger, name,
+        super(Image, self).__init__(config,
+                                    logger,
+                                    name,
+                                    additional_settings,
                                     scope=[constants.COMPUTE_SCOPE,
                                            constants.STORAGE_SCOPE_RW])
         self.url = url
@@ -82,22 +86,22 @@ class Image(GoogleCloudPlatform):
         return response.get('items')
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'name': self.name,
             'rawDisk': {
                 'source': self.url,
                 'containerType': 'TAR'
             }
-        }
-        return body
+        })
+        return self.body
 
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(image_name, image_path, **kwargs):
+def create(image_name, image_path, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(image_name)
-    image = Image(gcp_config, ctx.logger, name)
+    image = Image(gcp_config, ctx.logger, name, additional_settings)
     upload_image(image, image_path)
     ctx.instance.runtime_properties['name'] = image.name
 

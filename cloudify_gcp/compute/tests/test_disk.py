@@ -28,7 +28,10 @@ from ...tests import TestGCP
 class TestGCPDisk(TestGCP):
 
     def test_create(self, mock_build, *args):
-        disk.create('image', 'name', 'size')
+        disk.create(
+                'image', 'name', 'size',
+                additional_settings={},
+                )
 
         mock_build().disks().insert.assert_called_once_with(
                 body={
