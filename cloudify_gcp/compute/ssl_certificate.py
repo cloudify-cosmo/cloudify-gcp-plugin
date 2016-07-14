@@ -27,21 +27,25 @@ class SslCertificate(GoogleCloudPlatform):
                  config,
                  logger,
                  name,
+                 additional_settings=None,
                  private_key=None,
                  certificate=None):
-        super(SslCertificate, self).__init__(config, logger, name,
+        super(SslCertificate, self).__init__(config,
+                                             logger,
+                                             name,
+                                             additional_settings,
                                              api_version=constants.API_BETA)
         self.private_key = private_key
         self.certificate = certificate
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'description': 'Cloudify generated SSL certificate',
             'name': self.name,
             'privateKey': self.private_key,
             'certificate': self.certificate
-        }
-        return body
+        })
+        return self.body
 
     def get_self_url(self):
         return 'global/sslCertificates/{0}'.format(self.name)

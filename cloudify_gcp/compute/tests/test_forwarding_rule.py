@@ -36,6 +36,7 @@ class TestForwardingRule(TestGCP):
                 target_proxy='target',
                 port_range='range',
                 ip_address='ip',
+                additional_settings={},
                 )
 
         mock_build.assert_called_once()

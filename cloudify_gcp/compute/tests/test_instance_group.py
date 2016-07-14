@@ -27,6 +27,7 @@ class TestInstanceGroup(TestGCP):
         instance_group.create(
                 'name',
                 ['port', 83],
+                additional_settings={},
                 )
 
         mock_build().instanceGroups().insert.assert_called_once_with(

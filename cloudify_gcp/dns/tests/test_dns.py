@@ -27,7 +27,10 @@ from ...tests import TestGCP
 class TestGCPDNS(TestGCP):
 
     def test_create(self, mock_build, *args):
-        dns.create('image', 'name')
+        dns.create(
+                'image', 'name',
+                additional_settings={},
+                )
 
         mock_build().managedZones().create.assert_called_once_with(
                 body={
