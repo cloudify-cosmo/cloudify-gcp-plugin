@@ -35,6 +35,7 @@ class Instance(GoogleCloudPlatform):
                  config,
                  logger,
                  name,
+                 additional_settings=None,
                  image=None,
                  machine_type=None,
                  startup_script=None,
@@ -58,7 +59,8 @@ class Instance(GoogleCloudPlatform):
         super(Instance, self).__init__(
             config,
             logger,
-            utils.get_gcp_resource_name(name))
+            utils.get_gcp_resource_name(name),
+            additional_settings)
         self.image = image
         self.machine_type = machine_type
         self.network = config['network']
@@ -252,8 +254,8 @@ class Instance(GoogleCloudPlatform):
             zone=self.zone).execute()
 
     def to_dict(self):
-        def add_key_value_to_metadata(key, value, body):
-            body['metadata']['items'].append({'key': key, 'value': value})
+        def add_key_value_to_metadata(key, value, d):
+            d['metadata']['items'].append({'key': key, 'value': value})
 
         body = {
             'name': self.name,
@@ -272,13 +274,15 @@ class Instance(GoogleCloudPlatform):
                 'items': [{'key': 'bucket', 'value': self.project}]
             }
         }
-
+        self.body.update(body)
         ssh_keys_str = '\n'.join(self.ssh_keys)
-        add_key_value_to_metadata(KeyPair.KEY_VALUE, ssh_keys_str, body)
+        add_key_value_to_metadata(KeyPair.KEY_VALUE,
+                                  ssh_keys_str,
+                                  self.body)
         if self.startup_script:
             add_key_value_to_metadata('startup-script',
                                       self.startup_script,
-                                      body)
+                                      self.body)
 
         if not self.disks:
             self.disks = [{'boot': True,
@@ -286,14 +290,14 @@ class Instance(GoogleCloudPlatform):
                            'initializeParams': {
                                'sourceImage': self.image
                            }}]
-        body['disks'] = self.disks
+        self.body['disks'] = self.disks
 
         if self.externalIP:
-            for item in body['networkInterfaces']:
+            for item in self.body['networkInterfaces']:
                 if item['name'] == self.ACCESS_CONFIG:
                     item['accessConfigs'] = [{'type': self.ACCESS_CONFIG_TYPE,
                                               'name': self.ACCESS_CONFIG}]
-        return body
+        return self.body
 
 
 @operation
@@ -306,6 +310,7 @@ def create(instance_type,
            startup_script,
            scopes,
            tags,
+           additional_settings,
            **kwargs):
     if zone:
         ctx.instance.runtime_properties[constants.GCP_ZONE] = zone
@@ -332,7 +337,8 @@ def create(instance_type,
                         startup_script=script,
                         scopes=scopes,
                         tags=tags,
-                        ssh_keys=ssh_keys)
+                        ssh_keys=ssh_keys,
+                        additional_settings=additional_settings)
     ctx.instance.runtime_properties[constants.NAME] = instance.name
     if not utils.is_manager_instance():
         add_to_security_groups(instance)

@@ -32,9 +32,13 @@ class TargetProxy(GoogleCloudPlatform):
                  logger,
                  name,
                  api_version,
-                 url_map=None):
-        super(TargetProxy, self).__init__(config, logger,
-                                          name, api_version=api_version)
+                 url_map=None,
+                 additional_settings=None):
+        super(TargetProxy, self).__init__(config,
+                                          logger,
+                                          name,
+                                          additional_settings,
+                                          api_version=api_version)
         self.url_map = url_map
 
     @check_response
@@ -80,10 +84,15 @@ class TargetHttpProxy(TargetProxy):
                  config,
                  logger,
                  name,
+                 additional_settings=None,
                  api_version=constants.API_V1,
                  url_map=None):
-        super(TargetHttpProxy, self).__init__(config, logger, name,
-                                              api_version, url_map)
+        super(TargetHttpProxy, self).__init__(config,
+                                              logger,
+                                              name,
+                                              api_version,
+                                              url_map,
+                                              additional_settings)
 
     def get_self_url(self):
         return 'global/targetHttpProxies/{0}'.format(self.name)
@@ -95,11 +104,12 @@ class TargetHttpProxy(TargetProxy):
         }
 
     def to_dict(self):
-        return {
+        self.body.update({
             'description': 'Cloudify generated TargetHttpProxy',
             'name': self.name,
             'urlMap': self.url_map
-        }
+        })
+        return self.body
 
     def _gcp_target_proxies(self):
         return self.discovery.targetHttpProxies()
@@ -111,9 +121,14 @@ class TargetHttpsProxy(TargetProxy):
                  logger,
                  name,
                  url_map=None,
-                 ssl_certificate=None):
-        super(TargetHttpsProxy, self).__init__(config, logger, name,
-                                               constants.API_BETA, url_map)
+                 ssl_certificate=None,
+                 additional_settings=None):
+        super(TargetHttpsProxy, self).__init__(config,
+                                               logger,
+                                               name,
+                                               constants.API_BETA,
+                                               url_map,
+                                               additional_settings)
         self.ssl_certificate = ssl_certificate
 
     def get_self_url(self):
@@ -126,14 +141,15 @@ class TargetHttpsProxy(TargetProxy):
         }
 
     def to_dict(self):
-        return {
+        self.body.update({
             'description': 'Cloudify generated TargetHttpsProxy',
             'name': self.name,
             'urlMap': self.url_map,
             'sslCertificates': [
                 self.ssl_certificate
             ]
-        }
+        })
+        return self.body
 
     def _gcp_target_proxies(self):
         return self.discovery.targetHttpsProxies()
@@ -141,7 +157,8 @@ class TargetHttpsProxy(TargetProxy):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, target_proxy_type, url_map, ssl_certificate, **kwargs):
+def create(name, target_proxy_type, url_map, ssl_certificate,
+           additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     target_proxy = target_proxy_of_type(target_proxy_type,
@@ -149,7 +166,8 @@ def create(name, target_proxy_type, url_map, ssl_certificate, **kwargs):
                                         logger=ctx.logger,
                                         name=name,
                                         url_map=url_map,
-                                        ssl_certificate=ssl_certificate)
+                                        ssl_certificate=ssl_certificate,
+                                        additional_settings=additional_settings)
     utils.create(target_proxy)
     ctx.instance.runtime_properties[constants.NAME] = name
     ctx.instance.runtime_properties[constants.TARGET_PROXY_TYPE] = \

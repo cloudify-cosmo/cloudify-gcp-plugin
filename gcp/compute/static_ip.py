@@ -28,15 +28,19 @@ class StaticIP(GoogleCloudPlatform):
                  config,
                  logger,
                  name,
-                 ip=None):
-        super(StaticIP, self).__init__(config, logger, name)
+                 ip=None,
+                 additional_settings=None):
+        super(StaticIP, self).__init__(config,
+                                       logger,
+                                       name,
+                                       additional_settings)
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'description': 'Cloudify generated Static IP',
             'name': self.name
-        }
-        return body
+        })
+        return self.body
 
     @check_response
     def get(self):
@@ -59,12 +63,13 @@ class StaticIP(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, **kwargs):
+def create(name, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     static_ip = StaticIP(gcp_config,
                          ctx.logger,
-                         name)
+                         name,
+                         additional_settings)
     utils.create(static_ip)
     ip_address = get_reserved_ip_address(static_ip)
     ctx.instance.runtime_properties[constants.NAME] = name

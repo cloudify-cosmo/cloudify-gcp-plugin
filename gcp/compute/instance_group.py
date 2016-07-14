@@ -26,20 +26,24 @@ class InstanceGroup(GoogleCloudPlatform):
                  config,
                  logger,
                  name,
+                 additional_settings=None,
                  named_ports=None):
-        super(InstanceGroup, self).__init__(config, logger, name)
+        super(InstanceGroup, self).__init__(config,
+                                            logger,
+                                            name,
+                                            additional_settings)
         self.network = config['network']
         self.named_ports = named_ports or []
         self.self_url = None
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'description': 'Cloudify generated instance group',
             'name': self.name,
             'network': 'global/networks/{0}'.format(self.network),
             'namedPorts': self.named_ports
-        }
-        return body
+        })
+        return self.body
 
     def instance_to_dict(self, instance_name):
         url = 'zones/{0}/instances/{1}'.format(self.zone, instance_name)
@@ -102,13 +106,14 @@ class InstanceGroup(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, named_ports, **kwargs):
+def create(name, named_ports, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     instance_group = InstanceGroup(gcp_config,
                                    ctx.logger,
                                    name=name,
-                                   named_ports=named_ports)
+                                   named_ports=named_ports,
+                                   additional_settings=additional_settings)
 
     utils.create(instance_group)
     ctx.instance.runtime_properties[constants.NAME] = name

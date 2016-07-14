@@ -47,7 +47,9 @@ class GoogleCloudPlatform(object):
     Platform.
     """
 
-    def __init__(self, config, logger, name, scope=constants.COMPUTE_SCOPE,
+    def __init__(self, config, logger, name,
+                 additional_settings=None,
+                 scope=constants.COMPUTE_SCOPE,
                  discovery=constants.COMPUTE_DISCOVERY,
                  api_version=constants.API_V1):
         """
@@ -72,7 +74,7 @@ class GoogleCloudPlatform(object):
         self.logger = logger.getChild('GCP')
         self.discovery = self.create_discovery(discovery, self.scope, api_version)
         self.api_version = api_version
-        self.body = {}
+        self.body = additional_settings if additional_settings else {}
 
     def create_discovery(self, discovery, scope, api_version):
         """

@@ -26,7 +26,8 @@ class Network(GoogleCloudPlatform):
     def __init__(self,
                  config,
                  logger,
-                 network):
+                 network,
+                 additional_settings=None):
         """
         Create Network object
 
@@ -38,7 +39,8 @@ class Network(GoogleCloudPlatform):
         super(Network, self).__init__(
             config,
             logger,
-            utils.get_gcp_resource_name(network['name']))
+            utils.get_gcp_resource_name(network['name']),
+            additional_settings)
         self.network = network
         self.iprange = None
 
@@ -98,22 +100,22 @@ class Network(GoogleCloudPlatform):
         self.iprange = self.body['IPv4Range']
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'description': 'Cloudify generated network',
             'name': self.name
-        }
-        self.body.update(body)
+        })
         return self.body
 
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(network, **kwargs):
+def create(network, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
     network['name'] = utils.get_final_resource_name(network['name'])
     network = Network(gcp_config,
                       ctx.logger,
-                      network=network)
+                      network=network,
+                      additional_settings=additional_settings)
     utils.create(network)
     ctx.instance.runtime_properties[constants.NAME] = network.name
     # will be updated only if the resource is created before

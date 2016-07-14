@@ -26,7 +26,8 @@ class FirewallRule(GoogleCloudPlatform):
                  config,
                  logger,
                  firewall,
-                 network):
+                 network,
+                 additional_settings=None):
         """
         Create Firewall rule object
 
@@ -42,7 +43,11 @@ class FirewallRule(GoogleCloudPlatform):
         ref. https://cloud.google.com/compute/docs/reference/latest/firewalls
         :param network: network name the firewall rule is connected to
         """
-        super(FirewallRule, self).__init__(config, logger, firewall['name'])
+        super(FirewallRule, self).__init__(config,
+                                           logger,
+                                           firewall['name'],
+                                           additional_settings=
+                                           additional_settings)
         self.firewall = firewall
         self.network = network
 
@@ -61,9 +66,10 @@ class FirewallRule(GoogleCloudPlatform):
                 self.network))
 
         self.firewall['network'] = 'global/networks/{0}'.format(self.network)
+        self.body.update(self.firewall)
         return self.discovery.firewalls().insert(
             project=self.project,
-            body=self.firewall).execute()
+            body=self.body).execute()
 
     @check_response
     def delete(self):
@@ -129,14 +135,15 @@ class FirewallRule(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(firewall_rule, name, **kwargs):
+def create(firewall_rule, name, additonal_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
     network_name = utils.get_gcp_resource_name(gcp_config['network'])
     set_firewall_rule_name(firewall_rule, network_name, name)
     firewall = FirewallRule(gcp_config,
                             ctx.logger,
                             firewall=firewall_rule,
-                            network=network_name)
+                            network=network_name,
+                            additional_settings=additonal_settings)
 
     utils.create(firewall)
     ctx.instance.runtime_properties[constants.NAME] = firewall.name
@@ -171,7 +178,7 @@ def delete(**kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create_security_group(rules, name, **kwargs):
+def create_security_group(rules, name, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
     firewall_structure = create_firewall_structure_from_rules(
         gcp_config['network'],
@@ -184,7 +191,8 @@ def create_security_group(rules, name, **kwargs):
     firewall = FirewallRule(gcp_config,
                             ctx.logger,
                             firewall_structure,
-                            gcp_config['network'])
+                            gcp_config['network'],
+                            additional_settings=additional_settings)
     ctx.instance.runtime_properties[constants.NAME] = firewall.name
     utils.create(firewall)
 
