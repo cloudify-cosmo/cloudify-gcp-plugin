@@ -29,7 +29,11 @@ class TestAddress(TestGCP):
         self.ctxmock.node.properties['gcp_config']['zone'] = 'us-central1-b'
 
     def test_create(self, mock_build, *args):
-        address.create('name', 'region')
+        address.create(
+                'name',
+                additional_settings={},
+                region='region',
+                )
 
         mock_build().addresses().insert.assert_called_once_with(
                 body={

@@ -28,7 +28,11 @@ class TestGCPimage(TestGCP):
 
     @patch('cloudify_gcp.compute.image.Object')
     def test_create(self, mock_Object, mock_build, *args):
-        image.create('name', 'path')
+        image.create(
+                'name',
+                'path',
+                additional_settings={},
+                )
 
         mock_Object.assert_called_once_with(
                 {'project': 'not really a project',

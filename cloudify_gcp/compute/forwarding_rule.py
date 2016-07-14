@@ -35,8 +35,13 @@ class BaseForwardingRule(GoogleCloudPlatform):
                  name,
                  target_proxy=None,
                  port_range=None,
-                 ip_address=None):
-        super(BaseForwardingRule, self).__init__(config, logger, name)
+                 ip_address=None,
+                 additional_settings=None):
+        super(BaseForwardingRule, self).__init__(
+                config,
+                logger,
+                name,
+                additional_settings=additional_settings)
         self.target_proxy = target_proxy
         self.port_range = port_range
         self.ip_address = ip_address
@@ -46,14 +51,14 @@ class BaseForwardingRule(GoogleCloudPlatform):
         """Return the endpoint object for this type"""
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'description': 'Cloudify generated Global Forwarding Rule',
             'name': self.name,
             'target': self.target_proxy,
             'portRange': self.port_range,
             'IPAddress': self.ip_address
-        }
-        return body
+        })
+        return self.body
 
     @check_response
     def get(self):
@@ -115,7 +120,8 @@ def creation_validation(**kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, target_proxy, port_range, ip_address, **kwargs):
+def create(name, target_proxy, port_range,
+           ip_address, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
 
@@ -126,12 +132,14 @@ def create(name, target_proxy, port_range, ip_address, **kwargs):
                 'forwarding_rule_connected_to_target_proxy')[0]
         target_proxy = rel.target.instance.runtime_properties['selfLink']
 
-    forwarding_rule = GlobalForwardingRule(gcp_config,
-                                           ctx.logger,
-                                           name,
-                                           target_proxy,
-                                           port_range,
-                                           ip_address)
+    forwarding_rule = GlobalForwardingRule(
+            gcp_config,
+            ctx.logger,
+            name,
+            target_proxy,
+            port_range,
+            ip_address,
+            additional_settings=additional_settings)
     utils.create(forwarding_rule)
 
 

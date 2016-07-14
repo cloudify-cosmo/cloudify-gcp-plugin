@@ -37,8 +37,12 @@ class Address(GoogleCloudPlatform):
                  logger,
                  name,
                  region=None,
+                 additional_settings=None,
                  ):
-        super(Address, self).__init__(config, logger, name)
+        super(Address, self).__init__(
+                config, logger, name,
+                additional_settings=additional_settings,
+                )
         self.region = region
 
     def _get_resource_type(self):
@@ -47,11 +51,11 @@ class Address(GoogleCloudPlatform):
         return self.discovery.globalAddresses()
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'description': 'Cloudify generated Address',
             'name': self.name
-        }
-        return body
+        })
+        return self.body
 
     def _common_kwargs(self):
         args = {'project': self.project}
@@ -82,7 +86,7 @@ class Address(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, region=None, **kwargs):
+def create(name, additional_settings, region=None, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
 
@@ -94,6 +98,7 @@ def create(name, region=None, **kwargs):
             ctx.logger,
             name,
             region=region,
+            additional_settings=additional_settings,
             )
 
     utils.create(address)

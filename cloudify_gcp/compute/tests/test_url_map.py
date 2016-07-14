@@ -32,6 +32,7 @@ class TestUrlMap(TestGCP):
         url_map.create(
                 'name',
                 'default service',
+                {},
                 )
 
         mock_build.assert_called_once()
