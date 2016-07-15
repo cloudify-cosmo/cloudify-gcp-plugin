@@ -27,14 +27,6 @@ from gcp.gcp import check_response
 
 class HealthCheck(GoogleCloudPlatform):
     __metaclass__ = ABCMeta
-    GCP_TRANSLATION = {
-        'port': 'port',
-        'request_path': 'requestPath',
-        'timeout_sec': 'timeoutSec',
-        'check_interval_sec': 'checkIntervalSec',
-        'healthy_threshold': 'healthyThreshold',
-        'unhealthy_threshold': 'unhealthyThreshold',
-    }
 
     def __init__(self,
                  config,
@@ -43,20 +35,20 @@ class HealthCheck(GoogleCloudPlatform):
                  api_version,
                  name_keyword,
                  additional_settings=None):
-        super(HealthCheck, self).__init__(config, logger,
-                                          name, api_version=api_version)
-        self.additional_settings = copy(additional_settings) or {}
+        super(HealthCheck, self).__init__(config,
+                                          logger,
+                                          name,
+                                          additional_settings=
+                                          additional_settings,
+                                          api_version=api_version)
         self.name_keyword = name_keyword
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'description': 'Cloudify generated {0}'.format(self.name_keyword),
             'name': self.name
-        }
-        gcp_settings = {self.GCP_TRANSLATION[key]: value
-                        for key, value in self.additional_settings.iteritems()}
-        body.update(gcp_settings)
-        return body
+        })
+        return self.body
 
     @check_response
     def get(self):

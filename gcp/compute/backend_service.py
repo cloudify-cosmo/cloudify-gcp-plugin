@@ -24,11 +24,6 @@ from gcp.gcp import check_response
 
 
 class BackendService(GoogleCloudPlatform):
-    GCP_TRANSLATION = {
-        'port_name': 'portName',
-        'protocol': 'protocol',
-        'timeout_sec': 'timeoutSec'
-    }
 
     def __init__(self,
                  config,
@@ -37,24 +32,24 @@ class BackendService(GoogleCloudPlatform):
                  health_check=None,
                  additional_settings=None,
                  backends=None):
-        super(BackendService, self).__init__(config, logger, name,
+        super(BackendService, self).__init__(config,
+                                             logger,
+                                             name,
+                                             additional_settings,
                                              api_version=constants.API_BETA)
         self.health_check = health_check
         self.additional_settings = copy(additional_settings) or {}
         self.backends = backends or []
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'description': 'Cloudify generated backend service',
             'name': self.name,
             'healthChecks': [
                 self.health_check
             ]
-        }
-        gcp_settings = {self.GCP_TRANSLATION[key]: value
-                        for key, value in self.additional_settings.iteritems()}
-        body.update(gcp_settings)
-        return body
+        })
+        return self.body
 
     def backend_to_dict(self, group_self_url):
         return {
