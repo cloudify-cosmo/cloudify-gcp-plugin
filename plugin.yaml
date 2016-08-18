@@ -63,6 +63,12 @@ node_types:
           its name.
         type: string
         default: ''
+      scopes:
+        description: >
+          Optional scopes. If not will set by default: 
+          'https://www.googleapis.com/auth/devstorage.read_write',
+          'https://www.googleapis.com/auth/logging.write'
+        default: []
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -83,7 +89,7 @@ node_types:
             zone:
               default: { get_property: [SELF, zone]}
             scopes:
-              default: ''
+              default: { get_property: [SELF, scopes] }
             tags:
               default: { get_property: [SELF, tags]}
             additional_settings:
