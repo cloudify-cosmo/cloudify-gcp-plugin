@@ -20,7 +20,7 @@ setup(
 
     name='cloudify-gcp-plugin',
 
-    version='1.3.1.post5',
+    version='1.3.1.post6',
     description='Plugin for Google Cloud Platform',
 
     packages=['gcp', 'gcp/compute'],
