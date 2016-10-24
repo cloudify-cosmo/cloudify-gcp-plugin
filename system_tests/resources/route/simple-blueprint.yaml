@@ -1,0 +1,102 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.4/types.yaml
+  - ../../../plugin.yaml
+
+
+inputs:
+  gcp_auth:
+  project:
+
+  image_id:
+    default: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20160803
+
+
+dsl_definitions:
+  - &gcp_config
+    auth: { get_input: gcp_auth }
+    project: { get_input: project }
+    network: default
+    zone: us-east1-b
+
+
+node_templates:
+
+  ip:
+    type: cloudify.gcp.nodes.ExternalIP
+    properties:
+      gcp_config: *gcp_config
+
+  ssh-key:
+    type: cloudify.gcp.nodes.KeyPair
+    properties:
+      private_key_path: 'gcp_systest.key'
+      user: keypair-user
+      gcp_config: *gcp_config
+
+  vm-1:
+    type: cloudify.gcp.nodes.Instance
+    properties:
+      image_id: { get_input: image_id }
+      can_ip_forward: true
+      gcp_config: *gcp_config
+      install_agent: false
+
+  vm-2:
+    type: cloudify.gcp.nodes.Instance
+    properties:
+      image_id: { get_input: image_id }
+      tags: ['ctx-test-route-tag']
+      gcp_config: *gcp_config
+      install_agent: false
+    relationships:
+      - type: cloudify.gcp.relationships.instance_connected_to_ip
+        target: ip
+      - type: cloudify.gcp.relationships.instance_connected_to_keypair
+        target: ssh-key
+
+  route_gateway_hop:
+    type: cloudify.gcp.nodes.Route
+    properties:
+      tags: ['ctx-test-route-tag']
+      dest_range: 8.8.8.0/26
+      gcp_config: *gcp_config
+
+  route_instance_hop:
+    type: cloudify.gcp.nodes.Route
+    properties:
+      tags: ['ctx-test-route-tag']
+      dest_range: 8.7.6.0/24
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: vm-1
+
+  route_ip_hop:
+    type: cloudify.gcp.nodes.Route
+    properties:
+      tags: ['ctx-test-route-tag']
+      dest_range: 7.6.5.0/24
+      next_hop: { get_attribute: [vm-1, networkInterfaces.networkIP] }
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vm-1
+
+  route_not_connected:
+    type: cloudify.gcp.nodes.Route
+    properties:
+      tags: ['different-tag']
+      dest_range: 6.5.4.0/24
+      next_hop: { get_attribute: [vm-1, networkInterfaces.networkIP] }
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vm-1
+
+
+outputs:
+  ip:
+    value: { get_attribute: [vm-1, ip] }

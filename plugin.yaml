@@ -22,11 +22,6 @@ node_types:
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing instance that is referenced by this node.
-        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -42,10 +37,6 @@ node_types:
           https://cloud.google.com/compute/docs/machine-types
         type: string
         default: n1-standard-1
-      instance_additional_settings:
-        description: >
-          Additional instance settings.
-        default: {}
       name:
         description: >
           Optional instance name. By default it will be instance id.
@@ -57,15 +48,48 @@ node_types:
           in default zone.
         type: string
         default: ''
+      tags:
+        description: >
+          Optional tags. If not given, this instance will have a tag only with
+          its name.
+        type: string
+        default: ''
+      block_project_ssh_keys:
+        description: >
+          Disable project-wide ssh keys for this Instance
+        type: boolean
+        default: false
+      can_ip_forward:
+        description: >
+          Is the VM allowed to send packets with source address different to its own?
+        type: boolean
+        default: false
+      scopes:
+        description: >
+          Optional scopes. If not will set by default: 
+          'https://www.googleapis.com/auth/devstorage.read_write',
+          'https://www.googleapis.com/auth/logging.write'
+        default: []
+      startup_script:
+        description: >
+          A script which will be run when the Instance is first started
+          example:
+            type: string
+            script: |
+              yum install some stuff
+              systemctl start it
+          or:
+            type: file
+            script: <path to script file>
+        default:
+          ''
     interfaces:
       cloudify.interfaces.lifecycle:
-        start:
-          implementation: gcp_plugin.gcp.compute.instance.create
+        configure:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.create
           inputs:
             startup_script:
-              default:
-                  type: ''
-                  string: ''
+              default: { get_property: [SELF, startup_script]}
             external_ip:
               default: false
             instance_type:
@@ -77,11 +101,23 @@ node_types:
             zone:
               default: { get_property: [SELF, zone]}
             scopes:
-              default: ''
-            user_data:
-              default: ''
+              default: { get_property: [SELF, scopes] }
+            tags:
+              default: { get_property: [SELF, tags]}
+            can_ip_forward:
+              default: { get_property: [SELF, can_ip_forward]}
+        start:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.start
+          inputs:
+            name:
+              default: { get_attribute: [SELF, name]}
         delete:
-          implementation: gcp_plugin.gcp.compute.instance.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.delete
+          inputs:
+            name:
+              default: { get_attribute: [SELF, name] }
+            zone:
+              default: { get_attribute: [SELF, zone]}
 
   cloudify.gcp.nodes.InstanceGroup:
     derived_from: cloudify.nodes.Root
@@ -92,11 +128,6 @@ node_types:
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing instance group that is referenced by this node.
-        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -114,14 +145,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.instance_group.create
+          implementation: gcp_plugin.cloudify_gcp.compute.instance_group.create
           inputs:
             name:
               default: { get_property: [SELF, name]}
             named_ports:
               default: { get_property: [SELF, named_ports]}
         delete:
-          implementation: gcp_plugin.gcp.compute.instance_group.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.instance_group.delete
 
   cloudify.gcp.nodes.Volume:
     derived_from: cloudify.nodes.Volume
@@ -131,11 +162,6 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing volume that is referenced by this node.
-        default: ''
       image:
         description: >
           The image of the Volume.
@@ -157,7 +183,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.disk.create
+          implementation: gcp_plugin.cloudify_gcp.compute.disk.create
           inputs:
             image:
               default: { get_property: [SELF, image] }
@@ -166,7 +192,7 @@ node_types:
             size:
               default: { get_property: [SELF, size] }
         delete:
-          implementation: gcp_plugin.gcp.compute.disk.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.disk.delete
 
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.Network
@@ -176,10 +202,53 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
-      resource_id:
+      name:
+        default: ''
+      auto_subnets:
         description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing network that is referenced by this node.
+          Whether to use the GCP "autoCreateSubnetworks" feature (see
+          https://cloud.google.com/compute/docs/subnetworks#networks_and_subnetworks)
+        default: true
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.network.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name] }
+            auto_subnets:
+              default: { get_property: [SELF, auto_subnets] }
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.compute.network.delete
+          inputs:
+            name:
+              default: { get_property: [SELF, name] }
+
+  cloudify.gcp.nodes.SubNetwork:
+    derived_from: cloudify.nodes.Subnet
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists or if Cloudify should create the resource.
+        type: boolean
+        default: false
+      name:
+        default: ''
+      region:
+        description: >
+          The region this subnet is in. See https://cloud.google.com/compute/docs/regions-zones/regions-zones
+        type: string
+        default: ''
+      subnet:
+        description: >
+          The subnet, denoted in CIDR form (i.e. '10.8.0.0/20')
+          Subnets must be unique and non-overlapping within a project.
+          See https://cloud.google.com/compute/docs/subnetworks#networks_and_subnetworks
+        type: string
         default: ''
       gcp_config:
         description: >
@@ -188,12 +257,62 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.network.create
+          implementation: gcp_plugin.cloudify_gcp.compute.subnetwork.create
           inputs:
-            network:
-              default: {}
+            name:
+              default: { get_property: [SELF, name] }
+            region:
+              default: { get_property: [SELF, region] }
+            subnet:
+              default: { get_property: [SELF, subnet] }
         delete:
-          implementation: gcp_plugin.gcp.compute.network.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.subnetwork.delete
+      cloudify.interfaces.validation:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.subnetwork.creation_validation
+
+  cloudify.gcp.nodes.Route:
+    derived_from: cloudify.nodes.Router
+    properties:
+      dest_range:
+        description: >
+          The outgoing range that this route will handle
+      name:
+        default: ''
+      tags:
+        description: >
+          Instance tags that this route will be applied to
+        default: []
+      next_hop:
+        description: >
+          The Instance, IP or VpnTunnel which will handle the matching packets
+        default: ''
+      priority:
+        default: 1000
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.route.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name] }
+            dest_range:
+              default: { get_property: [SELF, dest_range] }
+            tags:
+              default: { get_property: [SELF, tags] }
+            next_hop:
+              default: { get_property: [SELF, next_hop] }
+            priority:
+              default: { get_property: [SELF, priority] }
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.compute.route.delete
+          inputs:
+            name:
+              default: { get_attribute: [SELF, name] }
 
   cloudify.gcp.nodes.FirewallRule:
     derived_from: cloudify.nodes.Root
@@ -203,11 +322,31 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
-      resource_id:
+      name:
         description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing firewall rule that is referenced by this node.
+          Optional security group name. By default it will be network name
+          plus node name.
         default: ''
+      allowed:
+        description: >
+          Dictionary of allowed ports per protocol, in the form
+            protocol: [port, ...]
+          If no ports are specified then all ports are opened for that protocol
+          eg:
+            tcp: 80, 443
+            udp:
+      sources:
+        description: |
+          List of CIDR formatted ranges and instance tags which
+          will be permitted to connect to targets by this rule
+          e.g.:
+            - 10.100.101.0/24
+            - a-tag
+      target_tags:
+        description: >
+          List of target tags this rule should apply to. If no tags are
+          specified, it will apply to all instances in the network
+        default: []
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
@@ -215,30 +354,32 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.firewall.create
+          implementation: gcp_plugin.cloudify_gcp.compute.firewall.create
           inputs:
-            firewall_rule:
-              default: {}
+            name:
+              default: { get_property: [SELF, name] }
+            allowed:
+              default: { get_property: [SELF, allowed] }
+            sources:
+              default: { get_property: [SELF, sources] }
+            target_tags:
+              default: { get_property: [SELF, target_tags] }
         delete:
-          implementation: gcp_plugin.gcp.compute.firewall.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.firewall.delete
 
   cloudify.gcp.nodes.SecurityGroup:
     derived_from: cloudify.nodes.SecurityGroup
     properties:
-      use_external_resource:
+      name:
         description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
-        type: boolean
-        default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing security group that is referenced by this node.
+          Optional security group name. By default it will be network name
+          plus node name.
         default: ''
       rules:
         description: >
-          You need to pass in either source_tags list OR cidr_ip list,
-          and then the following two: ip_protocol and port list OR target_tags list.
+          List of FirewallRules which will form this SecurityGroup.
+          Only the `sources:` and `allowed:` fields should be supplied
+          (see FirewallRule properties for details).
         default: []
       gcp_config:
         description: >
@@ -247,12 +388,19 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create: 
-          implementation: gcp_plugin.gcp.compute.firewall.create_security_group
+          implementation: gcp_plugin.cloudify_gcp.compute.security_group.create
           inputs: 
             rules:
               default: { get_property: [SELF, rules] }
-        delete:          
-          implementation: gcp_plugin.gcp.compute.firewall.delete_security_group
+            name:
+              default: { get_property: [SELF, name] }
+        configure:
+          implementation: gcp_plugin.cloudify_gcp.compute.security_group.configure
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.compute.security_group.delete
+      cloudify.interfaces.validation:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.security_group.creation_validation
 
   cloudify.gcp.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
@@ -279,12 +427,14 @@ node_types:
           A dictionary of values to pass to authenticate with the Google Cloud Platform API.
         default: {}
       user:
+        description: >
+          The user account for this key. A corresponding user account will be created by GCP when the key is added to the Instance. This must be supplied for a non-external resource key. See https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys
         type: string
         default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.keypair.create
+          implementation: gcp_plugin.cloudify_gcp.compute.keypair.create
           inputs:
             user: 
               default: { get_property: [SELF, user] }
@@ -293,7 +443,7 @@ node_types:
             public_key_path:
               default: { get_property: [SELF, public_key_path] }
         delete:
-          implementation: gcp_plugin.gcp.compute.keypair.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.keypair.delete
           inputs:
             user: 
               default: { get_property: [SELF, user] }
@@ -321,7 +471,7 @@ node_types:
           A dictionary of values to pass to authenticate with the GCP API.
         default: {}
 
-  cloudify.gcp.nodes.StaticIP:
+  cloudify.gcp.nodes.GlobalAddress:
     derived_from: cloudify.nodes.VirtualIP
     properties:
       use_external_resource:
@@ -331,11 +481,6 @@ node_types:
           it will be reserved static IP address.
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing static ip that is referenced by this node.
-        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -348,12 +493,34 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.static_ip.create
+          implementation: gcp_plugin.cloudify_gcp.compute.address.create
           inputs:
             name:
               default: { get_property: [SELF, name]}
         delete:
-          implementation: gcp_plugin.gcp.compute.static_ip.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.address.delete
+
+  cloudify.gcp.nodes.StaticIP:
+    derived_from: cloudify.gcp.nodes.GlobalAddress
+
+  cloudify.gcp.nodes.Address:
+    derived_from: cloudify.gcp.nodes.GlobalAddress
+    properties:
+      region:
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.address.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            region:
+              default: { get_property: [SELF, region]}
 
   cloudify.gcp.nodes.Image:
     derived_from: cloudify.nodes.Root
@@ -363,26 +530,25 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing image that is referenced by this node.
-        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
         default: {}
+      image_name:
+        default: ''
+      image_path:
+        default: ''
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.image.create
+          implementation: gcp_plugin.cloudify_gcp.compute.image.create
           inputs:
             image_name:
-              default: ''
+              default: { get_property: [ SELF, image_name ] }
             image_path:
-              default: ''
+              default: { get_property: [ SELF, image_path ] }
         delete:
-          implementation: gcp_plugin.gcp.compute.image.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.image.delete
 
   cloudify.gcp.nodes.HealthCheck:
     derived_from: cloudify.nodes.Root
@@ -393,11 +559,6 @@ node_types:
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing health check that is referenced by this node.
-        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -422,7 +583,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.health_check.create
+          implementation: gcp_plugin.cloudify_gcp.compute.health_check.create
           inputs:
             name:
               default: { get_property: [SELF, name]}
@@ -431,7 +592,7 @@ node_types:
             additional_settings:
               default: { get_property: [SELF, additional_settings]}
         delete:
-          implementation: gcp_plugin.gcp.compute.health_check.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.health_check.delete
 
   cloudify.gcp.nodes.BackendService:
     derived_from: cloudify.nodes.Root
@@ -442,11 +603,6 @@ node_types:
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing backend service that is referenced by this node.
-        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -469,7 +625,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.backend_service.create
+          implementation: gcp_plugin.cloudify_gcp.compute.backend_service.create
           inputs:
             name:
               default: { get_property: [SELF, name]}
@@ -478,7 +634,7 @@ node_types:
             additional_settings:
               default: { get_property: [SELF, additional_settings]}
         delete:
-          implementation: gcp_plugin.gcp.compute.backend_service.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.backend_service.delete
 
   cloudify.gcp.nodes.UrlMap:
     derived_from: cloudify.nodes.Root
@@ -489,11 +645,6 @@ node_types:
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing URL map that is referenced by this node.
-        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -511,14 +662,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.url_map.create
+          implementation: gcp_plugin.cloudify_gcp.compute.url_map.create
           inputs:
             name:
               default: { get_property: [SELF, name]}
             default_service:
               default: { get_property: [SELF, default_service]}
         delete:
-          implementation: gcp_plugin.gcp.compute.url_map.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.url_map.delete
 
   cloudify.gcp.nodes.TargetProxy:
     derived_from: cloudify.nodes.Root
@@ -529,11 +680,6 @@ node_types:
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing target proxy that is referenced by this node.
-        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -564,7 +710,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.target_proxy.create
+          implementation: gcp_plugin.cloudify_gcp.compute.target_proxy.create
           inputs:
             name:
               default: { get_property: [SELF, name]}
@@ -575,7 +721,7 @@ node_types:
             ssl_certificate:
               default: { get_property: [SELF, ssl_certificate]}
         delete:
-          implementation: gcp_plugin.gcp.compute.target_proxy.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.target_proxy.delete
 
   cloudify.gcp.nodes.SslCertificate:
     derived_from: cloudify.nodes.Root
@@ -586,11 +732,6 @@ node_types:
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing SSL certificate that is referenced by this node.
-        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -617,7 +758,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.ssl_certificate.create
+          implementation: gcp_plugin.cloudify_gcp.compute.ssl_certificate.create
           inputs:
             name:
               default: { get_property: [SELF, name]}
@@ -626,7 +767,7 @@ node_types:
             certificate:
               default: { get_property: [SELF, certificate]}
         delete:
-          implementation: gcp_plugin.gcp.compute.ssl_certificate.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.ssl_certificate.delete
 
   cloudify.gcp.nodes.GlobalForwardingRule:
     derived_from: cloudify.nodes.Root
@@ -637,11 +778,6 @@ node_types:
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
-      resource_id:
-        description: >
-          If "use_external_resource" is set to true, this field will be used as a name
-          of existing global forwarding rule that is referenced by this node.
-        default: ''
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -674,7 +810,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.gcp.compute.forwarding_rule.create
+          implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.create
           inputs:
             name:
               default: { get_property: [SELF, name]}
@@ -685,121 +821,163 @@ node_types:
             ip_address:
               default: { get_property: [SELF, ip_address]}
         delete:
-          implementation: gcp_plugin.gcp.compute.forwarding_rule.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.delete
+      cloudify.interfaces.validation:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.creation_validation
 
 relationships:
 
-  cloudify.gcp.relationships.contained_in_compute:
-    derived_from: cloudify.relationships.contained_in
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure:
-          implementation: gcp_plugin.gcp.compute.instance.contained_in
 
   cloudify.gcp.relationships.instance_connected_to_security_group:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         establish:
-          implementation: gcp_plugin.gcp.compute.instance.add_instance_tag
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.add_instance_tag
           inputs:
             instance_name: 
-              default: { get_attribute: [SOURCE, gcp_name] }
+              default: { get_attribute: [SOURCE, name] }
+            zone:
+              default: { get_attribute: [SOURCE, zone] }
             tag:
-              default: { get_attribute: [TARGET, targetTags] }
+              default: [{ get_attribute: [TARGET, name] }]
         unlink:
-          implementation: gcp_plugin.gcp.compute.instance.remove_instance_tag
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.remove_instance_tag
           inputs:
             instance_name: 
-              default: { get_attribute: [SOURCE, gcp_name] }
+              default: { get_attribute: [SOURCE, name] }
+            zone:
+              default: { get_attribute: [SOURCE, zone] }
             tag:
-              default: { get_attribute: [TARGET, targetTags] }
+              default: [{ get_attribute: [TARGET, name] }]
 
   cloudify.gcp.relationships.instance_connected_to_ip:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         establish:
-          implementation: gcp_plugin.gcp.compute.instance.add_external_ip
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.add_external_ip
           inputs:
             instance_name: 
-              default: { get_attribute: [SOURCE, gcp_name] }
+              default: { get_attribute: [SOURCE, name] }
+            zone:
+              default: { get_attribute: [SOURCE, zone] }
         unlink:
-          implementation: gcp_plugin.gcp.compute.instance.remove_external_ip
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.remove_external_ip
           inputs:
             instance_name: 
-              default: { get_attribute: [SOURCE, gcp_name] }
+              default: { get_attribute: [SOURCE, name] }
+            zone:
+              default: { get_attribute: [SOURCE, zone] }
 
   cloudify.gcp.relationships.instance_connected_to_keypair:
     derived_from: cloudify.relationships.connected_to
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
-          implementation: gcp_plugin.gcp.compute.instance.add_ssh_key
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.add_ssh_key
           inputs:
             instance_name:
-              default: { get_attribute: [SOURCE, gcp_name] }
+              default: { get_attribute: [SOURCE, name] }
 
   cloudify.gcp.relationships.file_system_contained_in_compute:
     derived_from: cloudify.relationships.contained_in
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
-          implementation: gcp_plugin.gcp.compute.disk.add_boot_disk
+          implementation: gcp_plugin.cloudify_gcp.compute.disk.add_boot_disk
 
   cloudify.gcp.relationships.instance_connected_to_disk:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         establish:
-          implementation: gcp_plugin.gcp.compute.instance.attach_disk
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.attach_disk
           inputs:
             instance_name: 
-              default: { get_attribute: [TARGET, gcp_name] }
+              default: { get_attribute: [TARGET, name] }
+            zone:
+              default: { get_attribute: [TARGET, zone] }
             disk: 
               default: { get_attribute: [SOURCE, gcp_disk] }
         unlink:
-          implementation: gcp_plugin.gcp.compute.instance.detach_disk
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.detach_disk
           inputs:
             instance_name: 
-              default: { get_property: [TARGET, gcp_name] }
+              default: { get_property: [TARGET, name] }
+            zone:
+              default: { get_attribute: [TARGET, zone] }
             disk_name: 
-              default: { get_attribute: [SOURCE, gcp_name] }
+              default: { get_attribute: [SOURCE, name] }
 
   cloudify.gcp.relationships.instance_connected_to_instance_group:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         establish:
-          implementation: gcp_plugin.gcp.compute.instance_group.add_to_instance_group
+          implementation: gcp_plugin.cloudify_gcp.compute.instance_group.add_to_instance_group
           inputs:
             instance_group_name:
-              default: { get_attribute: [TARGET, gcp_name] }
+              default: { get_attribute: [TARGET, name] }
             instance_name:
-              default: { get_attribute: [SOURCE, gcp_name] }
+              default: { get_attribute: [SOURCE, name] }
         unlink:
-          implementation: gcp_plugin.gcp.compute.instance_group.remove_from_instance_group
+          implementation: gcp_plugin.cloudify_gcp.compute.instance_group.remove_from_instance_group
           inputs:
             instance_group_name:
-              default: { get_attribute: [TARGET, gcp_name] }
+              default: { get_attribute: [TARGET, name] }
             instance_name:
-              default: { get_attribute: [SOURCE, gcp_name] }
+              default: { get_attribute: [SOURCE, name] }
 
   cloudify.gcp.relationships.uses_as_backend:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         establish:
-          implementation: gcp_plugin.gcp.compute.backend_service.add_backend
+          implementation: gcp_plugin.cloudify_gcp.compute.backend_service.add_backend
           inputs:
             backend_service_name:
-              default: { get_attribute: [SOURCE, gcp_name] }
+              default: { get_attribute: [SOURCE, name] }
             group_self_url:
-              default: { get_attribute: [TARGET, self_url] }
+              default: { get_attribute: [TARGET, selfLink] }
         unlink:
-          implementation: gcp_plugin.gcp.compute.backend_service.remove_backend
+          implementation: gcp_plugin.cloudify_gcp.compute.backend_service.remove_backend
           inputs:
             backend_service_name:
-              default: { get_attribute: [SOURCE, gcp_name] }
+              default: { get_attribute: [SOURCE, name] }
             group_self_url:
-              default: { get_attribute: [TARGET, self_url] }
+              default: { get_attribute: [TARGET, selfLink] }
+
+  cloudify.gcp.relationships.contained_in_compute:
+    derived_from: cloudify.relationships.contained_in
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.contained_in
+
+  cloudify.gcp.relationships.dns_record_contained_in_zone:
+    derived_from: cloudify.relationships.contained_in
+    source_interfaces:
+      cloudify.interfaces.validation:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.dns.record.validate_contained_in
+
+  cloudify.gcp.relationships.dns_record_connected_to_instance:
+    derived_from: cloudify.relationships.connected_to
+
+  cloudify.gcp.relationships.dns_record_connected_to_ip:
+    derived_from: cloudify.relationships.connected_to
+
+  cloudify.gcp.relationships.contained_in_network:
+    derived_from: cloudify.relationships.contained_in
+
+  cloudify.gcp.relationships.instance_contained_in_network:
+    derived_from: cloudify.relationships.contained_in
+    source_interfaces:
+      cloudify.interfaces.validation:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.validate_contained_in_network
+
+  cloudify.gcp.relationships.forwarding_rule_connected_to_target_proxy:
+    derived_from: cloudify.relationships.connected_to

@@ -1,0 +1,79 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.4/types.yaml
+  - ../../../plugin.yaml
+
+
+inputs:
+  gcp_auth:
+  project:
+  zone:
+  network:
+
+
+dsl_definitions:
+  - &gcp_config
+    auth: { get_input: gcp_auth }
+    project: { get_input: project }
+    zone: { get_input: zone }
+    network: { get_input: network }
+
+
+node_types:
+  Instance:
+    derived_from: cloudify.gcp.nodes.Instance
+    properties:
+      gcp_config:
+        default: *gcp_config
+      image_id:
+        default: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20160803
+      agent_config:
+        default:
+          install_method: none
+
+
+node_templates:
+
+  instance_2:
+    type: Instance
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: network_2
+
+  instance_3:
+    type: Instance
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: subnet_a
+
+  network:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      name: 'network name'
+      gcp_config: *gcp_config
+      auto_subnets: false
+
+  network_2:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      gcp_config: *gcp_config
+
+  subnet_a:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      region: us-central1
+      subnet: 10.11.12.0/22
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: network
+
+
+outputs:
+  network:
+    value: { get_attribute: [network, name] }
+    description: should be used assigned as the nameservers for your domain
+  network_2:
+    value: { get_attribute: [network_2, name] }

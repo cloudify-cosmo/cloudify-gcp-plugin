@@ -1,0 +1,239 @@
+node_types:
+  Instance:
+    description:
+      A GCP Instance (i.e. a VM).
+    example:
+      yaml: |
+        my_gcp_instance:
+          type: cloudify.gcp.nodes.Instance
+          properties:
+            image_id: http://url.to.your.example.com/image
+            instance_type: n1-standard-1
+            gcp_config:
+              project: your-project
+              network: default
+              zone: us-east1-b
+              auth: path_to_auth_file.json
+      text: >
+        This example includes shows adding additional parameters,
+        tagging an instance name, and explicitly defining the gcp_config.
+
+  InstanceGroup:
+    description:
+      A GCP InstanceGroup.
+
+      This is used to configure failover systems. InstanceGroups can be configured to scale automatically based on load, and will replace failing Instances with freashly started ones.
+
+  Volume:
+    description: |
+      A GCP Volume.
+
+      A virtual disk which can be attached to Instances.
+
+  Image:
+    description: |
+      A stored image which can be used as the base for newly created Instances.
+
+  KeyPair:
+    description: |
+      An SSH key-pair which will be uploaded to any Instances connected to it via `cloudify.gcp.relationships.instance_connected_to_keypair`.
+
+      Unlike other cloud providers, users are dynamically created on Instances based on the username specified by the uploaded SSH key, so the public key text must include a username in the comment section (keys generated using `ssh-keygen` have this by default).
+
+  GlobalAddress:
+    description: |
+      A GCP GlobalAddress.
+
+      GlobalAddress can only be used together with GlobalForwardingRule. If you want to connect a static IP to an Instance, use StaticIP instead.
+
+  StaticIP:
+    description: |
+      Alias for GlobalAddress for backward compatibility.
+
+  GlobalForwardingRule:
+    description: |
+      A GCP GlobalForwardingRule.
+
+      Can only be used in conjunction with a GlobalAddress to set up HTTP and HTTPS forwarding.
+
+  Address:
+    description: >
+      A GCP Address. This can be connected to an Instance using the
+      `cloudify.gcp.relationships.instance_connected_to_ip` relationship type
+
+  ExternalIP:
+    description: >
+      Use this together with the `cloudify.gcp.relationships.instance_connected_to_ip` if you want the Instance to have an ephemeral external IP
+
+  BackendService:
+    description: >
+      A group of Instances (contained within InstanceGroups) which can be used
+      as the backend for load balancing.
+
+  FirewallRule:
+    description: |
+      A GCP FirewallRule.
+
+      This describes allowed traffic directed to either the whole of the specified network, or to Instances specified by matching tags.
+    example:
+      yaml: |
+        allow_ssh:
+          type: cloudify.gcp.nodes.FirewallRule
+          properties:
+            sources: [0.0.0.0/0]
+            allowed:
+              tcp: [22]
+
+        allow_http_to_http_tag:
+          type: cloudify.gcp.nodes.FirewallRule
+          properties:
+            sources: [0.0.0.0/0]
+            allowed:
+              tcp: [80]
+            target_tags: [http]
+
+        http_instance:
+          type: cloudify.gcp.nodes.Instance
+          properties:
+            tags: [http]
+            ...
+
+
+  SecurityGroup:
+    description: |
+      A virtual SecurityGroup.
+
+      Google Cloud Platform has no entity equivalent to a Security Group on AWS or OpenStack, so as a convenience Cloudify includes a virtual one. It is implemented behind the scenes using a specially constructed tag and a number of FirewallRules.
+
+  Network:
+    description: >
+      A GCP Network. This supports either auto-assigned or manual subnets. Legacy networks are not supported.
+      See the GCP Manager and Networks section below if you plan to run a cloudify manager on GCP.
+
+    example:
+      yaml: |
+        my_net:
+          type: cloudify.gcp.nodes.Network
+
+  SubNetwork:
+    description: |
+      A GCP Subnetwork. Must be connected to a Network using `cloudify.gcp.relationships.contained_in_network`.
+
+      Only networks with the `auto_subnets` property disabled can be used.
+
+    example:
+      yaml: |
+        my_net:
+          type: cloudify.gcp.nodes.Network
+        properties:
+          auto_subnets: false
+
+        my_subnet:
+          type: cloudify.gcp.nodes.SubNetwork
+          properties:
+            subnet: 10.8.0.0/20
+          relationships:
+            - type: cloudify.gcp.relationships.contained_in_network
+              target: my_net
+
+        my_instance:
+          type: cloudify.gcp.nodes.Instance
+          properties:
+            ...
+          relationships:
+            - type: cloudify.gcp.relationships.contained_in_network
+              target: my_subnet
+
+      text: |
+        If you want to use an exsisting SubNetwork (`use_external_resource: true`) then you must supply the `name` and `region` properties. This is because SubNetwork names are not unique across the whole project, only within a region.
+
+
+  Route:
+    description: |
+      A defined route, which will be added to the specified network.
+      If tags are specified, it will only be added to Instances matching them.
+
+  TargetProxy:
+    description: |
+      A TargetHttpProxy or TargetHttpsProxy.
+
+      Specify which using the `target_proxy_type` property.
+
+  HealthCheck:
+    description: |
+      A GCP HealthCheck.
+
+      This describes a method that a TargetProxy can use to verify that particualr backend Instances are functioning. Backends which fail the health check verification will be removed from the list of candidates.
+
+  DNSZone:
+    description: |
+      A Cloud DNS zone.
+
+      Represents a particular DNS domain which you wish to manage through Google Cloud DNS.
+      DNS nameservers can vary between different DNSZones. In order to find the correct nameserver entries for your domain, use the `nameServers` attribute from the created zone.
+
+    example:
+      yaml: |
+        my_zone:
+          type: cloudify.gcp.nodes.DNSZone
+          properties:
+            dns_name: getcloudify.org.
+
+      text:
+        The `dns_name` supplied must be a fully-qualified domain name with the trailing dot.
+        The output attributes (`runtime_properties`) will include a key `nameServers` which contains the list of nameservers that should be supplied as nameservers with the domain registrar.
+
+  DNSRecord:
+    description: |
+      Corresponds to a particular subdomain (or `@` for the root) and record-type in the containing DNSZone.
+
+      e.g. the `A` record for `special_service.getcloudify.org`
+
+      A number of convenience types are provided which update the default type (see DNSAAAARecord, DNSMXRecord, DNSTXTRecord, DNSNSRecord)
+
+    example:
+      yaml: |
+        www:
+          type: cloudify.gcp.nodes.DNSRecord
+          properties:
+            resources: [10.11.12.13, 8.9.10.11]
+          relationships:
+            - type: cloudify.gcp.relationships.dns_record_contained_in_zone
+              target: my_zone
+
+        mx:
+          type: cloudify.gcp.nodes.DNSMXRecord
+          properties:
+            name: mail
+          relationships:
+            - type: cloudify.gcp.relationships.dns_record_contained_in_zone
+              target: my_zone
+            - type: cloudify.gcp.relationships.dns_record_connected_to_instance
+              target: my_instance
+
+      text:
+        The DNSRecord type can be connected to an instance or directly to an IP. In this case the (associated) public IP will be added to the list of resources.
+
+  DNSAAAARecord:
+    description: |
+      `AAAA` type DNSRecord
+
+  DNSMXRecord:
+    description: |
+      `MX` type DNSRecord
+
+  DNSTXTRecord:
+    description: |
+      `TXT` type DNSRecord
+
+  DNSNSRecord:
+    description: |
+      `NS` type DNSRecord
+
+  UrlMap:
+    description: |
+      Maps URLs to BackendServices
+
+  SslCertificate:
+    description: |
+      A TLS/SSL certificate and key. This will be used by a HTTPS TargetProxy to provide authenticated encryption for connecting users.
