@@ -1,4 +1,5 @@
 -e .
+dnspython
 mock
 nose
 pyopenssl
