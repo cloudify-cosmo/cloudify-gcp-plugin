@@ -826,8 +826,99 @@ node_types:
         create:
           implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.creation_validation
 
-relationships:
+  cloudify.gcp.nodes.DNSZone:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        type: boolean
+        default: false
+      name:
+        type: string
+        default: ''
+      dns_name:
+        type: string
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.dns.dns.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            dns_name:
+              default: { get_property: [SELF, dns_name]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.dns.dns.delete
 
+  cloudify.gcp.nodes.DNSRecord:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        type: boolean
+        default: false
+      type:
+        type: string
+        default: A
+      name:
+        type: string
+        default: ''
+      resources:
+        default: []
+      ttl:
+        description: >
+          DNS entry Time To Live
+        type: integer
+        default: 86400
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.dns.record.create
+          inputs:
+            type:
+              default: { get_property: [SELF, type]}
+            name:
+              default: { get_property: [SELF, name]}
+            resources:
+              default: { get_property: [SELF, resources]}
+            ttl:
+              default: { get_property: [SELF, ttl]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.dns.record.delete
+
+  cloudify.gcp.nodes.DNSAAAARecord:
+    derived_from: cloudify.gcp.nodes.DNSRecord
+    properties:
+      type:
+        default: AAAA
+
+  cloudify.gcp.nodes.DNSMXRecord:
+    derived_from: cloudify.gcp.nodes.DNSRecord
+    properties:
+      type:
+        default: MX
+
+  cloudify.gcp.nodes.DNSNSRecord:
+    derived_from: cloudify.gcp.nodes.DNSRecord
+    properties:
+      type:
+        default: NS
+
+  cloudify.gcp.nodes.DNSTXTRecord:
+    derived_from: cloudify.gcp.nodes.DNSRecord
+    properties:
+      type:
+        default: TXT
+
+
+relationships:
 
   cloudify.gcp.relationships.instance_connected_to_security_group:
     derived_from: cloudify.relationships.connected_to

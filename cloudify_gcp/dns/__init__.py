@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2016 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,30 +12,3 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-
-
-from setuptools import setup
-
-setup(
-
-    name='cloudify-gcp-plugin',
-
-    version='0.1',
-    description='Plugin for Google Cloud Platform',
-
-    packages=[
-        'cloudify_gcp',
-        'cloudify_gcp.compute',
-        'cloudify_gcp.dns',
-        ],
-
-    license='LICENSE',
-    zip_safe=False,
-    install_requires=[
-        "oauth2client==3",
-        "google-api-python-client==1.5.1",
-        "cloudify-plugins-common>=3.3.1",
-        "pyyaml",
-        "pycrypto",
-    ],
-)
