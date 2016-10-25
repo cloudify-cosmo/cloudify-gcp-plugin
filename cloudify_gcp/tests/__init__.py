@@ -43,12 +43,5 @@ class TestGCP(unittest.TestCase):
                 },
             }
         ctx.instance.runtime_properties = DirtyTrackingDict()
-        ctx.provider_context = {
-            'resources': {
-                'cloudify_agent': {
-                    'public_key': 'Fakey McFakeface',
-                    },
-                },
-            }
         ctx.instance.relationships = []
         current_ctx.set(ctx)
