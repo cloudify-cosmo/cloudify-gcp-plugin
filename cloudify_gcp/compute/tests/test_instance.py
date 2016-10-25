@@ -33,6 +33,9 @@ class TestGCPInstance(TestGCP):
         self.ctxmock.source.instance.runtime_properties = {
                 'zone': 'a very fake zone',
                 }
+        self.ctxmock.node.properties.update({
+                'install_agent': False,
+                })
 
     def test_create(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties = {
@@ -70,7 +73,7 @@ class TestGCPInstance(TestGCP):
                     'metadata': {
                         'items': [
                             {'value': 'not really a project', 'key': 'bucket'},
-                            {'value': 'Fakey McFakeface', 'key': 'sshKeys'}]},
+                            {'value': '', 'key': 'sshKeys'}]},
                     'networkInterfaces': [{
                         'network': 'not a real network'}],
                     'canIpForward': False,
@@ -149,7 +152,7 @@ class TestGCPInstance(TestGCP):
                     'metadata': {
                         'items': [
                             {'value': 'not really a project', 'key': 'bucket'},
-                            {'value': 'Fakey McFakeface', 'key': 'sshKeys'}]},
+                            {'value': '', 'key': 'sshKeys'}]},
                     'networkInterfaces': [{
                         'network': 'not a real network'}],
                     'canIpForward': False,

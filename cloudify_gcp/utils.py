@@ -16,8 +16,8 @@
 import re
 import string
 import time
-from copy import deepcopy
 from functools import wraps
+from subprocess import check_output
 from os.path import basename, expanduser
 from abc import ABCMeta, abstractmethod
 
@@ -231,17 +231,26 @@ def get_gcp_config():
         gcp_config = gcp_config_from_properties
     else:
         try:
-            config = ctx.provider_context['resources'][constants.GCP_CONFIG]
-        except KeyError:
-            try:
-                with open(expanduser(constants.GCP_DEFAULT_CONFIG_PATH)) as f:
-                    gcp_config = yaml.load(f)
-            except OSError:
-                raise NonRecoverableError(
-                    '{} not provided as a property. '
-                    'and the provider context '
-                    'is not set up either'.format(constants.GCP_CONFIG))
-        gcp_config = deepcopy(config)
+            with open(expanduser(constants.GCP_DEFAULT_CONFIG_PATH)) as f:
+                gcp_config = yaml.load(f)
+        except (IOError, OSError) as e:
+            raise NonRecoverableError(
+                '{} not provided as a property and the config file ({}) '
+                'does not exist either: {}'.format(
+                    constants.GCP_CONFIG,
+                    constants.GCP_DEFAULT_CONFIG_PATH,
+                    e,
+                    ))
+
+    # Validate the config contains what it should
+    try:
+        for key in 'project', 'auth', 'zone':
+            gcp_config[key]
+    except Exception as e:
+        raise NonRecoverableError("invalid gcp_config provided: {}".format(e))
+
+    # If no network is specified, assume the GCP default network, 'default'
+    gcp_config.setdefault('network', 'default')
 
     return update_zone(gcp_config)
 
@@ -262,18 +271,6 @@ def update_zone(gcp_config):
     return gcp_config
 
 
-def get_manager_provider_config():
-    provider_config = ctx.provider_context.get('resources', {})
-    agents_security_group = provider_config.get('agents_security_group', {})
-    manager_agent_security_group = \
-        provider_config.get('manager_agent_security_group', {})
-    provider_context = {
-        'agents_security_group': agents_security_group,
-        'manager_security_group': manager_agent_security_group
-    }
-    return provider_context
-
-
 def is_object_deleted(obj):
     try:
         obj.get()
@@ -281,10 +278,6 @@ def is_object_deleted(obj):
         if is_missing_resource_error(error):
             return True
     return False
-
-
-def is_manager_instance():
-    return not ctx.provider_context
 
 
 def get_key_user_string(user, public_key):
@@ -301,12 +294,34 @@ def get_key_user_string(user, public_key):
 
 
 def get_agent_ssh_key_string():
+    cloudify_agent = {}
+
     try:
-        return ctx.provider_context['resources'][
-                'cloudify_agent']['public_key']
+        cloudify_agent.update(
+                ctx.provider_context['cloudify']['cloudify_agent'])
     except KeyError:
-        # means that we are bootstrapping the manager
+        pass
+
+    # node-specific overrides should take precendence
+    # cloudify_agent is deprecated but may still be used.
+    for key in 'cloudify_agent', 'agent_config':
+        cloudify_agent.update(ctx.node.properties.get(key, {}))
+
+    if 'agent_key_path' not in cloudify_agent:
+        ctx.logger.debug('agent to be installed but key file info not found')
         return ''
+
+    public_key = check_output([
+        'ssh-keygen', '-y',  # generate public key from private key
+        '-P', '',  # don't prompt for passphrase (would hang forever)
+        '-f', expanduser(cloudify_agent['agent_key_path'])])
+    # add the agent user to the key. GCP uses this to create user accounts on
+    # the instance.
+    full_key = '{user}:{key} {user}@cloudify'.format(
+            key=public_key.strip(),
+            user=cloudify_agent['user'])
+
+    return full_key
 
 
 def response_to_operation(response, config, logger):
