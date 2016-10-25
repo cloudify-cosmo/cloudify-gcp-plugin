@@ -30,6 +30,7 @@ class TestGCP(unittest.TestCase):
         ctx.node.name = 'name'
         ctx.node.id = 'id'
         ctx.node.properties = {
+            'agent_config': {'install_method': 'none'},
             'gcp_config': {
                 'auth': {
                     'type': 'service_account',
@@ -43,12 +44,5 @@ class TestGCP(unittest.TestCase):
                 },
             }
         ctx.instance.runtime_properties = DirtyTrackingDict()
-        ctx.provider_context = {
-            'resources': {
-                'cloudify_agent': {
-                    'public_key': 'Fakey McFakeface',
-                    },
-                },
-            }
         ctx.instance.relationships = []
         current_ctx.set(ctx)

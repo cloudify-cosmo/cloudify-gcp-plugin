@@ -99,8 +99,6 @@ class Instance(GoogleCloudPlatform):
         e.g. the file is not under the given path or it has wrong permissions
         """
 
-        if not utils.is_manager_instance():
-            add_to_security_groups(self)
         disk = ctx.instance.runtime_properties.get(constants.DISK)
         if disk:
             self.disks = [disk]
@@ -280,6 +278,7 @@ class Instance(GoogleCloudPlatform):
 
     def to_dict(self):
         def add_key_value_to_metadata(key, value, body):
+            ctx.logger.info('Adding {} to metadata'.format(key))
             body['metadata']['items'].append({'key': key, 'value': value})
 
         network = {'network': 'global/networks/default'}
@@ -586,18 +585,16 @@ def set_ip(instance, relationship=False):
                 'The instance has not yet created network interface', 10)
 
 
-def add_to_security_groups(instance):
-    provider_config = utils.get_manager_provider_config()
-    instance.tags.extend(
-        provider_config[constants.AGENTS_SECURITY_GROUP]
-        .get(constants.SOURCE_TAGS, {}))
-
-
 def get_ssh_keys():
     instance_keys = ctx.instance.runtime_properties.get(constants.SSH_KEYS, [])
-    if not utils.is_manager_instance():
-        agent_key = \
-            ctx.provider_context['resources']['cloudify_agent']['public_key']
+    install = ctx.node.properties['install_agent']
+    # properties['install_agent'] defaults to '', but that means true!
+    agent_config = ctx.node.properties.get('agent_config', {})
+    if not any([
+            agent_config.get('install_method') == 'none',
+            install is False,
+            ]):
+        agent_key = utils.get_agent_ssh_key_string()
         instance_keys.append(agent_key)
     return list(set(instance_keys))
 
