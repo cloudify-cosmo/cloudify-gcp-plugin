@@ -11,6 +11,8 @@ plugins:
     # the plugin if it is included in the the blueprint directory under the
     # "plugins" directory.
     source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/2.0.0-devel.zip
+    package_name: cloudify-gcp-plugin
+    package_version: '2.0.0'
 
 node_types:
   cloudify.gcp.nodes.Instance:
