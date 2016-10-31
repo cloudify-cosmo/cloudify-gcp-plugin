@@ -104,3 +104,20 @@ class GCPTest(object):
 
     def pre_install_hook(self):
         "Override this if your test needs to do something before installing"
+
+    def assertIP(self, ip, msg=None, match=None):
+        """
+        Set of assertions to valiate IPv4 addresses.
+        optional `match` input is a regular expression which can be used to
+        further constrain the allowed addresses.
+        """
+        parts = [int(n) for n in ip.split('.')]
+
+        self.assertEqual(len(parts), 4)
+        for i, part in enumerate(parts):
+            part = int(part)
+            self.assertLess(part, 256, 'part {} too big'.format(i))
+            self.assertGreater(part, -1, 'part {} too small'.format(i))
+
+        if match:
+            self.assertRegexpMatches(ip, match)
