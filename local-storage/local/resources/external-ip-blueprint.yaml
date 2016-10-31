@@ -1,0 +1,48 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.4/types.yaml
+  - ../../../plugin.yaml
+
+
+inputs:
+  gcp_auth:
+  project:
+  network:
+  zone:
+
+  image_id:
+    default: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20160803
+    required: true
+
+
+dsl_definitions:
+  - &gcp_config
+    auth: { get_input: gcp_auth }
+    project: { get_input: project }
+    network: { get_input: network }
+    zone: { get_input: zone }
+
+
+node_templates:
+
+  ephemeral_ip:
+    type: cloudify.gcp.nodes.ExternalIP
+
+  vm:
+    type: cloudify.gcp.nodes.Instance
+    properties:
+      image_id: { get_input: image_id }
+      gcp_config: *gcp_config
+      install_agent: false
+    relationships:
+      - type: cloudify.gcp.relationships.instance_connected_to_ip
+        target: ephemeral_ip
+
+
+outputs:
+  vm_ip:
+    value: { get_attribute: [vm, ip] }
+  vm_name:
+    value: { get_attribute: [vm, name] }
