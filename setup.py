@@ -23,19 +23,18 @@ setup(
     version='0.1',
     description='Plugin for Google Cloud Platform',
 
-    packages=['gcp', 'gcp/compute'],
+    packages=[
+        'cloudify_gcp',
+        'cloudify_gcp.compute',
+        ],
 
     license='LICENSE',
     zip_safe=False,
     install_requires=[
-        "cloudify-plugins-common==3.2.1",
-        "oauth2client==1.4.6",
-        "google-api-python-client==1.4.0",
+        "oauth2client==3",
+        "google-api-python-client==1.5.1",
+        "cloudify-plugins-common>=3.3.1",
         "pyyaml",
-        "Crypto"
+        "pycrypto",
     ],
-    test_requires=[
-        "cloudify-dsl-parser==3.2   ",
-        "nose"
-    ]
 )
