@@ -27,6 +27,7 @@ class Network(GoogleCloudPlatform):
                  logger,
                  name,
                  auto_subnets=True,
+                 additional_settings=None
                  ):
         """
         Create Network object
@@ -39,7 +40,9 @@ class Network(GoogleCloudPlatform):
         super(Network, self).__init__(
             config,
             logger,
-            utils.get_gcp_resource_name(name))
+            utils.get_gcp_resource_name(name),
+            additional_settings,
+            )
         self.iprange = None
         self.auto_subnets = auto_subnets
 
@@ -98,18 +101,17 @@ class Network(GoogleCloudPlatform):
             project=self.project).execute()
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'description': 'Cloudify generated network',
             'name': self.name,
             'autoCreateSubnetworks': self.auto_subnets,
-        }
-        self.body.update(body)
+        })
         return self.body
 
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, auto_subnets, **kwargs):
+def create(name, auto_subnets, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(name)
 
@@ -117,7 +119,9 @@ def create(name, auto_subnets, **kwargs):
             config=gcp_config,
             logger=ctx.logger,
             auto_subnets=auto_subnets,
-            name=name)
+            name=name,
+            additional_settings=additional_settings,
+            )
 
     utils.create(network)
 

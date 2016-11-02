@@ -42,6 +42,7 @@ class Instance(GoogleCloudPlatform):
                  config,
                  logger,
                  name,
+                 additional_settings=None,
                  image=None,
                  machine_type=None,
                  startup_script=None,
@@ -70,7 +71,8 @@ class Instance(GoogleCloudPlatform):
         super(Instance, self).__init__(
             config,
             logger,
-            utils.get_gcp_resource_name(name))
+            utils.get_gcp_resource_name(name),
+            additional_settings)
         self.image = image
         self.machine_type = machine_type
         self.startup_script = startup_script
@@ -303,13 +305,15 @@ class Instance(GoogleCloudPlatform):
                 'items': [{'key': 'bucket', 'value': self.project}]
             }
         }
-
+        self.body.update(body)
         ssh_keys_str = '\n'.join(self.ssh_keys)
-        add_key_value_to_metadata(KeyPair.KEY_VALUE, ssh_keys_str, body)
+        add_key_value_to_metadata(KeyPair.KEY_VALUE,
+                                  ssh_keys_str,
+                                  self.body)
         if self.startup_script:
             add_key_value_to_metadata('startup-script',
                                       self.startup_script,
-                                      body)
+                                      self.body)
 
         if not self.disks:
             self.disks = [{'boot': True,
@@ -317,14 +321,14 @@ class Instance(GoogleCloudPlatform):
                            'initializeParams': {
                                'sourceImage': self.image
                            }}]
-        body['disks'] = self.disks
+        self.body['disks'] = self.disks
 
         if self.externalIP:
-            for item in body['networkInterfaces']:
+            for item in self.body['networkInterfaces']:
                 if item['name'] == self.ACCESS_CONFIG:
                     item['accessConfigs'] = [{'type': self.ACCESS_CONFIG_TYPE,
                                               'name': self.ACCESS_CONFIG}]
-        return body
+        return self.body
 
 
 @operation
@@ -338,6 +342,7 @@ def create(instance_type,
            tags,
            zone=None,
            can_ip_forward=False,
+           additional_settings=None,
            **kwargs):
     props = ctx.instance.runtime_properties
     gcp_config = utils.get_gcp_config()
@@ -387,6 +392,7 @@ def create(instance_type,
             subnetwork=subnetwork,
             zone=zone,
             can_ip_forward=can_ip_forward,
+            additional_settings=additional_settings,
             )
 
     utils.create(instance)

@@ -31,6 +31,7 @@ class FirewallRule(GoogleCloudPlatform):
                  sources=None,
                  tags=None,
                  security_group=False,
+                 additional_settings=None,
                  ):
         """
         Create Firewall rule object
@@ -47,7 +48,10 @@ class FirewallRule(GoogleCloudPlatform):
         ref. https://cloud.google.com/compute/docs/reference/latest/firewalls
         :param network: network name the firewall rule is connected to
         """
-        super(FirewallRule, self).__init__(config, logger, ctx.instance.id)
+        super(FirewallRule, self).__init__(
+            config, logger, ctx.instance.id,
+            additional_settings=additional_settings,
+            )
 
         if utils.should_use_external_resource():
             self.name = utils.assure_resource_id_correct()
@@ -141,7 +145,7 @@ class FirewallRule(GoogleCloudPlatform):
             project=self.project).execute()
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'name': self.name,
             'description': 'Cloudify generated {}'.format(
                 'SG part' if self.security_group else 'FirewallRule'),
@@ -149,30 +153,30 @@ class FirewallRule(GoogleCloudPlatform):
             'allowed': [],
             'sourceTags': [],
             'sourceRanges': [],
-            }
+            })
 
         for source in self.sources:
             if source[0].isdigit():
-                body['sourceRanges'].append(source)
+                self.body['sourceRanges'].append(source)
             else:
-                body['sourceTags'].append(source)
+                self.body['sourceTags'].append(source)
 
         for protocol, ports in self.allowed.items():
             rule = {'IPProtocol': protocol}
             if ports:
                 rule['ports'] = ports
                 # (no ports is fine and means any port)
-            body['allowed'].append(rule)
+            self.body['allowed'].append(rule)
 
         if self.tags:
-            body['targetTags'] = self.tags
+            self.body['targetTags'] = self.tags
 
-        return body
+        return self.body
 
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, allowed, sources, target_tags, **kwargs):
+def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
     network = utils.get_network(ctx)
     name = utils.get_final_resource_name(name)
@@ -184,6 +188,7 @@ def create(name, allowed, sources, target_tags, **kwargs):
                             allowed=allowed,
                             sources=sources,
                             tags=target_tags,
+                            additional_settings=additional_settings,
                             )
 
     utils.create(firewall)

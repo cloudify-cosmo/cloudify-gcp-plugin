@@ -29,17 +29,21 @@ class UrlMap(GoogleCloudPlatform):
                  config,
                  logger,
                  name,
-                 default_service=None):
-        super(UrlMap, self).__init__(config, logger, name)
+                 default_service=None,
+                 additional_settings=None):
+        super(UrlMap, self).__init__(config,
+                                     logger,
+                                     name,
+                                     additional_settings)
         self.default_service = default_service
 
     def to_dict(self):
-        body = {
+        self.body.update({
             'description': 'Cloudify generated URL Map',
             'name': self.name,
             'defaultService': self.default_service
-        }
-        return body
+        })
+        return self.body
 
     def get_self_url(self):
         return 'global/urlMaps/{0}'.format(self.name)
@@ -71,13 +75,15 @@ class UrlMap(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, default_service, **kwargs):
+def create(name, default_service, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     url_map = UrlMap(gcp_config,
                      ctx.logger,
                      name,
-                     default_service)
+                     default_service,
+                     additional_settings,
+                     )
 
     utils.create(url_map)
 

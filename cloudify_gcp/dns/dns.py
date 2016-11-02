@@ -30,6 +30,7 @@ class DNSZone(GoogleCloudPlatform):
                  logger,
                  name,
                  dns_name=None,
+                 additional_settings=None,
                  ):
         """
         Create DNSZone object
@@ -46,6 +47,7 @@ class DNSZone(GoogleCloudPlatform):
             utils.get_gcp_resource_name(name),
             discovery='dns',
             scope='https://www.googleapis.com/auth/ndev.clouddns.readwrite',
+            additional_settings=additional_settings,
             )
         self.name = name
         self.dns_name = dns_name
@@ -118,18 +120,22 @@ class DNSZone(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, dns_name, **kwargs):
+def create(name, dns_name, additional_settings=None, **kwargs):
     gcp_config = utils.get_gcp_config()
     if not name:
         name = ctx.node.id
     if not dns_name:
         dns_name = name
     name = utils.get_final_resource_name(name)
+
     dns_zone = DNSZone(
             gcp_config,
             ctx.logger,
             name,
-            dns_name)
+            dns_name,
+            additional_settings=additional_settings,
+            )
+
     resource = utils.create(dns_zone)
     ctx.instance.runtime_properties.update(resource)
 

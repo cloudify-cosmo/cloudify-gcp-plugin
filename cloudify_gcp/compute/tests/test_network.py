@@ -27,6 +27,7 @@ class TestGCPNetwork(TestGCP):
         network.create(
                 name='network-name',
                 auto_subnets=True,
+                additional_settings={},
                 )
 
         mock_build().networks().insert.assert_called_once_with(
