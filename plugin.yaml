@@ -843,8 +843,119 @@ node_types:
         create:
           implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.creation_validation
 
-relationships:
+  cloudify.gcp.nodes.DNSZone:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true) 
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      name:
+        type: string
+        description: >
+          (internal) name of the zone. Defaults to the instance ID.
+        default: ''
+      dns_name:
+        description: >
+          (fully qualified) domain name of the zone.
+          Defaults to the instance ID.
+        type: string
+        default: ''
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.dns.dns.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            dns_name:
+              default: { get_property: [SELF, dns_name]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.dns.dns.delete
 
+  cloudify.gcp.nodes.DNSRecord:
+    derived_from: cloudify.nodes.Root
+    properties:
+      type:
+        description: >
+          The type of this DNS record.
+          Only one record of each type is allowed with the same name within
+          a zone.
+        type: string
+        default: A
+      name:
+        description: >
+          The subdomain. This will be prepended to the DNSZone's dns_name
+          to produce the full domain name for this record.
+          Defaults to the instance ID.
+        type: string
+        default: ''
+      resources:
+        description: >
+          List of resources which will form this record.
+          (can be augmented using relationships
+            cloudify.gcp.relationships.dns_record_connected_to_instance
+            and
+            cloudify.gcp.relationships.dns_record_connected_to_ip
+            )
+        default: []
+      ttl:
+        description: >
+          DNS entry Time To Live
+        type: integer
+        default: 86400
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.dns.record.create
+          inputs:
+            type:
+              default: { get_property: [SELF, type]}
+            name:
+              default: { get_property: [SELF, name]}
+            resources:
+              default: { get_property: [SELF, resources]}
+            ttl:
+              default: { get_property: [SELF, ttl]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.dns.record.delete
+
+  cloudify.gcp.nodes.DNSAAAARecord:
+    derived_from: cloudify.gcp.nodes.DNSRecord
+    properties:
+      type:
+        default: AAAA
+
+  cloudify.gcp.nodes.DNSMXRecord:
+    derived_from: cloudify.gcp.nodes.DNSRecord
+    properties:
+      type:
+        default: MX
+
+  cloudify.gcp.nodes.DNSNSRecord:
+    derived_from: cloudify.gcp.nodes.DNSRecord
+    properties:
+      type:
+        default: NS
+
+  cloudify.gcp.nodes.DNSTXTRecord:
+    derived_from: cloudify.gcp.nodes.DNSRecord
+    properties:
+      type:
+        default: TXT
+
+
+relationships:
 
   cloudify.gcp.relationships.instance_connected_to_security_group:
     derived_from: cloudify.relationships.connected_to
