@@ -14,12 +14,20 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+from functools import partial
+
 from mock import patch
 
 from cloudify.exceptions import NonRecoverableError
 
 from .. import instance
 from ...tests import TestGCP
+
+
+utils_get_ssh_keys_patch = partial(
+        patch,
+        'cloudify_gcp.utils.get_agent_ssh_key_string',
+        )
 
 
 @patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
@@ -32,6 +40,9 @@ class TestGCPInstance(TestGCP):
         self.ctxmock.source.instance.runtime_properties = {
                 'zone': 'a very fake zone',
                 }
+        self.ctxmock.node.properties.update({
+                'install_agent': False,
+                })
 
     def test_create(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties = {
@@ -69,7 +80,7 @@ class TestGCPInstance(TestGCP):
                     'metadata': {
                         'items': [
                             {'value': 'not really a project', 'key': 'bucket'},
-                            {'value': 'Fakey McFakeface', 'key': 'sshKeys'}]},
+                            {'value': '', 'key': 'sshKeys'}]},
                     'networkInterfaces': [{
                         'network': 'not a real network'}],
                     'canIpForward': False,
@@ -148,7 +159,7 @@ class TestGCPInstance(TestGCP):
                     'metadata': {
                         'items': [
                             {'value': 'not really a project', 'key': 'bucket'},
-                            {'value': 'Fakey McFakeface', 'key': 'sshKeys'}]},
+                            {'value': '', 'key': 'sshKeys'}]},
                     'networkInterfaces': [{
                         'network': 'not a real network'}],
                     'canIpForward': False,
@@ -394,3 +405,34 @@ class TestGCPInstance(TestGCP):
         self.assertEqual(
                 '🗝🔑🗝',
                 self.ctxmock.source.instance.runtime_properties['ssh_keys'])
+
+    @utils_get_ssh_keys_patch(return_value='🗝')
+    def test_get_ssh_key(self, mock_get_key_string, *args):
+        self.ctxmock.node.properties['agent_config'] = {
+                'install_method': 'remote',
+                }
+        self.ctxmock.node.properties.update({
+                'install_agent': '',
+                })
+
+        keys = instance.get_ssh_keys()
+
+        self.assertEqual(['🗝'], keys)
+
+    @utils_get_ssh_keys_patch(return_value='🗝')
+    def test_get_ssh_key_none(self, mock_get_key_string, *args):
+        self.ctxmock.node.properties['agent_config'] = {
+                'install_method': 'none',
+                }
+
+        keys = instance.get_ssh_keys()
+
+        self.assertEqual([], keys)
+
+    @utils_get_ssh_keys_patch(return_value='🗝')
+    def test_get_ssh_key_none_legacy(self, mock_get_key_string, *args):
+        self.ctxmock.node.properties['install_agent'] = False
+
+        keys = instance.get_ssh_keys()
+
+        self.assertEqual([], keys)

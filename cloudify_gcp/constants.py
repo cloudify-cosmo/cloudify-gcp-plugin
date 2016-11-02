@@ -60,8 +60,8 @@ NETWORK = 'network'
 
 GCP_OP_DONE = 'DONE'
 
-MANAGER_PLUGIN_FILES = os.path.join('etc', 'cloudify', 'gcp_plugin')
-GCP_DEFAULT_CONFIG_PATH = os.path.join(MANAGER_PLUGIN_FILES, 'gcp_config.json')
+MANAGER_PLUGIN_FILES = os.path.join('/etc', 'cloudify', 'gcp_plugin')
+GCP_DEFAULT_CONFIG_PATH = os.path.join(MANAGER_PLUGIN_FILES, 'gcp_config')
 
 RETRY_DEFAULT_DELAY = 30
 
