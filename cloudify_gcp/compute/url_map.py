@@ -14,10 +14,10 @@
 #    * limitations under the License.
 
 from cloudify import ctx
+from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
-from ..utils import operation
 from cloudify_gcp.gcp import (
         check_response,
         GoogleCloudPlatform,

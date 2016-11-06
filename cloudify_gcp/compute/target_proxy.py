@@ -15,11 +15,11 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from cloudify import ctx
+from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
 from .. import constants
-from ..utils import operation
 from ..gcp import (
         check_response,
         GoogleCloudPlatform,

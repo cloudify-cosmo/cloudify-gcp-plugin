@@ -16,10 +16,10 @@
 from time import sleep
 
 from cloudify import ctx
+from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
-from ..utils import operation
 from .dns import DNSZone
 
 
