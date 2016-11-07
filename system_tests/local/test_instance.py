@@ -57,6 +57,30 @@ class GCPEphemeralIPTest(GCPTest, TestCase):
                 vm['runtime_properties']['ip'])
 
 
+class GCPExternalIPPropertyTest(GCPTest, TestCase):
+    blueprint_name = 'compute/external-ip-property-blueprint.yaml'
+
+    inputs = (
+            'project',
+            'network',
+            'zone',
+            'gcp_auth',
+            'image_id',
+            )
+
+    def assertions(self):
+        vm = self.test_env.storage.get_node_instances('vm')[0]
+
+        ephemeral_ip = vm['runtime_properties']['networkInterfaces'][0][
+                'accessConfigs'][0]['natIP']
+
+        self.assertIP(ephemeral_ip)
+        self.assertEqual(
+                ephemeral_ip,
+                vm['runtime_properties']['ip'],
+                "ephemeral IP should be copied to runtime_properties['ip']")
+
+
 class GCPInstanceScriptTest(GCPTest, TestCase):
     blueprint_name = 'compute/startup-script-blueprint.yaml'
 
@@ -69,6 +93,4 @@ class GCPInstanceScriptTest(GCPTest, TestCase):
             )
 
     def assertions(self):
-        ip = [int(n) for n in self.outputs['ip'].split('.')]
-        self.assertEqual(10, ip[0])
-        self.assertEqual(4, len(ip))
+        self.assertIP(self.outputs['ip'], match="^10\..*")

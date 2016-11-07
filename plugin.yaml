@@ -83,6 +83,17 @@ node_types:
             script: <path to script file>
         default:
           ''
+      external_ip:
+        description: >
+          Should the Instance be created with an externally-accessible
+          IP address. This will be an ephemeral IP.
+          If you would like to use an IP address which can be transferred
+          to another Instance then connect this Instance to an `Address`
+          node using the
+          `cloudify.gcp.relationships.instance_connected_to_ip`
+          relationship.
+        type: boolean
+        default: false
       additional_settings:
         description: >
           Additional instance settings.
@@ -95,7 +106,7 @@ node_types:
             startup_script:
               default: { get_property: [SELF, startup_script]}
             external_ip:
-              default: false
+              default: { get_property: [SELF, external_ip]}
             instance_type:
               default: { get_property: [SELF, instance_type]}
             image_id:

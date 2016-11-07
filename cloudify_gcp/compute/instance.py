@@ -323,10 +323,14 @@ class Instance(GoogleCloudPlatform):
         self.body['disks'] = self.disks
 
         if self.externalIP:
-            for item in self.body['networkInterfaces']:
-                if item['name'] == self.ACCESS_CONFIG:
-                    item['accessConfigs'] = [{'type': self.ACCESS_CONFIG_TYPE,
-                                              'name': self.ACCESS_CONFIG}]
+            # GCP Instances only support a single networkInterface, with a
+            # single accessConfig, so there's no need to look them up in a
+            # sophisiticated way.
+            self.body['networkInterfaces'][0]['accessConfigs'] = [{
+                'type': self.ACCESS_CONFIG_TYPE,
+                'name': self.ACCESS_CONFIG,
+                }]
+
         return self.body
 
 
@@ -573,7 +577,7 @@ def set_ip(instance, relationship=False):
                                             instances)
 
     try:
-        if relationship:
+        if relationship or ctx.node.properties['external_ip']:
             props.update(item)
             props['ip'] = item[
                     'networkInterfaces'][0]['accessConfigs'][0]['natIP']
