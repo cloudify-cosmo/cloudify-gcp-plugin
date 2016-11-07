@@ -450,32 +450,3 @@ def get_net_and_subnet(ctx):
 
 def get_network(ctx):
     return get_net_and_subnet(ctx)[0]
-
-
-def nonrecoverable_errors(fun):
-    """Decorator which raises NonRecoverableError if non recoverable errors
-    from gcp are caught"""
-    def wrap(*args, **kwargs):
-        try:
-            fun(*args, **kwargs)
-        except GCPError as e:
-            if (True):
-                raise NonRecoverableError(e)
-            raise
-
-    return wraps(fun)(wrap)
-
-
-def operation(fun, *args, **kwargs):
-    """Combine @operation and @nonrecoverable_errors"""
-    import inspect
-
-    @wraps(fun)
-    @nonrecoverable_errors
-    def wrap(*args, **kwargs):
-        if (fun.__name__ == 'create' and
-                hasattr(inspect.getmodule(fun), 'creation_validation')):
-            inspect.getmodule(fun).creation_validation(*args, **kwargs)
-        fun(*args, **kwargs)
-
-    return wrap

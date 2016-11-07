@@ -16,11 +16,11 @@
 import re
 
 from cloudify import ctx
+from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
 from .. import constants
-from ..utils import operation
 from .firewall import FirewallRule
 
 

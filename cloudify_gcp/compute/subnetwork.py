@@ -16,10 +16,10 @@
 from os.path import basename
 
 from cloudify import ctx
+from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
-from ..utils import operation
 from ..gcp import check_response
 from ..gcp import GoogleCloudPlatform
 

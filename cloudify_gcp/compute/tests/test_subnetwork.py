@@ -64,10 +64,10 @@ class TestGCPSubNetwork(TestGCP):
                 )
 
     def test_create_validation(self, mock_build, *args):
+        self.ctxmock.node.properties['name'] = 'network-name'
+
         with self.assertRaises(NonRecoverableError) as e:
-            subnetwork.create(
-                    name='network-name',
-                    )
+            subnetwork.creation_validation()
         self.assertIn(
                 'cloudify.gcp.relationships.contained_in_network',
                 e.exception.message)
@@ -86,11 +86,7 @@ class TestGCPSubNetwork(TestGCP):
         self.ctxmock.node.properties['use_external_resource'] = False
 
         with self.assertRaises(NonRecoverableError) as e:
-            subnetwork.create(
-                    name='subnet name',
-                    region='Bukit Bintang',
-                    subnet='Token Ring',
-                    )
+            subnetwork.creation_validation()
         self.assertIn(
                 'auto_subnets',
                 e.exception.message)
