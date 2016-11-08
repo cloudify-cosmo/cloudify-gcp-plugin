@@ -44,16 +44,6 @@ class InstanceGroup(GoogleCloudPlatform):
         })
         return self.body
 
-    def instance_to_dict(self, instance_name):
-        url = 'zones/{0}/instances/{1}'.format(self.zone, instance_name)
-        return {
-            'instances': [
-                {
-                    'instance': url
-                }
-            ]
-        }
-
     def get_self_url(self):
         if not self.self_url:
             self.self_url = self.get()['selfLink']
@@ -88,21 +78,33 @@ class InstanceGroup(GoogleCloudPlatform):
             zone=self.zone,
             instanceGroup=self.name).execute()
 
+    @utils.async_operation(relationship=True)
     @check_response
     def add_instance(self, instance_name):
         return self.discovery.instanceGroups().addInstances(
             project=self.project,
             zone=self.zone,
             instanceGroup=self.name,
-            body=self.instance_to_dict(instance_name)).execute()
+            body=instance_to_dict(instance_name)).execute()
 
+    @utils.async_operation(relationship=True)
     @check_response
     def remove_instance(self, instance_name):
         return self.discovery.instanceGroups().removeInstances(
             project=self.project,
             zone=self.zone,
             instanceGroup=self.name,
-            body=self.instance_to_dict(instance_name)).execute()
+            body=instance_to_dict(instance_name)).execute()
+
+
+def instance_to_dict(instance_url):
+    return {
+        'instances': [
+            {
+                'instance': instance_url
+            }
+        ]
+    }
 
 
 @operation
@@ -134,19 +136,19 @@ def delete(**kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def add_to_instance_group(instance_group_name, instance_name, **kwargs):
+def add_to_instance_group(instance_group_name, instance_url, **kwargs):
     gcp_config = utils.get_gcp_config()
     instance_group = InstanceGroup(gcp_config,
                                    ctx.logger,
                                    name=instance_group_name)
-    instance_group.add_instance(instance_name)
+    instance_group.add_instance(instance_url)
 
 
 @operation
 @utils.throw_cloudify_exceptions
-def remove_from_instance_group(instance_group_name, instance_name, **kwargs):
+def remove_from_instance_group(instance_group_name, instance_url, **kwargs):
     gcp_config = utils.get_gcp_config()
     instance_group = InstanceGroup(gcp_config,
                                    ctx.logger,
                                    name=instance_group_name)
-    instance_group.remove_instance(instance_name)
+    instance_group.remove_instance(instance_url)

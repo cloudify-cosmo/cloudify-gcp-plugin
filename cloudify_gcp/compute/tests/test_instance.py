@@ -45,9 +45,9 @@ class TestGCPInstance(TestGCP):
                 })
 
     def test_create(self, mock_build, *args):
-        self.ctxmock.instance.runtime_properties = {
+        self.ctxmock.instance.runtime_properties.update({
                 'startup_script': {'type': 'string'},
-                }
+                })
         self.ctxmock.instance.relationships = []
 
         instance.create(
@@ -82,7 +82,9 @@ class TestGCPInstance(TestGCP):
                             {'value': 'not really a project', 'key': 'bucket'},
                             {'value': '', 'key': 'sshKeys'}]},
                     'networkInterfaces': [{
-                        'network': 'not a real network'}],
+                        'network': 'projects/not really a project/'
+                                   'global/networks/not a real network',
+                        }],
                     'canIpForward': False,
                     },
                 project='not really a project',
@@ -128,9 +130,9 @@ class TestGCPInstance(TestGCP):
                 )
 
     def test_create_with_disk(self, mock_build, *args):
-        self.ctxmock.instance.runtime_properties = {
+        self.ctxmock.instance.runtime_properties.update({
                 'gcp_disk': '💾',
-                }
+                })
         self.ctxmock.instance.relationships = []
 
         instance.create(
@@ -161,7 +163,9 @@ class TestGCPInstance(TestGCP):
                             {'value': 'not really a project', 'key': 'bucket'},
                             {'value': '', 'key': 'sshKeys'}]},
                     'networkInterfaces': [{
-                        'network': 'not a real network'}],
+                        'network': 'projects/not really a project/'
+                                   'global/networks/not a real network',
+                        }],
                     'canIpForward': False,
                     },
                 project='not really a project',
@@ -193,7 +197,8 @@ class TestGCPInstance(TestGCP):
                             'key': 'sshKeys'}
                         ]},
                     'networkInterfaces': [{
-                        'network': 'not a real network',
+                        'network': 'projects/not really a project/'
+                                   'global/networks/not a real network',
                         'accessConfigs': [{
                             'type': 'ONE_TO_ONE_NAT',
                             'name': 'External NAT'}]
@@ -249,13 +254,13 @@ class TestGCPInstance(TestGCP):
                 'status': 'DONE',
                 'name': 'op_name',
                 }
-        self.ctxmock.instance.runtime_properties = {
+        self.ctxmock.instance.runtime_properties.update({
                 'gcp_disk': 'hi',
                 'name': 'delete-name',
                 'zone': 'hey',
                 'another': 'yo',
                 '_operation': _op,
-                }
+                })
         mock_build().globalOperations().get().execute.return_value = _op
 
         instance.delete('delete-name', 'zone')

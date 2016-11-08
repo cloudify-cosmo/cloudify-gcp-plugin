@@ -31,7 +31,7 @@ class GCPHttpForwardingTest(GCPTest, TestCase):
 
     def assertions(self):
 
-        for i in range(20):
+        for i in range(40):
             sleep(5)
             try:
                 text = urlopen('http://{}/'.format(
@@ -40,11 +40,9 @@ class GCPHttpForwardingTest(GCPTest, TestCase):
                 self.assertEqual(
                         self.outputs['vm_name'],
                         text.strip())
-            except (AssertionError, HTTPError):
-                pass
+            except (AssertionError, HTTPError) as e:
+                print('attempt {}/40: {}'.format(i, e))
             else:
                 break
         else:
             self.fail('tried too many times to get the page')
-
-        assert False
