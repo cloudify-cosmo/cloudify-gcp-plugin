@@ -74,7 +74,7 @@ class GCPHttpsForwardingTest(GCPTest, TestCase):
         ssl_context.verify_mode = ssl.CERT_REQUIRED
         ssl_context.load_verify_locations('https-forwarder-test-cert')
 
-        for i in range(20):
+        for i in range(40):
             sleep(5)
 
             try:
@@ -84,15 +84,14 @@ class GCPHttpsForwardingTest(GCPTest, TestCase):
                 # If the certificate isn't the one we provided
                 # this step will fail...
                 http.request('GET', '/')
-            except ssl.SSLError as e:
-                print('attempt {}: {}'.format(i, e))
+                text = http.getresponse().read()
+
+                self.assertEqual(
+                        self.outputs['vm_name'],
+                        text.strip())
+            except (ssl.SSLError, AssertionError) as e:
+                print('attempt {}/40: {}'.format(i, e))
             else:
                 break
         else:
-            self.fail('continual SSL errors')
-
-        # TODO: check http response body, once the startup-script issue is
-        # resolved.
-        # https://code.google.com/p/google-compute-engine/issues/detail?id=433
-
-        assert False
+            self.fail('tried too many times to get the page')

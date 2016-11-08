@@ -1139,15 +1139,15 @@ relationships:
           inputs:
             instance_group_name:
               default: { get_attribute: [TARGET, name] }
-            instance_name:
-              default: { get_attribute: [SOURCE, name] }
+            instance_url:
+              default: { get_attribute: [SOURCE, selfLink] }
         unlink:
           implementation: gcp_plugin.cloudify_gcp.compute.instance_group.remove_from_instance_group
           inputs:
             instance_group_name:
               default: { get_attribute: [TARGET, name] }
-            instance_name:
-              default: { get_attribute: [SOURCE, name] }
+            instance_url:
+              default: { get_attribute: [SOURCE, selfLink] }
 
   cloudify.gcp.relationships.uses_as_backend:
     derived_from: cloudify.relationships.connected_to

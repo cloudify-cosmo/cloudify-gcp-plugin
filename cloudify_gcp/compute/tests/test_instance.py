@@ -45,9 +45,9 @@ class TestGCPInstance(TestGCP):
                 })
 
     def test_create(self, mock_build, *args):
-        self.ctxmock.instance.runtime_properties = {
+        self.ctxmock.instance.runtime_properties.update({
                 'startup_script': {'type': 'string'},
-                }
+                })
         self.ctxmock.instance.relationships = []
 
         instance.create(
@@ -128,9 +128,9 @@ class TestGCPInstance(TestGCP):
                 )
 
     def test_create_with_disk(self, mock_build, *args):
-        self.ctxmock.instance.runtime_properties = {
+        self.ctxmock.instance.runtime_properties.update({
                 'gcp_disk': '💾',
-                }
+                })
         self.ctxmock.instance.relationships = []
 
         instance.create(
@@ -249,13 +249,13 @@ class TestGCPInstance(TestGCP):
                 'status': 'DONE',
                 'name': 'op_name',
                 }
-        self.ctxmock.instance.runtime_properties = {
+        self.ctxmock.instance.runtime_properties.update({
                 'gcp_disk': 'hi',
                 'name': 'delete-name',
                 'zone': 'hey',
                 'another': 'yo',
                 '_operation': _op,
-                }
+                })
         mock_build().globalOperations().get().execute.return_value = _op
 
         instance.delete('delete-name', 'zone')

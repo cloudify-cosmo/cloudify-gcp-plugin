@@ -43,9 +43,9 @@ class TestGCPBackendService(TestGCP):
                 )
 
     def test_delete(self, mock_build, *args):
-        self.ctxmock.instance.runtime_properties = {
+        self.ctxmock.instance.runtime_properties.update({
                 'name': 'delete_name',
-                }
+                })
 
         backend_service.delete()
 

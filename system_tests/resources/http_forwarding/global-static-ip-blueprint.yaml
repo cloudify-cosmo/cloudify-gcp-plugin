@@ -51,30 +51,17 @@ node_templates:
       allowed:
         tcp:
           - 80
-      gcp_config: *gcp_config
-
-  vm_sg:
-    type: cloudify.gcp.nodes.SecurityGroup
-    properties:
-      rules:
-        - sources:
-            - 0.0.0.0/0
-          allowed:
-            tcp:
-              - 80
-      gcp_config: *gcp_config
-
-  external_ip:
-    type: cloudify.gcp.nodes.ExternalIP
-    properties:
+      target_tags: [http-forwarding-fw]
       gcp_config: *gcp_config
 
   vm:
     type: cloudify.gcp.nodes.Instance
     properties:
       image_id: { get_input: image_id }
-      gcp_config: *gcp_config
+      external_ip: true
       install_agent: false
+      gcp_config: *gcp_config
+      tags: [http-forwarding-fw]
       startup_script:
         type: string
         script: |
@@ -87,10 +74,6 @@ node_templates:
     relationships:
       - type: cloudify.gcp.relationships.instance_connected_to_instance_group
         target: instance_group
-      - type: cloudify.gcp.relationships.instance_connected_to_ip
-        target: external_ip
-      - type: cloudify.gcp.relationships.instance_connected_to_security_group
-        target: vm_sg
 
   instance_group:
     type: cloudify.gcp.nodes.InstanceGroup
@@ -127,6 +110,7 @@ node_templates:
     properties:
       target_proxy: { get_attribute: [proxy, selfLink] }
       port_range: 80
+      ip_address: { get_attribute: [static_ip, address] }
       gcp_config: *gcp_config
     relationships:
       - type: cloudify.gcp.relationships.forwarding_rule_connected_to_target_proxy
