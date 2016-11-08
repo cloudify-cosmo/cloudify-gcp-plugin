@@ -49,7 +49,8 @@ class TestGCPSecurityGroup(TestGCP):
         self.assertEqual(2, mock_build.call_count)
         for body in [
                 {
-                    'network': 'not a real network',
+                    'network': 'projects/not really a project/'
+                               'global/networks/not a real network',
                     'sourceTags': ['bob', 'jane'],
                     'description': 'Cloudify generated SG part',
                     'sourceRanges': [],
@@ -58,7 +59,8 @@ class TestGCPSecurityGroup(TestGCP):
                     'name': 'ctx-sg-name-from-bobjane-to-nothing',
                 },
                 {
-                    'network': 'not a real network',
+                    'network': 'projects/not really a project/'
+                               'global/networks/not a real network',
                     'sourceTags': ['jane'],
                     'description': 'Cloudify generated SG part',
                     'sourceRanges': [],
