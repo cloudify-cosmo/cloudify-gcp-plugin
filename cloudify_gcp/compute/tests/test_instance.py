@@ -82,7 +82,9 @@ class TestGCPInstance(TestGCP):
                             {'value': 'not really a project', 'key': 'bucket'},
                             {'value': '', 'key': 'sshKeys'}]},
                     'networkInterfaces': [{
-                        'network': 'not a real network'}],
+                        'network': 'projects/not really a project/'
+                                   'global/networks/not a real network',
+                        }],
                     'canIpForward': False,
                     },
                 project='not really a project',
@@ -161,7 +163,9 @@ class TestGCPInstance(TestGCP):
                             {'value': 'not really a project', 'key': 'bucket'},
                             {'value': '', 'key': 'sshKeys'}]},
                     'networkInterfaces': [{
-                        'network': 'not a real network'}],
+                        'network': 'projects/not really a project/'
+                                   'global/networks/not a real network',
+                        }],
                     'canIpForward': False,
                     },
                 project='not really a project',
@@ -193,7 +197,8 @@ class TestGCPInstance(TestGCP):
                             'key': 'sshKeys'}
                         ]},
                     'networkInterfaces': [{
-                        'network': 'not a real network',
+                        'network': 'projects/not really a project/'
+                                   'global/networks/not a real network',
                         'accessConfigs': [{
                             'type': 'ONE_TO_ONE_NAT',
                             'name': 'External NAT'}]
