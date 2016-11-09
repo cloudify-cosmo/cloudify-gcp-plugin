@@ -152,15 +152,22 @@ def sync_operation(func):
     return wraps(func)(_decorator)
 
 
-def async_operation(get=False):
+def async_operation(get=False, relationship=False):
     """
     Decorator for node methods which return an Operation
     Handles the operation if it exists
     """
     def decorator(func):
         def wrapper(self, *args, **kwargs):
-            props = ctx.instance.runtime_properties
-            response = props.get('_operation', None)
+            if relationship:
+                props = ctx.source.instance.runtime_properties
+                response = props.setdefault('_operations', {}).get(
+                        ctx.target.instance.id)
+            else:
+                props = ctx.instance.runtime_properties
+                response = props.get('_operation', None)
+
+            props.dirty = True
 
             if response:
                 operation = response_to_operation(
@@ -175,10 +182,13 @@ def async_operation(get=False):
                             response['status']),
                         constants.RETRY_DEFAULT_DELAY)
                 elif response['status'] == 'DONE':
-                    for key in '_operation', 'name', 'selfLink':
-                        props.pop(key, None)
-                    if get:
-                        props.update(self.get())
+                    if relationship:
+                        props['_operations'].pop(ctx.target.instance.id)
+                    else:
+                        for key in '_operation', 'name', 'selfLink':
+                            props.pop(key, None)
+                        if get:
+                            props.update(self.get())
                 else:
                     raise NonRecoverableError(
                             'Unknown status response from operation')
@@ -186,7 +196,12 @@ def async_operation(get=False):
             else:
                 # Actually run the method
                 response = func(self, *args, **kwargs)
-                ctx.instance.runtime_properties['_operation'] = response
+                if relationship:
+                    props.setdefault('_operations', {})[
+                            ctx.target.instance.id] = response
+                else:
+                    props['_operation'] = response
+
                 ctx.operation.retry('Operation started')
 
         return wraps(func)(wrapper)

@@ -15,6 +15,8 @@
 
 from mock import patch
 
+from cloudify.manager import DirtyTrackingDict
+
 from .. import instance_group
 from ...tests import TestGCP
 
@@ -22,6 +24,10 @@ from ...tests import TestGCP
 @patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
 @patch('cloudify_gcp.gcp.build')
 class TestInstanceGroup(TestGCP):
+
+    def setUp(self):
+        super(TestInstanceGroup, self).setUp()
+        self.ctxmock.source.instance.runtime_properties = DirtyTrackingDict()
 
     def test_create(self, mock_build, *args):
         instance_group.create(
@@ -52,27 +58,25 @@ class TestInstanceGroup(TestGCP):
                 )
 
     def test_add_to_instance_group(self, mock_build, *args):
-        instance_group.add_to_instance_group('group name', 'instance name')
+        instance_group.add_to_instance_group('group name', 'instance url')
 
         mock_build().instanceGroups().addInstances.assert_called_once_with(
                 body={
                     'instances': [
-                        {'instance': 'zones/a very fake zone/instances/'
-                            'instance name'}]},
+                        {'instance': 'instance url'}]},
                 instanceGroup='group name',
                 project='not really a project',
                 zone='a very fake zone'
                 )
 
-    def test_remove_to_instance_group(self, mock_build, *args):
+    def test_remove_from_instance_group(self, mock_build, *args):
         instance_group.remove_from_instance_group(
-                'group name', 'instance name')
+                'group name', 'instance url')
 
         mock_build().instanceGroups().removeInstances.assert_called_once_with(
                 body={
                     'instances': [
-                        {'instance': 'zones/a very fake zone/instances/'
-                            'instance name'}]},
+                        {'instance': 'instance url'}]},
                 instanceGroup='group name',
                 project='not really a project',
                 zone='a very fake zone'

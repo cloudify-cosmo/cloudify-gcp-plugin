@@ -99,9 +99,9 @@ class TestGCPRoute(TestGCP):
                 )
 
     def test_delete(self, mock_build, *args):
-        self.ctxmock.instance.runtime_properties = {
+        self.ctxmock.instance.runtime_properties.update({
                 'name': 'hi',
-                }
+                })
 
         route.delete('name')
 
