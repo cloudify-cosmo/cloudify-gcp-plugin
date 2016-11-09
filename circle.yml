@@ -3,3 +3,6 @@ test:
     - tox -e flake8
     - tox -e py27
     - tox -e docs
+
+  post:
+    - cp -R ~/.tox/docs/tmp/html $CIRCLE_ARTIFACTS/
