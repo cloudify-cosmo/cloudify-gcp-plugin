@@ -183,14 +183,20 @@ def async_operation(get=False, relationship=False):
                         response,
                         get_gcp_config(),
                         ctx.logger)
-                response = operation.get()
 
-                if response['status'] in ('PENDING', 'RUNNING'):
-                    ctx.operation.retry(
-                        'Operation not completed yet: {}'.format(
-                            response['status']),
-                        constants.RETRY_DEFAULT_DELAY)
-                elif response['status'] == 'DONE':
+                try:
+                    has_finished = operation.has_finished()
+                except GCPError:
+                    # If the operation has an error, clear it from
+                    # runtime_properties so the next try will start from
+                    # scratch.
+                    if relationship:
+                        props['_operations'].pop(ctx.target.instance.id)
+                    else:
+                        props.pop('_operation')
+                    raise
+
+                if has_finished:
                     if relationship:
                         props['_operations'].pop(ctx.target.instance.id)
                     else:
@@ -199,8 +205,10 @@ def async_operation(get=False, relationship=False):
                         if get:
                             props.update(self.get())
                 else:
-                    raise NonRecoverableError(
-                            'Unknown status response from operation')
+                    ctx.operation.retry(
+                        'Operation not completed yet: {}'.format(
+                            operation.last_response['status']),
+                        constants.RETRY_DEFAULT_DELAY)
 
             else:
                 # Actually run the method
