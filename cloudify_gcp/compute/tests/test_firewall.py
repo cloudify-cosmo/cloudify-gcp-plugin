@@ -41,7 +41,8 @@ class TestGCPFirewall(TestGCP):
         mock_build.assert_called_once()
         mock_build().firewalls().insert.assert_called_with(
                 body={
-                    'network': 'not a real network',
+                    'network': 'projects/not really a project/'
+                               'global/networks/not a real network',
                     'sourceTags': ['sauce'],
                     'description': 'Cloudify generated FirewallRule',
                     'sourceRanges': ['1'],

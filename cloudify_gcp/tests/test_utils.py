@@ -21,9 +21,9 @@ from mock import Mock, patch, PropertyMock
 
 from cloudify.exceptions import NonRecoverableError
 from cloudify.mocks import MockCloudifyContext
-from cloudify.state import current_ctx
 
 from cloudify_gcp import utils
+from . import TestGCP
 
 
 class NS(object):
@@ -98,13 +98,7 @@ class TestUtils(unittest.TestCase):
 
 
 @patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
-class TestUtilsWithCTX(unittest.TestCase):
-
-    def setUp(self):
-        ctx = self.ctxmock = Mock()
-        ctx.node.properties = {}
-
-        current_ctx.set(ctx)
+class TestUtilsWithCTX(TestGCP):
 
     @patch('cloudify_gcp.utils.assure_resource_id_correct')
     def test_get_final_resource_name(self, mock_assure_correct, *args):
@@ -184,3 +178,18 @@ class TestUtilsWithCTX(unittest.TestCase):
         conf = utils.get_gcp_config()
 
         self.assertEqual('default', conf['network'])
+
+    def test_get_net_and_subnet(self, *args):
+        self.assertEqual(
+                ('projects/not really a project/'
+                 'global/networks/not a real network',
+                 None),
+                utils.get_net_and_subnet(self.ctxmock.instance.relationships)
+                )
+
+    @patch('cloudify_gcp.utils.get_net_and_subnet')
+    def test_get_network(self, mock_nands, *args):
+        self.assertEqual(
+                mock_nands.return_value.__getitem__.return_value,
+                utils.get_network('hi'),
+                )

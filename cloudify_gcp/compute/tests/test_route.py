@@ -35,7 +35,8 @@ class TestGCPRoute(TestGCP):
 
         mock_build().routes().insert.assert_called_once_with(
                 body={
-                    'network': 'not a real network',
+                    'network': 'projects/not really a project/'
+                               'global/networks/not a real network',
                     'tags': 'tags',
                     'name': 'name',
                     'priority': 'priority',
@@ -59,7 +60,8 @@ class TestGCPRoute(TestGCP):
         mock_build().routes().insert.assert_called_once_with(
             body={
                 'nextHopGateway': 'global/gateways/default-internet-gateway',
-                'network': 'not a real network',
+                'network': 'projects/not really a project/'
+                           'global/networks/not a real network',
                 'tags': 'tags',
                 'name': 'name',
                 'priority': 'priority',
@@ -87,7 +89,8 @@ class TestGCPRoute(TestGCP):
 
         mock_build().routes().insert.assert_called_once_with(
                 body={
-                    'network': 'not a real network',
+                    'network': 'projects/not really a project/'
+                               'global/networks/not a real network',
                     'tags': 'tags',
                     'name': 'name',
                     'priority': 'priority',

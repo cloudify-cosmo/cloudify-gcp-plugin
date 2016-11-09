@@ -156,6 +156,15 @@ def async_operation(get=False, relationship=False):
     """
     Decorator for node methods which return an Operation
     Handles the operation if it exists
+
+    :param get: if True, update runtime_properties with the result of
+                self.get() when the Operation is complete
+    :param relationship: if True, this method is called as part of a
+                relationship operation (e.g. establish, unlink), and the
+                operation data should be stored under
+                runtime_properties['_operations'][target_id] to avoid
+                collisions.
+    (relationship = True implies get = False)
     """
     def decorator(func):
         def wrapper(self, *args, **kwargs):
@@ -455,10 +464,14 @@ def get_net_and_subnet(ctx):
                 'Unsupported target type for '
                 "'cloudify.gcp.relationships.instance_contained_in_network")
     else:
-        network = get_gcp_config()['network']
+        config = get_gcp_config()
+        network = config['network']
 
-    if network == 'default':
-        network = 'global/networks/default'
+        if network == 'default':
+            network = 'global/networks/default'
+        elif '/' not in network:
+            network = 'projects/{0}/global/networks/{1}'.format(
+                    config['project'], network)
 
     return network, subnetwork
 
