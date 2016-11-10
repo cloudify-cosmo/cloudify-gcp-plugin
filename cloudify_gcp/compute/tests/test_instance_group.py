@@ -58,6 +58,11 @@ class TestInstanceGroup(TestGCP):
                 )
 
     def test_add_to_instance_group(self, mock_build, *args):
+        mock_build().globalOperations().get().execute.side_effect = [
+                {'status': 'PENDING', 'name': 'Dave'},
+                {'status': 'DONE', 'name': 'Dave'},
+                ]
+
         instance_group.add_to_instance_group('group name', 'instance url')
 
         mock_build().instanceGroups().addInstances.assert_called_once_with(
@@ -70,6 +75,11 @@ class TestInstanceGroup(TestGCP):
                 )
 
     def test_remove_from_instance_group(self, mock_build, *args):
+        mock_build().globalOperations().get().execute.side_effect = [
+                {'status': 'PENDING', 'name': 'Dave'},
+                {'status': 'DONE', 'name': 'Dave'},
+                ]
+
         instance_group.remove_from_instance_group(
                 'group name', 'instance url')
 
