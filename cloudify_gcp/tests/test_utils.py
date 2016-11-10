@@ -20,7 +20,6 @@ from functools import partial
 from mock import Mock, patch, PropertyMock
 
 from cloudify.mocks import MockCloudifyContext
-from cloudify.manager import DirtyTrackingDict
 from cloudify.exceptions import NonRecoverableError
 
 from cloudify_gcp import utils
@@ -222,35 +221,3 @@ class TestUtilsWithCTX(TestGCP):
         self.assertNotIn(
                 '_operation',
                 self.ctxmock.instance.runtime_properties)
-
-    @patch('cloudify_gcp.utils.response_to_operation')
-    def test_async_operation_failing_rel_operation(self, mock_r2o, *args):
-        self.ctxmock.source.instance.runtime_properties = DirtyTrackingDict({
-                '_operations': {
-                    'first': 'rhinoplasty'
-                    }
-                })
-        self.ctxmock.target.instance.id = 'first'
-        mock_r2o.return_value.has_finished.side_effect = utils.GCPError('nooo')
-        mock_r2o.return_value.last_response = {
-                'status': 'DONE',
-                'error': 'YEP! IT FAILED.',
-                'name': 'first',
-            }
-
-        class FakeNodeType(object):
-            @utils.async_operation(relationship=True)
-            def star_jump(self):
-                return {
-                        'a': 'response',
-                        }
-
-        fake_obj = FakeNodeType()
-
-        with self.assertRaises(utils.GCPError) as e:
-            fake_obj.star_jump()
-
-        self.assertIs(
-                e.exception,
-                mock_r2o.return_value.has_finished.side_effect)
-        self.assertNotIn('_operations', 'first')
