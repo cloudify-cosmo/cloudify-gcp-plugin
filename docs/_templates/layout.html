@@ -1,0 +1,22 @@
+{% extends "!layout.html" %}
+
+{% block doctype %}
+    <!doctype html>
+{% endblock %}
+
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="http://getcloudify.org/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="http://getcloudify.org/css/overwrite.css">
+    <link rel="stylesheet" type="text/css" href="_static/cloudify-sphinx.css">
+{% endblock %}
+
+{% block header %}
+    <header>
+        <nav>
+            <a href="//getcloudify.org" class="navbar-brand">
+                <img src="_static/logo.png" alt="Cloudify Logo">
+                <span class="gs-font">Cloudify</span>
+            </a>
+        </nav>
+    </header>
+{% endblock %}
