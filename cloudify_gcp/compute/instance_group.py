@@ -78,7 +78,7 @@ class InstanceGroup(GoogleCloudPlatform):
             zone=self.zone,
             instanceGroup=self.name).execute()
 
-    @utils.async_operation(relationship=True)
+    @utils.sync_operation
     @check_response
     def add_instance(self, instance_name):
         return self.discovery.instanceGroups().addInstances(
@@ -87,7 +87,7 @@ class InstanceGroup(GoogleCloudPlatform):
             instanceGroup=self.name,
             body=instance_to_dict(instance_name)).execute()
 
-    @utils.async_operation(relationship=True)
+    @utils.sync_operation
     @check_response
     def remove_instance(self, instance_name):
         return self.discovery.instanceGroups().removeInstances(
