@@ -44,3 +44,10 @@ class GCPRouteTest(GCPTest, TestCase):
             self.assertEqual(
                     'compute#route',
                     route['runtime_properties']['kind'])
+
+        self.assertEqual(
+                routes['instance_hop']['nextHopInstance'],
+                getter('vm-1')['selfLink'])
+        self.assertEqual(
+                routes['ip_hop']['nextHopIp'],
+                getter('vm-1')['networkInterfaces'][0]['networkIP'])

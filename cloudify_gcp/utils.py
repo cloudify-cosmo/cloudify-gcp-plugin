@@ -410,7 +410,8 @@ class ZoneOperation(Operation):
 def get_relationships(
         relationships,
         filter_relationships=None,
-        filter_nodes=None):
+        filter_nodes=None,
+        filter_resource_types=None):
     """
     Get all relationships of a particular node or the current context.
 
@@ -429,6 +430,10 @@ def get_relationships(
         if filter_relationships and rel.type not in filter_relationships:
             rel = None
         if filter_nodes and rel.target.node.type not in filter_nodes:
+            rel = None
+        if (filter_resource_types and
+                get_resource_type(rel.target.instance.runtime_properties)
+                not in filter_resource_types):
             rel = None
         if rel:
             results.append(rel)
@@ -478,3 +483,8 @@ def get_net_and_subnet(ctx):
 
 def get_network(ctx):
     return get_net_and_subnet(ctx)[0]
+
+
+def get_resource_type(runtime_properties):
+    self_link = runtime_properties.get('selfLink')
+    return self_link.split('/')[3]
