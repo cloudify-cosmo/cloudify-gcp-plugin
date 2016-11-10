@@ -59,7 +59,7 @@ class Route(GoogleCloudPlatform):
         else:
             rels = utils.get_relationships(
                     ctx,
-                    filter_nodes='cloudify.gcp.nodes.Instance',
+                    filter_resource_types='instances',
                     )
             if rels:
                 inst = rels[0]
