@@ -73,9 +73,8 @@ class TestGCPRoute(TestGCP):
 
     def test_create_with_instance(self, mock_build, *args):
         rel_mock = Mock()
-        rel_mock.target.node.type = 'cloudify.gcp.nodes.Instance'
         rel_mock.target.instance.runtime_properties = {
-                'selfLink': 'I am pointing to myself',
+                'selfLink': 'I am pointing to ///instances/instanceName',
                 }
         self.ctxmock.instance.relationships.append(rel_mock)
 
@@ -95,7 +94,8 @@ class TestGCPRoute(TestGCP):
                     'name': 'name',
                     'priority': 'priority',
                     'destRange': 'dest_range',
-                    'nextHopInstance': 'I am pointing to myself',
+                    'nextHopInstance':
+                        'I am pointing to ///instances/instanceName',
                     'description': 'Cloudify generated route'
                     },
                 project='not really a project',

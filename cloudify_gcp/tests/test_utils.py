@@ -19,8 +19,9 @@ from functools import partial
 
 from mock import Mock, patch, PropertyMock
 
-from cloudify.exceptions import NonRecoverableError
 from cloudify.mocks import MockCloudifyContext
+from cloudify.manager import DirtyTrackingDict
+from cloudify.exceptions import NonRecoverableError
 
 from cloudify_gcp import utils
 from . import TestGCP
@@ -193,3 +194,63 @@ class TestUtilsWithCTX(TestGCP):
                 mock_nands.return_value.__getitem__.return_value,
                 utils.get_network('hi'),
                 )
+
+    @patch('cloudify_gcp.utils.response_to_operation')
+    def test_async_operation_failing_operation(self, mock_r2o, *args):
+        self.ctxmock.instance.runtime_properties['_operation'] = 'rhinoplasty'
+        mock_r2o.return_value.has_finished.side_effect = utils.GCPError('nooo')
+        mock_r2o.return_value.last_response = {
+                'status': 'DONE',
+                'error': 'YEP! IT FAILED.',
+            }
+
+        class FakeNodeType(object):
+            @utils.async_operation()
+            def star_jump(self):
+                return {
+                        'a': 'response',
+                        }
+
+        fake_obj = FakeNodeType()
+
+        with self.assertRaises(utils.GCPError) as e:
+            fake_obj.star_jump()
+
+        self.assertIs(
+                e.exception,
+                mock_r2o.return_value.has_finished.side_effect)
+        self.assertNotIn(
+                '_operation',
+                self.ctxmock.instance.runtime_properties)
+
+    @patch('cloudify_gcp.utils.response_to_operation')
+    def test_async_operation_failing_rel_operation(self, mock_r2o, *args):
+        self.ctxmock.source.instance.runtime_properties = DirtyTrackingDict({
+                '_operations': {
+                    'first': 'rhinoplasty'
+                    }
+                })
+        self.ctxmock.target.instance.id = 'first'
+        mock_r2o.return_value.has_finished.side_effect = utils.GCPError('nooo')
+        mock_r2o.return_value.last_response = {
+                'status': 'DONE',
+                'error': 'YEP! IT FAILED.',
+                'name': 'first',
+            }
+
+        class FakeNodeType(object):
+            @utils.async_operation(relationship=True)
+            def star_jump(self):
+                return {
+                        'a': 'response',
+                        }
+
+        fake_obj = FakeNodeType()
+
+        with self.assertRaises(utils.GCPError) as e:
+            fake_obj.star_jump()
+
+        self.assertIs(
+                e.exception,
+                mock_r2o.return_value.has_finished.side_effect)
+        self.assertNotIn('_operations', 'first')

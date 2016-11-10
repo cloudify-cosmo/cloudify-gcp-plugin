@@ -152,64 +152,49 @@ def sync_operation(func):
     return wraps(func)(_decorator)
 
 
-def async_operation(get=False, relationship=False):
+def async_operation(get=False):
     """
     Decorator for node methods which return an Operation
     Handles the operation if it exists
 
     :param get: if True, update runtime_properties with the result of
                 self.get() when the Operation is complete
-    :param relationship: if True, this method is called as part of a
-                relationship operation (e.g. establish, unlink), and the
-                operation data should be stored under
-                runtime_properties['_operations'][target_id] to avoid
-                collisions.
-    (relationship = True implies get = False)
     """
     def decorator(func):
         def wrapper(self, *args, **kwargs):
-            if relationship:
-                props = ctx.source.instance.runtime_properties
-                response = props.setdefault('_operations', {}).get(
-                        ctx.target.instance.id)
-            else:
-                props = ctx.instance.runtime_properties
-                response = props.get('_operation', None)
-
-            props.dirty = True
+            props = ctx.instance.runtime_properties
+            response = props.get('_operation', None)
 
             if response:
                 operation = response_to_operation(
                         response,
                         get_gcp_config(),
                         ctx.logger)
-                response = operation.get()
 
-                if response['status'] in ('PENDING', 'RUNNING'):
+                try:
+                    has_finished = operation.has_finished()
+                except GCPError:
+                    # If the operation has an error, clear it from
+                    # runtime_properties so the next try will start from
+                    # scratch.
+                    props.pop('_operation')
+                    raise
+
+                if has_finished:
+                    for key in '_operation', 'name', 'selfLink':
+                        props.pop(key, None)
+                    if get:
+                        props.update(self.get())
+                else:
                     ctx.operation.retry(
                         'Operation not completed yet: {}'.format(
-                            response['status']),
+                            operation.last_response['status']),
                         constants.RETRY_DEFAULT_DELAY)
-                elif response['status'] == 'DONE':
-                    if relationship:
-                        props['_operations'].pop(ctx.target.instance.id)
-                    else:
-                        for key in '_operation', 'name', 'selfLink':
-                            props.pop(key, None)
-                        if get:
-                            props.update(self.get())
-                else:
-                    raise NonRecoverableError(
-                            'Unknown status response from operation')
 
             else:
                 # Actually run the method
                 response = func(self, *args, **kwargs)
-                if relationship:
-                    props.setdefault('_operations', {})[
-                            ctx.target.instance.id] = response
-                else:
-                    props['_operation'] = response
+                props['_operation'] = response
 
                 ctx.operation.retry('Operation started')
 
@@ -410,7 +395,8 @@ class ZoneOperation(Operation):
 def get_relationships(
         relationships,
         filter_relationships=None,
-        filter_nodes=None):
+        filter_nodes=None,
+        filter_resource_types=None):
     """
     Get all relationships of a particular node or the current context.
 
@@ -429,6 +415,10 @@ def get_relationships(
         if filter_relationships and rel.type not in filter_relationships:
             rel = None
         if filter_nodes and rel.target.node.type not in filter_nodes:
+            rel = None
+        if (filter_resource_types and
+                get_resource_type(rel.target.instance.runtime_properties)
+                not in filter_resource_types):
             rel = None
         if rel:
             results.append(rel)
@@ -478,3 +468,8 @@ def get_net_and_subnet(ctx):
 
 def get_network(ctx):
     return get_net_and_subnet(ctx)[0]
+
+
+def get_resource_type(runtime_properties):
+    self_link = runtime_properties.get('selfLink')
+    return self_link.split('/')[3]
