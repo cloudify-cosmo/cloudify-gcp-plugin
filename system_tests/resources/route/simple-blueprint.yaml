@@ -79,18 +79,20 @@ node_templates:
     properties:
       tags: ['ctx-test-route-tag']
       dest_range: 7.6.5.0/24
-      next_hop: { get_attribute: [vm-1, networkInterfaces.networkIP] }
+      next_hop: { get_attribute: [vm-1, networkInterfaces, 0, networkIP] }
       gcp_config: *gcp_config
     relationships:
       - type: cloudify.relationships.depends_on
-        target: vm-1
+        target: route_instance_hop
+        # Because if it depends_on the Instance route.create() will be clever
+        # and turn it into a nextHopInstance
 
   route_not_connected:
     type: cloudify.gcp.nodes.Route
     properties:
       tags: ['different-tag']
       dest_range: 6.5.4.0/24
-      next_hop: { get_attribute: [vm-1, networkInterfaces.networkIP] }
+      next_hop: { get_attribute: [vm-1, networkInterfaces, 0, networkIP] }
       gcp_config: *gcp_config
     relationships:
       - type: cloudify.relationships.depends_on
