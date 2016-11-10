@@ -74,6 +74,7 @@ class TestGCPRoute(TestGCP):
     def test_create_with_instance(self, mock_build, *args):
         rel_mock = Mock()
         rel_mock.target.instance.runtime_properties = {
+                'kind': 'an#instance',
                 'selfLink': 'I am pointing to ///instances/instanceName',
                 }
         self.ctxmock.instance.relationships.append(rel_mock)
