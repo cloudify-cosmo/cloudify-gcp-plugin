@@ -421,21 +421,27 @@ def get_relationships(
         # Shortcut to support supplying ctx directly
         relationships = relationships.instance.relationships
     # And coerce the other inputs to lists if they are strings:
+    if isinstance(filter_resource_types, basestring):
+        filter_resource_types = [filter_resource_types]
     if isinstance(filter_relationships, basestring):
         filter_relationships = [filter_relationships]
     if isinstance(filter_nodes, basestring):
         filter_nodes = [filter_nodes]
     results = []
     for rel in relationships:
-        if filter_relationships and rel.type not in filter_relationships:
-            rel = None
-        if filter_nodes and rel.target.node.type not in filter_nodes:
-            rel = None
-        if (filter_resource_types and
-                get_resource_type(rel.target.instance.runtime_properties)
-                not in filter_resource_types):
-            rel = None
-        if rel:
+        res_type = get_resource_type(rel.target)
+        if not any([
+                (not res_type),
+
+                (filter_resource_types and
+                 res_type not in filter_resource_types),
+
+                (filter_relationships and
+                 rel.type not in filter_relationships),
+
+                (filter_nodes and
+                 rel.target.node.type not in filter_nodes),
+                ]):
             results.append(rel)
     return results
 
@@ -485,6 +491,5 @@ def get_network(ctx):
     return get_net_and_subnet(ctx)[0]
 
 
-def get_resource_type(runtime_properties):
-    kind = runtime_properties.get('kind')
-    return kind.split('#')[1]
+def get_resource_type(ctx):
+    return ctx.instance.runtime_properties.get('kind', False)

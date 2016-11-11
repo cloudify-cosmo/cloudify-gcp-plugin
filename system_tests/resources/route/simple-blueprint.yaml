@@ -24,6 +24,9 @@ dsl_definitions:
 
 node_templates:
 
+  dummy_node:
+    type: cloudify.nodes.Root
+
   ip:
     type: cloudify.gcp.nodes.ExternalIP
     properties:
@@ -97,6 +100,8 @@ node_templates:
     relationships:
       - type: cloudify.relationships.depends_on
         target: vm-1
+      - type: cloudify.relationships.connected_to
+        target: dummy_node
 
 
 outputs:
