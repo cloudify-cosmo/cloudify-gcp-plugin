@@ -121,3 +121,6 @@ class GCPTest(object):
 
         if match:
             self.assertRegexpMatches(ip, match)
+
+    def get_instance(self, node):
+        return self.test_env.storage.get_node_instances(node)[0]

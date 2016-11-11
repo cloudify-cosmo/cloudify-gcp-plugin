@@ -203,6 +203,11 @@ node_types:
           Size of the Volume in GB.
         type: integer
         default: 10
+      boot:
+        description: >
+          Will this disk be the boot disk for the Instance it is connected to?
+        type: boolean
+        default: no
       additional_settings:
         description: >
           Additional setting for volume
@@ -218,6 +223,8 @@ node_types:
               default: { get_property: [SELF, name] }
             size:
               default: { get_property: [SELF, size] }
+            boot:
+              default: { get_property: [SELF, boot] }
             additional_settings:
               default: { get_property: [SELF, additional_settings]}
         delete:
@@ -1099,13 +1106,6 @@ relationships:
           inputs:
             instance_name:
               default: { get_attribute: [SOURCE, name] }
-
-  cloudify.gcp.relationships.file_system_contained_in_compute:
-    derived_from: cloudify.relationships.contained_in
-    target_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure:
-          implementation: gcp_plugin.cloudify_gcp.compute.disk.add_boot_disk
 
   cloudify.gcp.relationships.instance_connected_to_disk:
     derived_from: cloudify.relationships.connected_to

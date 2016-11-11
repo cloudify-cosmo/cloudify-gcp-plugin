@@ -27,8 +27,14 @@ from ...tests import TestGCP
 class TestGCPDisk(TestGCP):
 
     def test_create(self, mock_build, *args):
+        mock_build().globalOperations().get().execute.side_effect = [
+                {'status': 'PENDING', 'name': 'Dave'},
+                {'status': 'DONE', 'name': 'Dave'},
+                ]
+
         disk.create(
                 'image', 'name', 'size',
+                boot=False,
                 additional_settings={},
                 )
 
