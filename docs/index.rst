@@ -16,6 +16,7 @@ Contents:
     :maxdepth: 2
 
     node_types
+    types
     manager
 
 Plugin Requirements
