@@ -51,10 +51,10 @@ class GCPEphemeralIPTest(GCPTest, TestCase):
     def assertions(self):
         vm = self.test_env.storage.get_node_instances('vm')[0]
 
-        self.assertEqual(
-                vm['runtime_properties']['networkInterfaces'][0][
-                    'accessConfigs'][0]['natIP'],
-                vm['runtime_properties']['ip'])
+        ephemeral_ip = vm['runtime_properties']['networkInterfaces'][0][
+                'accessConfigs'][0]['natIP']
+
+        self.assertIP(ephemeral_ip)
 
 
 class GCPExternalIPPropertyTest(GCPTest, TestCase):
@@ -75,10 +75,6 @@ class GCPExternalIPPropertyTest(GCPTest, TestCase):
                 'accessConfigs'][0]['natIP']
 
         self.assertIP(ephemeral_ip)
-        self.assertEqual(
-                ephemeral_ip,
-                vm['runtime_properties']['ip'],
-                "ephemeral IP should be copied to runtime_properties['ip']")
 
 
 class GCPInstanceScriptTest(GCPTest, TestCase):
