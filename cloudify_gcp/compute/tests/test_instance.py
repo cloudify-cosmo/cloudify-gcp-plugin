@@ -217,6 +217,93 @@ class TestGCPInstance(TestGCP):
                 zone='a very fake zone',
                 )
 
+    @patch('cloudify_gcp.utils.get_network_node')
+    @patch('cloudify_gcp.utils.get_net_and_subnet')
+    def test_create_with_subnet(self, mock_g_ns, mock_g_nn, mock_build, *args):
+        mock_g_ns.return_value = 'net', 'subnet'
+
+        instance.create(
+                'type',
+                'image',
+                'name',
+                external_ip=True,
+                startup_script=None,
+                scopes='scopes',
+                tags=['tags'],
+                )
+
+        mock_build().instances().insert.call_args[1][
+                'body']['tags']['items'].sort()
+        mock_build().instances().insert.assert_called_with(
+                body={
+                    'tags': {'items': ['name', 'tags']},
+                    'machineType': 'zones/a very fake zone/machineTypes/type',
+                    'name': 'name',
+                    'canIpForward': False,
+                    'disks': [{
+                        'initializeParams': {'sourceImage': 'image'},
+                        'boot': True,
+                        'autoDelete': True}],
+                    'networkInterfaces': [{
+                        'accessConfigs': [{
+                            'name': 'External NAT',
+                            'type': 'ONE_TO_ONE_NAT'}],
+                        'subnetwork': 'subnet',
+                        'network': 'net'}],
+                    'serviceAccounts': [{
+                        'scopes': 'scopes',
+                        'email': 'default'}],
+                    'metadata': {'items': [
+                        {'key': 'bucket', 'value': 'not really a project'},
+                        {'key': 'sshKeys', 'value': ''}]},
+                    'description': 'Cloudify generated instance'},
+                project='not really a project',
+                zone='a very fake zone',
+                )
+
+    def test_create_with_script(self, mock_build, *args):
+        instance.create(
+                'instance_type',
+                'image_id',
+                'name',
+                zone='zone',
+                external_ip=False,
+                startup_script={
+                    'type': 'string',
+                    'script': 'Cyrillic',
+                    },
+                scopes='scopes',
+                tags=['tags'],
+                )
+
+        mock_build().instances().insert.call_args[1][
+                'body']['tags']['items'].sort()
+        mock_build().instances().insert.assert_called_with(
+                body={
+                    'metadata': {
+                        'items': [
+                            {'key': 'bucket', 'value': 'not really a project'},
+                            {'key': 'sshKeys', 'value': ''},
+                            {'key': 'startup-script', 'value': 'Cyrillic'},
+                            ]},
+                        'tags': {'items': ['name', 'tags']},
+                        'disks': [{
+                            'boot': True,
+                            'initializeParams': {'sourceImage': 'image_id'},
+                            'autoDelete': True}],
+                        'machineType': 'zones/zone/machineTypes/instance_type',
+                        'serviceAccounts': [{
+                            'email': 'default', 'scopes': 'scopes'}],
+                        'name': 'name',
+                        'canIpForward': False,
+                        'description': 'Cloudify generated instance',
+                        'networkInterfaces': [{
+                            'network': 'projects/not really a project/global'
+                                       '/networks/not a real network'}]
+                        },
+                project='not really a project', zone='zone'
+                )
+
     @patch('cloudify_gcp.utils.get_item_from_gcp_response',
            return_value={'networkInterfaces': [{'networkIP': 'a'}]})
     def test_start(self, mock_getitem, mock_build, *args):
@@ -236,7 +323,8 @@ class TestGCPInstance(TestGCP):
         instance.start()
 
         self.assertEqual(
-                self.ctxmock.instance.runtime_properties['ip'],
+                self.ctxmock.instance.runtime_properties[
+                    'networkInterfaces'][0]['accessConfigs'][0]['natIP'],
                 '🕷')
 
     def test_delete(self, mock_build, *args):
@@ -271,7 +359,9 @@ class TestGCPInstance(TestGCP):
                 {'another': 'yo', 'zone': 'hey'},
                 self.ctxmock.instance.runtime_properties)
 
-    def test_add_external_ip(self, mock_build, *args):
+    @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
+                'networkInterfaces': [{'accessConfigs': [{'natIP': '🕷'}]}]})
+    def test_add_external_ip(self, mock_getitem, mock_build, *args):
         self.ctxmock.target.node.type = 'cloudify.gcp.nodes.Address'
         self.ctxmock.target.node.properties = {
                 'use_external_resource': False,
@@ -294,7 +384,9 @@ class TestGCPInstance(TestGCP):
                 zone='a very fake zone',
                 )
 
-    def test_add_external_external_ip(self, mock_build, *args):
+    @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
+                'networkInterfaces': [{'accessConfigs': [{'natIP': '🕷'}]}]})
+    def test_add_external_external_ip(self, mock_getitem, mock_build, *args):
         self.ctxmock.target.node.properties = {
                 'use_external_resource': True,
                 }

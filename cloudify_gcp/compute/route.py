@@ -59,7 +59,7 @@ class Route(GoogleCloudPlatform):
         else:
             rels = utils.get_relationships(
                     ctx,
-                    filter_resource_types='instance',
+                    filter_resource_types='compute#instance',
                     )
             if rels:
                 inst = rels[0]

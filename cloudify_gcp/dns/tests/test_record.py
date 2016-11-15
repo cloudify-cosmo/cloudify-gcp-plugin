@@ -31,6 +31,7 @@ class TestGCPRecord(TestGCP):
         rel = Mock()
         rel.type = 'cloudify.gcp.relationships.dns_record_contained_in_zone'
         rel.target.instance.runtime_properties = {
+                'kind': 'dns#managedZone',
                 'name': 'target instance',
                 'dnsName': 'example.com.',
                 }
@@ -75,6 +76,7 @@ class TestGCPRecord(TestGCP):
         rel.type = ('cloudify.gcp.relationships.'
                     'dns_record_connected_to_instance')
         rel.target.instance.runtime_properties = {
+                'kind': 'compute#instance',
                 'networkInterfaces': [{'accessConfigs': [{
                     'natIP': 'intellectual property',
                     }]}],

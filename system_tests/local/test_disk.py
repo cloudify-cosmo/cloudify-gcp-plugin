@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2016 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ from cosmo_tester.framework.testenv import TestCase
 from . import GCPTest
 
 
-class GCPStaticIPTest(GCPTest, TestCase):
-    blueprint_name = 'static_ip/simple-blueprint.yaml'
+class GCPDiskTest(GCPTest, TestCase):
+    blueprint_name = 'disk/attach-disk.yaml'
 
     inputs = (
             'project',
@@ -30,12 +30,7 @@ class GCPStaticIPTest(GCPTest, TestCase):
             )
 
     def assertions(self):
-        vm = self.test_env.storage.get_node_instances('vm')[0]
-        ip = self.test_env.storage.get_node_instances('static_ip')[0]
-
-        external_ip = vm['runtime_properties']['networkInterfaces'][0][
-                'accessConfigs'][0]['natIP']
-
         self.assertEqual(
-                ip['runtime_properties']['address'],
-                external_ip)
+            self.get_instance('vm')[
+                'runtime_properties']['disks'][0]['source'],
+            self.get_instance('boot_disk')['runtime_properties']['selfLink'])

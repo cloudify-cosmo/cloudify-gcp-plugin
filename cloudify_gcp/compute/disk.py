@@ -26,12 +26,14 @@ class Disk(GoogleCloudPlatform):
                  config,
                  logger,
                  name,
+                 boot=False,
                  additional_settings=None,
                  image=None,
                  size_gb=None):
         super(Disk, self).__init__(config, logger, name, additional_settings)
         self.image = image
         self.sizeGb = size_gb
+        self.boot = boot
 
     def to_dict(self):
         self.body.update({
@@ -48,7 +50,7 @@ class Disk(GoogleCloudPlatform):
         disk_info = self.get()
         body = {
             'deviceName': mount_name,
-            'boot': False,
+            'boot': self.boot,
             'mode': 'READ_WRITE',
             'autoDelete': False,
             'source': disk_info['selfLink']
@@ -68,6 +70,7 @@ class Disk(GoogleCloudPlatform):
             project=self.project,
             zone=self.zone).execute()
 
+    @utils.sync_operation
     @check_response
     def create(self):
         return self.discovery.disks().insert(
@@ -75,6 +78,7 @@ class Disk(GoogleCloudPlatform):
             zone=self.zone,
             body=self.to_dict()).execute()
 
+    @utils.async_operation()
     @check_response
     def delete(self):
         return self.discovery.disks().delete(
@@ -85,7 +89,7 @@ class Disk(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(image, name, size, additional_settings, **kwargs):
+def create(image, name, size, boot, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     disk = Disk(gcp_config,
@@ -93,9 +97,10 @@ def create(image, name, size, additional_settings, **kwargs):
                 image=image,
                 name=name,
                 size_gb=size,
+                boot=boot,
                 additional_settings=additional_settings)
     utils.create(disk)
-    ctx.instance.runtime_properties['name'] = name
+    ctx.instance.runtime_properties.update(disk.get())
     ctx.instance.runtime_properties[constants.DISK] = \
         disk.disk_to_insert_instance_dict(name)
 
@@ -106,12 +111,11 @@ def create(image, name, size, additional_settings, **kwargs):
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name')
-    disk = Disk(gcp_config,
-                ctx.logger,
-                name=name)
-    utils.delete_if_not_external(disk)
-    ctx.instance.runtime_properties.pop(constants.DISK, None)
-    ctx.instance.runtime_properties.pop('name')
+    if name:
+        disk = Disk(gcp_config,
+                    ctx.logger,
+                    name=name)
+        utils.delete_if_not_external(disk)
 
 
 @operation

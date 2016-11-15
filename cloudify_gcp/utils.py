@@ -410,7 +410,6 @@ class ZoneOperation(Operation):
 def get_relationships(
         relationships,
         filter_relationships=None,
-        filter_nodes=None,
         filter_resource_types=None):
     """
     Get all relationships of a particular node or the current context.
@@ -421,33 +420,37 @@ def get_relationships(
         # Shortcut to support supplying ctx directly
         relationships = relationships.instance.relationships
     # And coerce the other inputs to lists if they are strings:
+    if isinstance(filter_resource_types, basestring):
+        filter_resource_types = [filter_resource_types]
     if isinstance(filter_relationships, basestring):
         filter_relationships = [filter_relationships]
-    if isinstance(filter_nodes, basestring):
-        filter_nodes = [filter_nodes]
     results = []
     for rel in relationships:
-        if filter_relationships and rel.type not in filter_relationships:
-            rel = None
-        if filter_nodes and rel.target.node.type not in filter_nodes:
-            rel = None
-        if (filter_resource_types and
-                get_resource_type(rel.target.instance.runtime_properties)
-                not in filter_resource_types):
-            rel = None
-        if rel:
+        res_type = get_resource_type(rel.target)
+        if not any([
+                (not res_type),
+
+                (filter_resource_types and
+                 res_type not in filter_resource_types),
+
+                (filter_relationships and
+                 rel.type not in filter_relationships),
+                ]):
             results.append(rel)
     return results
 
 
 def get_network_node(ctx):
-    network_list = get_relationships(
-            ctx,
-            filter_relationships='cloudify.gcp.relationships.'
-                                 'contained_in_network',
-            )
-    if len(network_list) > 0:
-        return network_list[0].target
+    for kind in 'compute#subnetwork', 'compute#network':
+        network_list = get_relationships(
+                ctx,
+                filter_resource_types=[kind],
+                )
+        if len(network_list) > 1:
+            raise NonRecoverableError(
+                    'Only one {} is supported at a time'.format(kind))
+        if len(network_list) > 0:
+            return network_list[0].target
 
 
 def get_net_and_subnet(ctx):
@@ -459,9 +462,9 @@ def get_net_and_subnet(ctx):
 
     subnetwork = None
     if net_node:
-        if net_node.node.type == 'cloudify.gcp.nodes.Network':
+        if get_resource_type(net_node) == 'compute#network':
             network = net_node.instance.runtime_properties['selfLink']
-        elif net_node.node.type == 'cloudify.gcp.nodes.SubNetwork':
+        elif get_resource_type(net_node) == 'compute#subnetwork':
             network = net_node.instance.runtime_properties['network']
             subnetwork = net_node.instance.runtime_properties['selfLink']
         else:
@@ -485,6 +488,5 @@ def get_network(ctx):
     return get_net_and_subnet(ctx)[0]
 
 
-def get_resource_type(runtime_properties):
-    kind = runtime_properties.get('kind')
-    return kind.split('#')[1]
+def get_resource_type(ctx):
+    return ctx.instance.runtime_properties.get('kind', False)

@@ -71,7 +71,7 @@ class GCPTest(object):
     def test_blueprint(self):
         blueprint = os.path.join(self.blueprints_path, self.blueprint_name)
 
-        self.logger.info('Creating a new Network')
+        print('\n{}:test_blueprint starting....\n'.format(type(self).__name__))
 
         self.pre_install_hook()
 
@@ -121,3 +121,6 @@ class GCPTest(object):
 
         if match:
             self.assertRegexpMatches(ip, match)
+
+    def get_instance(self, node):
+        return self.test_env.storage.get_node_instances(node)[0]

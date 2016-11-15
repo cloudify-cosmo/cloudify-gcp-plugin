@@ -38,6 +38,7 @@ class TestGCPSubNetwork(TestGCP):
                 'auto_subnets': False,
                 }
         rel.target.instance.runtime_properties = {
+                'kind': 'compute#network',
                 'selfLink': 'Look at me!',
                 }
         self.ctxmock.instance.relationships.append(rel)
@@ -80,6 +81,7 @@ class TestGCPSubNetwork(TestGCP):
                 'auto_subnets': True,
                 }
         rel.target.instance.runtime_properties = {
+                'kind': 'compute#network',
                 'selfLink': 'Look at me!',
                 }
         self.ctxmock.instance.relationships.append(rel)

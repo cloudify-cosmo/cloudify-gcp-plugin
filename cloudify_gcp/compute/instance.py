@@ -13,7 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import random
 from os.path import basename
 
 from cloudify import ctx
@@ -44,6 +43,7 @@ class Instance(GoogleCloudPlatform):
                  name,
                  additional_settings=None,
                  image=None,
+                 disks=None,
                  machine_type=None,
                  startup_script=None,
                  external_ip=False,
@@ -78,7 +78,7 @@ class Instance(GoogleCloudPlatform):
         self.startup_script = startup_script
         self.tags = tags + [self.name] if tags else [self.name]
         self.externalIP = external_ip
-        self.disks = []
+        self.disks = disks or []
         self.scopes = scopes or self.DEFAULT_SCOPES
         self.ssh_keys = ssh_keys or []
         self.zone = zone
@@ -371,19 +371,30 @@ def create(instance_type,
     else:
         if props.get('zone', False):
             zone = props['zone']
-        elif subnetwork:
-            zone = props['zone'] = random.choice(constants.REGION_ZONES_FULL[
-                basename(utils.get_network_node(ctx)
-                         .instance.runtime_properties['region'])])
         else:
             zone = props['zone'] = utils.get_gcp_resource_name(
                     gcp_config['zone'])
+
+    disks = [
+            disk.target.instance.runtime_properties[constants.DISK]
+            for disk
+            in utils.get_relationships(
+                ctx,
+                filter_resource_types='compute#disk'
+                )
+            ]
+    disks.sort(key=lambda disk: disk['boot'], reverse=True)
+    if len(disks) > 1:
+        if disks[1]['boot']:
+            raise NonRecoverableError(
+                    'Only one disk per Instance may be a boot disk')
 
     instance_name = utils.get_final_resource_name(name)
     instance = Instance(
             gcp_config,
             ctx.logger,
             name=instance_name,
+            disks=disks,
             image=image_id,
             machine_type=instance_type,
             external_ip=external_ip,
@@ -419,19 +430,21 @@ def start(**kwargs):
 def delete(name, zone, **kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
-    name = utils.get_final_resource_name(name)
 
     if not zone:
         zone = props['zone']
+    if not name:
+        name = props['name']
 
-    instance = Instance(gcp_config,
-                        ctx.logger,
-                        name=name,
-                        zone=zone,
-                        )
-    props.pop(constants.DISK, None)
+    if name:
+        instance = Instance(gcp_config,
+                            ctx.logger,
+                            name=name,
+                            zone=zone,
+                            )
+        props.pop(constants.DISK, None)
 
-    utils.delete_if_not_external(instance)
+        utils.delete_if_not_external(instance)
 
 
 @operation
@@ -577,16 +590,13 @@ def set_ip(instance, relationship=False):
                                             instances)
 
     try:
+        props['ip'] = item['networkInterfaces'][0]['networkIP']
         if relationship or ctx.node.properties['external_ip']:
-            props.update(item)
-            props['ip'] = item[
-                    'networkInterfaces'][0]['accessConfigs'][0]['natIP']
-        else:
-            props['ip'] = item['networkInterfaces'][0]['networkIP']
-        # only with one default network interface
+            item['networkInterfaces'][0]['accessConfigs'][0]['natIP']
     except (TypeError, KeyError):
         ctx.operation.retry(
                 'The instance has not yet created network interface', 10)
+    props.update(item)
 
 
 def get_ssh_keys():

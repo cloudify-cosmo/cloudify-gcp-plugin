@@ -44,7 +44,6 @@ class GCP2SubnetTest(GCPTest, TestCase):
             'prefix',
             'project',
             'gcp_auth',
-            'zone',
             'network',
             'subnet_1_name',
             'subnet_2_name',
