@@ -235,6 +235,7 @@ class Instance(GoogleCloudPlatform):
             accessConfig=self.ACCESS_CONFIG,
             networkInterface=self.NETWORK_INTERFACE).execute()
 
+    @utils.sync_operation
     @check_response
     def attach_disk(self, disk):
         """
@@ -249,6 +250,7 @@ class Instance(GoogleCloudPlatform):
             instance=self.name,
             body=disk).execute()
 
+    @utils.sync_operation
     @check_response
     def detach_disk(self, disk_name):
         """

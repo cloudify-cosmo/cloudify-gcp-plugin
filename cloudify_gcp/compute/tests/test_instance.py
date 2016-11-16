@@ -32,6 +32,7 @@ utils_get_ssh_keys_patch = partial(
 
 
 @patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
+@patch('cloudify_gcp.utils.Operation.has_finished', return_value=True)
 @patch('cloudify_gcp.gcp.build')
 class TestGCPInstance(TestGCP):
 
