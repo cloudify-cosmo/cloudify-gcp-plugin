@@ -1047,24 +1047,28 @@ node_types:
     properties:
       type:
         default: AAAA
+        description: overridden default
 
   cloudify.gcp.nodes.DNSMXRecord:
     derived_from: cloudify.gcp.nodes.DNSRecord
     properties:
       type:
         default: MX
+        description: overridden default
 
   cloudify.gcp.nodes.DNSNSRecord:
     derived_from: cloudify.gcp.nodes.DNSRecord
     properties:
       type:
         default: NS
+        description: overridden default
 
   cloudify.gcp.nodes.DNSTXTRecord:
     derived_from: cloudify.gcp.nodes.DNSRecord
     properties:
       type:
         default: TXT
+        description: overridden default
 
 
 relationships:
