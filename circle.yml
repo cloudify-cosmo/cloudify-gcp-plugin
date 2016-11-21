@@ -12,7 +12,7 @@ general:
 # Docs deployment
 deployment:
   docs:
-    branch: master
+    branch: sphinx-docs
     commands:
       - pip install sphinxcontrib-versioning
       - pip install git+https://github.com/cloudify-cosmo/sphinxify.git@initial-work
