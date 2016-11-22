@@ -1,3 +1,82 @@
+Types
+^^^^^
+
+
+.. _common-properties:
+
+Common Properties
+=================
+
+Many cloud resource nodes have common properties:
+
+``gcp_config``
+--------------
+
+Every time you manage a resource with Cloudify,
+it creates one or more connections to the GCP API.
+The configuration for these clients is specified using the ``gcp_config`` property.
+It should be a dictionary with the following values:
+
+  * ``project`` the name of your project on GCP.
+  * ``zone`` the default zone which will be used,
+    unless overridden by a defined zone/subnetwork.
+  * ``auth`` the JSON key file provided by GCP.
+    Can either be the contents of the JSON file, or a file path.
+    This should be in the format provided by the GCP credentials JSON export (https://developers.google.com/identity/protocols/OAuth2ServiceAccount#creatinganaccount)
+  * (optional) ``network`` the default network to place network-scoped nodes in.
+    The default network (``default``) will be used if this is not specified.
+
+Example::
+
+    ...
+    node_types:
+      my_vm:
+        type: cloudify.gcp.nodes.Instance
+        properties:
+          image_id: <GCP image ID>
+          gcp_config:
+            project: a-gcp-project-123456
+            zone: us-east1-b
+            auth: <GCP auth JSON file>
+
+
+``use_external_resource``
+-------------------------
+
+Many Cloudify GCP types have a property named ``use_external_resource``, which defaults to ``false``. When set to ``true``, the plugin will apply different semantics for each of the operations executed on the relevant node's instances:
+
+  If ``use_external_resource`` is ``true``, then the required properties for that type (`name`, possibly ``region`` or ``zone``) will be used to look up an existing entity in the GCP project.
+  If the entity is found, then its data will be used to popluate the cloudify instance's attributes (``runtime_properties``). If it is not found then the blueprint will fail to deploy.
+
+
+This behavior is common to all resource types which support ``use_external_resource``:
+
+* ``create`` If ``use_external_resource`` is true, the GCP plugin will check if the resource is available in your account. If no such resource is available, the operation will fail, if it is available, it will assign the resource details to the instance ``runtime_properties``.
+* ``delete`` If ``use_external_resource`` is true, the GCP plugin will check if the resource is available in your account. If no such resource is available, the operation will fail, if it is available, it will unassign the instance ``runtime_properties``.
+
+
+Runtime Properties
+------------------
+
+See section on `runtime properties <http://cloudify-plugins-common.readthedocs.org/en/3.3/context.html?highlight=runtime#cloudify.context.NodeInstanceContext.runtime_properties>`_.
+
+Most node types will write a snapshot of the |resource|_
+information from GCP when the node creation has finished
+(some, e.g. DNSRecord don't correspond directly to an entity in GCP,
+so this is not universal).
+
+.. |resource| replace:: ``resource``
+.. _resource: https://cloud.google.com/docs/overview/
+
+.. _node_types:
+
+Node Types
+==========
+
+The following are
+`node type <http://docs.getcloudify.org/latest/blueprints/spec-node-types.md>`_
+definitions.
+Nodes describe resources in your cloud infrastructure.
 
 
 Types
@@ -8,7 +87,7 @@ Compute
 
 .. cfy:node:: cloudify.gcp.nodes.Instance
 
-    A GCP Instance (i.e. a VM).
+    A GCP Instance (i.e. a VM). :cfy:node:`cloudify.nodes.Compute`.
 
 
 .. cfy:node:: cloudify.gcp.nodes.Address

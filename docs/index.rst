@@ -10,12 +10,14 @@ See :ref:`node_types` for the supported resource types.
 
 .. _Google Cloud Platform: https://cloud.google.com
 
+
+test :cfy:node:`cloudify.gcp.nodes.Instance`
+
 Contents:
 
 .. toctree::
     :maxdepth: 2
 
-    node_types
     types
     manager
 
