@@ -152,31 +152,18 @@ def sync_operation(func):
     return wraps(func)(_decorator)
 
 
-def async_operation(get=False, relationship=False):
+def async_operation(get=False):
     """
     Decorator for node methods which return an Operation
     Handles the operation if it exists
 
     :param get: if True, update runtime_properties with the result of
                 self.get() when the Operation is complete
-    :param relationship: if True, this method is called as part of a
-                relationship operation (e.g. establish, unlink), and the
-                operation data should be stored under
-                runtime_properties['_operations'][target_id] to avoid
-                collisions.
-    (relationship = True implies get = False)
     """
     def decorator(func):
         def wrapper(self, *args, **kwargs):
-            if relationship:
-                props = ctx.source.instance.runtime_properties
-                response = props.setdefault('_operations', {}).get(
-                        ctx.target.instance.id)
-            else:
-                props = ctx.instance.runtime_properties
-                response = props.get('_operation', None)
-
-            props.dirty = True
+            props = ctx.instance.runtime_properties
+            response = props.get('_operation')
 
             if response:
                 operation = response_to_operation(
@@ -190,20 +177,14 @@ def async_operation(get=False, relationship=False):
                     # If the operation has an error, clear it from
                     # runtime_properties so the next try will start from
                     # scratch.
-                    if relationship:
-                        props['_operations'].pop(ctx.target.instance.id)
-                    else:
-                        props.pop('_operation')
+                    props.pop('_operation')
                     raise
 
                 if has_finished:
-                    if relationship:
-                        props['_operations'].pop(ctx.target.instance.id)
-                    else:
-                        for key in '_operation', 'name', 'selfLink':
-                            props.pop(key, None)
-                        if get:
-                            props.update(self.get())
+                    for key in '_operation', 'name', 'selfLink':
+                        props.pop(key, None)
+                    if get:
+                        props.update(self.get())
                 else:
                     ctx.operation.retry(
                         'Operation not completed yet: {}'.format(
@@ -213,11 +194,7 @@ def async_operation(get=False, relationship=False):
             else:
                 # Actually run the method
                 response = func(self, *args, **kwargs)
-                if relationship:
-                    props.setdefault('_operations', {})[
-                            ctx.target.instance.id] = response
-                else:
-                    props['_operation'] = response
+                props['_operation'] = response
 
                 ctx.operation.retry('Operation started')
 
