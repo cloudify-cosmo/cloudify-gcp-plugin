@@ -395,7 +395,8 @@ class ZoneOperation(Operation):
 def get_relationships(
         relationships,
         filter_relationships=None,
-        filter_nodes=None):
+        filter_nodes=None,
+        filter_resource_types=None):
     """
     Get all relationships of a particular node or the current context.
 
@@ -405,17 +406,32 @@ def get_relationships(
         # Shortcut to support supplying ctx directly
         relationships = relationships.instance.relationships
     # And coerce the other inputs to lists if they are strings:
+    if isinstance(filter_resource_types, basestring):
+        filter_resource_types = [filter_resource_types]
     if isinstance(filter_relationships, basestring):
         filter_relationships = [filter_relationships]
     if isinstance(filter_nodes, basestring):
         filter_nodes = [filter_nodes]
     results = []
     for rel in relationships:
-        if filter_relationships and rel.type not in filter_relationships:
-            rel = None
-        if filter_nodes and rel.target.node.type not in filter_nodes:
-            rel = None
-        if rel:
+        res_type = get_resource_type(rel.target)
+        if not any([
+                # if the instance runtime_properties doesn't have a 'kind' key
+                # filter it out regardless as it's not a GCP node.
+                (not res_type),
+
+                # filter on the GCP type ('kind' attribute)
+                (filter_resource_types and
+                 res_type not in filter_resource_types),
+
+                # Filter by relationship type
+                (filter_relationships and
+                 rel.type not in filter_relationships),
+
+                # filter by node type (doesn't work with derived types)
+                (filter_nodes and
+                 rel.target.node.type not in filter_nodes),
+                ]):
             results.append(rel)
     return results
 
@@ -463,3 +479,7 @@ def get_net_and_subnet(ctx):
 
 def get_network(ctx):
     return get_net_and_subnet(ctx)[0]
+
+
+def get_resource_type(ctx):
+    return ctx.instance.runtime_properties.get('kind')
