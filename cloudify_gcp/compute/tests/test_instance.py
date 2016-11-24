@@ -21,7 +21,6 @@ from mock import patch, Mock
 from cloudify.exceptions import NonRecoverableError
 
 from .. import instance
-from ...constants import REGION_ZONES_FULL
 from ...tests import TestGCP
 
 
@@ -247,34 +246,24 @@ class TestGCPInstance(TestGCP):
     @patch('cloudify_gcp.utils.get_network_node')
     @patch('cloudify_gcp.utils.get_net_and_subnet')
     def test_create_with_subnet(self, mock_g_ns, mock_g_nn, mock_build, *args):
-        del self.ctxmock.instance.runtime_properties['zone']
         mock_g_ns.return_value = 'net', 'subnet'
-        # This is the region the network is in
-        mock_g_nn().instance.runtime_properties.__getitem__(
-                ).__getitem__.return_value = 'europe-west1'
 
-        with patch.dict(
-                'cloudify_gcp.constants.REGION_ZONES_FULL',
-                {'europe-west1': ['nope', 'nope', 'nope']}):
-            instance.create(
-                    'type',
-                    'image',
-                    'name',
-                    external_ip=True,
-                    startup_script=None,
-                    scopes='scopes',
-                    tags=['tags'],
-                    )
-
-            zone = mock_build().instances().insert.call_args[1]['zone']
-            self.assertIn(zone, REGION_ZONES_FULL['europe-west1'])
+        instance.create(
+                'type',
+                'image',
+                'name',
+                external_ip=True,
+                startup_script=None,
+                scopes='scopes',
+                tags=['tags'],
+                )
 
         mock_build().instances().insert.call_args[1][
                 'body']['tags']['items'].sort()
         mock_build().instances().insert.assert_called_with(
                 body={
                     'tags': {'items': ['name', 'tags']},
-                    'machineType': 'zones/nope/machineTypes/type',
+                    'machineType': 'zones/a very fake zone/machineTypes/type',
                     'name': 'name',
                     'canIpForward': False,
                     'disks': [{
@@ -295,7 +284,7 @@ class TestGCPInstance(TestGCP):
                         {'key': 'sshKeys', 'value': ''}]},
                     'description': 'Cloudify generated instance'},
                 project='not really a project',
-                zone=zone,
+                zone='a very fake zone',
                 )
 
     def test_create_with_script(self, mock_build, *args):

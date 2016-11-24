@@ -13,7 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import random
 from os.path import basename
 
 from cloudify import ctx
@@ -370,15 +369,9 @@ def create(instance_type,
     if zone:
         zone = props['zone'] = utils.get_gcp_resource_name(zone)
     else:
-        if props.get('zone', False):
-            zone = props['zone']
-        elif subnetwork:
-            zone = props['zone'] = random.choice(constants.REGION_ZONES_FULL[
-                basename(utils.get_network_node(ctx)
-                         .instance.runtime_properties['region'])])
-        else:
-            zone = props['zone'] = utils.get_gcp_resource_name(
-                    gcp_config['zone'])
+        zone = props.setdefault(
+                'zone',
+                utils.get_gcp_resource_name(gcp_config['zone']))
 
     disks = [
             disk.target.instance.runtime_properties[constants.DISK]

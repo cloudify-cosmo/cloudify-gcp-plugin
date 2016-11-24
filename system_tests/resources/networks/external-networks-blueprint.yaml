@@ -16,7 +16,6 @@ inputs:
 
   project:
   gcp_auth:
-  zone:
 
   network:
   subnet_1_name:
@@ -28,7 +27,7 @@ dsl_definitions:
     auth: {get_input: gcp_auth}
     project: {get_input: project}
     network: {get_input: network}
-    zone: {get_input: zone}
+    zone: us-central1-b
 
 
 node_templates:
@@ -67,6 +66,7 @@ node_templates:
     properties:
       name: {concat: [get_input: prefix, -, instance-1]}
       image_id: {get_input: image}
+      zone: us-east1-b
       install_agent: false
       gcp_config: *gcp_config
     relationships:
@@ -78,6 +78,7 @@ node_templates:
     properties:
       name: {concat: [get_input: prefix, -, instance-2]}
       image_id: {get_input: image}
+      zone: us-east1-c
       install_agent: false
       gcp_config: *gcp_config
     relationships:
