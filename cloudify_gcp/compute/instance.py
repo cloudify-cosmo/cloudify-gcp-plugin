@@ -592,16 +592,13 @@ def set_ip(instance, relationship=False):
                                             instances)
 
     try:
+        props['ip'] = item['networkInterfaces'][0]['networkIP']
         if relationship or ctx.node.properties['external_ip']:
-            props.update(item)
-            props['ip'] = item[
-                    'networkInterfaces'][0]['accessConfigs'][0]['natIP']
-        else:
-            props['ip'] = item['networkInterfaces'][0]['networkIP']
-        # only with one default network interface
+            item['networkInterfaces'][0]['accessConfigs'][0]['natIP']
     except (TypeError, KeyError):
         ctx.operation.retry(
                 'The instance has not yet created network interface', 10)
+    props.update(item)
 
 
 def get_ssh_keys():
