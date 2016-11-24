@@ -16,11 +16,12 @@
 
 from functools import partial
 
-from mock import patch
+from mock import patch, Mock
 
 from cloudify.exceptions import NonRecoverableError
 
 from .. import instance
+from ...constants import REGION_ZONES_FULL
 from ...tests import TestGCP
 
 
@@ -172,6 +173,32 @@ class TestGCPInstance(TestGCP):
                 zone='zone'
                 )
 
+    def test_create_2_boot_disks_raises(self, *args):
+        self.ctxmock.instance.relationships = []
+        for i in 1, 2:
+            rel = Mock()
+            rel.target.instance.runtime_properties = {
+                    'kind': 'compute#disk',
+                    'gcp_disk': {
+                        'source': 'disk_{}'.format(i),
+                        'boot': True,
+                        },
+                    }
+            self.ctxmock.instance.relationships.append(rel)
+
+        with self.assertRaises(NonRecoverableError) as e:
+            instance.create(
+                'type',
+                'image',
+                'name',
+                external_ip=True,
+                startup_script=None,
+                scopes='scopes',
+                tags=['tags'],
+                )
+        for name in 'disk_1', 'disk_2':
+            self.assertIn(name, str(e.exception))
+
     def test_create_with_external_ip(self, mock_build, *args):
         instance.create(
                 'type',
@@ -215,6 +242,103 @@ class TestGCPInstance(TestGCP):
                     },
                 project='not really a project',
                 zone='a very fake zone',
+                )
+
+    @patch('cloudify_gcp.utils.get_network_node')
+    @patch('cloudify_gcp.utils.get_net_and_subnet')
+    def test_create_with_subnet(self, mock_g_ns, mock_g_nn, mock_build, *args):
+        del self.ctxmock.instance.runtime_properties['zone']
+        mock_g_ns.return_value = 'net', 'subnet'
+        # This is the region the network is in
+        mock_g_nn().instance.runtime_properties.__getitem__(
+                ).__getitem__.return_value = 'europe-west1'
+
+        with patch.dict(
+                'cloudify_gcp.constants.REGION_ZONES_FULL',
+                {'europe-west1': ['nope', 'nope', 'nope']}):
+            instance.create(
+                    'type',
+                    'image',
+                    'name',
+                    external_ip=True,
+                    startup_script=None,
+                    scopes='scopes',
+                    tags=['tags'],
+                    )
+
+            zone = mock_build().instances().insert.call_args[1]['zone']
+            self.assertIn(zone, REGION_ZONES_FULL['europe-west1'])
+
+        mock_build().instances().insert.call_args[1][
+                'body']['tags']['items'].sort()
+        mock_build().instances().insert.assert_called_with(
+                body={
+                    'tags': {'items': ['name', 'tags']},
+                    'machineType': 'zones/nope/machineTypes/type',
+                    'name': 'name',
+                    'canIpForward': False,
+                    'disks': [{
+                        'initializeParams': {'sourceImage': 'image'},
+                        'boot': True,
+                        'autoDelete': True}],
+                    'networkInterfaces': [{
+                        'accessConfigs': [{
+                            'name': 'External NAT',
+                            'type': 'ONE_TO_ONE_NAT'}],
+                        'subnetwork': 'subnet',
+                        'network': 'net'}],
+                    'serviceAccounts': [{
+                        'scopes': 'scopes',
+                        'email': 'default'}],
+                    'metadata': {'items': [
+                        {'key': 'bucket', 'value': 'not really a project'},
+                        {'key': 'sshKeys', 'value': ''}]},
+                    'description': 'Cloudify generated instance'},
+                project='not really a project',
+                zone=zone,
+                )
+
+    def test_create_with_script(self, mock_build, *args):
+        instance.create(
+                'instance_type',
+                'image_id',
+                'name',
+                zone='zone',
+                external_ip=False,
+                startup_script={
+                    'type': 'string',
+                    'script': 'Cyrillic',
+                    },
+                scopes='scopes',
+                tags=['tags'],
+                )
+
+        mock_build().instances().insert.call_args[1][
+                'body']['tags']['items'].sort()
+        mock_build().instances().insert.assert_called_with(
+                body={
+                    'metadata': {
+                        'items': [
+                            {'key': 'bucket', 'value': 'not really a project'},
+                            {'key': 'sshKeys', 'value': ''},
+                            {'key': 'startup-script', 'value': 'Cyrillic'},
+                            ]},
+                        'tags': {'items': ['name', 'tags']},
+                        'disks': [{
+                            'boot': True,
+                            'initializeParams': {'sourceImage': 'image_id'},
+                            'autoDelete': True}],
+                        'machineType': 'zones/zone/machineTypes/instance_type',
+                        'serviceAccounts': [{
+                            'email': 'default', 'scopes': 'scopes'}],
+                        'name': 'name',
+                        'canIpForward': False,
+                        'description': 'Cloudify generated instance',
+                        'networkInterfaces': [{
+                            'network': 'projects/not really a project/global'
+                                       '/networks/not a real network'}]
+                        },
+                project='not really a project', zone='zone'
                 )
 
     @patch('cloudify_gcp.utils.get_item_from_gcp_response',

@@ -163,14 +163,20 @@ def creation_validation(**kwargs):
     if not ctx.node.properties['region']:
         raise NonRecoverableError("region must be supplied")
 
-    types = ('cloudify.gcp.relationships.contained_in_network',
-             'cloudify.gcp.nodes.Network')
-    rels = utils.get_relationships(ctx, *types)
+    rel_type = 'cloudify.gcp.relationships.contained_in_network'
+    node_type = 'cloudify.gcp.nodes.Network'
+
+    rels = utils.get_relationships(
+            ctx,
+            filter_relationships=[rel_type])
 
     if len(rels) != 1:
         raise NonRecoverableError(
-                "SubNetwork must be contained in a '{1}' using the '{0}' "
-                "relationship".format(*types))
+                "SubNetwork must be contained in a '{node}' "
+                "using the '{rel}' relationship".format(
+                    node=node_type,
+                    rel=rel_type,
+                    ))
 
     if not ctx.node.properties['use_external_resource']:
         network = rels[0].target
