@@ -18,6 +18,7 @@ Contents:
 
     types
     manager
+    examples
 
 Plugin Requirements
 -------------------
