@@ -17,6 +17,7 @@ Excerpt from https://github.com/cloudify-cosmo/cloudify-gcp-plugin/blob/master/s
     :language: yaml
     :lines: 27-
     :lineno-match:
+
 This will create a DNS zone with the following entries:
 
 ================    ====================================    =========
