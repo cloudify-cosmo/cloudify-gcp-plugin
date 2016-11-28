@@ -33,6 +33,9 @@ class GCPStaticIPTest(GCPTest, TestCase):
         vm = self.test_env.storage.get_node_instances('vm')[0]
         ip = self.test_env.storage.get_node_instances('static_ip')[0]
 
+        external_ip = vm['runtime_properties']['networkInterfaces'][0][
+                'accessConfigs'][0]['natIP']
+
         self.assertEqual(
                 ip['runtime_properties']['address'],
-                vm['runtime_properties']['ip'])
+                external_ip)

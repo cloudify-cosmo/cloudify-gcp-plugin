@@ -55,3 +55,8 @@ class GCPRouteTest(GCPTest, TestCase):
         self.assertIn(
             'nextHopGateway',
             routes['gateway_hop']['runtime_properties'])
+
+        self.assertEqual(
+            getter('vm-1')['runtime_properties']['canIpForward'],
+            True
+            )

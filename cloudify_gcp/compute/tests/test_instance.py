@@ -349,7 +349,8 @@ class TestGCPInstance(TestGCP):
         instance.start()
 
         self.assertEqual(
-                self.ctxmock.instance.runtime_properties['ip'],
+                self.ctxmock.instance.runtime_properties[
+                    'networkInterfaces'][0]['accessConfigs'][0]['natIP'],
                 '🕷')
 
     def test_delete(self, mock_build, *args):
@@ -384,7 +385,9 @@ class TestGCPInstance(TestGCP):
                 {'another': 'yo', 'zone': 'hey'},
                 self.ctxmock.instance.runtime_properties)
 
-    def test_add_external_ip(self, mock_build, *args):
+    @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
+                'networkInterfaces': [{'accessConfigs': [{'natIP': '🕷'}]}]})
+    def test_add_external_ip(self, mock_getitem, mock_build, *args):
         self.ctxmock.target.node.type = 'cloudify.gcp.nodes.Address'
         self.ctxmock.target.node.properties = {
                 'use_external_resource': False,
@@ -407,7 +410,9 @@ class TestGCPInstance(TestGCP):
                 zone='a very fake zone',
                 )
 
-    def test_add_external_external_ip(self, mock_build, *args):
+    @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
+                'networkInterfaces': [{'accessConfigs': [{'natIP': '🕷'}]}]})
+    def test_add_external_external_ip(self, mock_getitem, mock_build, *args):
         self.ctxmock.target.node.properties = {
                 'use_external_resource': True,
                 }
