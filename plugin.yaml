@@ -1,5 +1,5 @@
 plugins:
-  gcp:
+  gcp_plugin:
     executor: central_deployment_agent
     source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.0.zip
     package_name: cloudify-gcp-plugin
