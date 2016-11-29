@@ -168,6 +168,19 @@ class TestUtilsWithCTX(TestGCP):
                 '🙎:public 🗝 🙎@cloudify',
                 utils.get_agent_ssh_key_string())
 
+    def test_get_agent_ssh_key_string_raises(self, *args):
+        self.ctxmock.provider_context = {
+            'cloudify': {
+                'cloudify_agent': {
+                    'agent_key_path': None,
+                    'user': '🙎',
+                    }}}
+
+        with self.assertRaises(NonRecoverableError) as e:
+            utils.get_agent_ssh_key_string()
+
+        self.assertIn('key generation failure', str(e.exception))
+
     def test_get_gcp_config(self, *args):
         self.ctxmock.node.properties['gcp_config'] = {
                 'zone': '3',

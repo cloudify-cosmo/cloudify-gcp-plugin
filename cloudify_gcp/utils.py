@@ -320,10 +320,14 @@ def get_agent_ssh_key_string():
         ctx.logger.debug('agent to be installed but key file info not found')
         return ''
 
-    public_key = check_output([
-        'ssh-keygen', '-y',  # generate public key from private key
-        '-P', '',  # don't prompt for passphrase (would hang forever)
-        '-f', expanduser(cloudify_agent['agent_key_path'])])
+    try:
+        public_key = check_output([
+            'ssh-keygen', '-y',  # generate public key from private key
+            '-P', '',  # don't prompt for passphrase (would hang forever)
+            '-f', expanduser(cloudify_agent['agent_key_path'])])
+    except Exception as e:
+        # any failure here is fatal
+        raise NonRecoverableError('key generation failure', e)
     # add the agent user to the key. GCP uses this to create user accounts on
     # the instance.
     full_key = '{user}:{key} {user}@cloudify'.format(
