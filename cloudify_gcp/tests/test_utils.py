@@ -19,8 +19,8 @@ from functools import partial
 
 from mock import Mock, patch, PropertyMock
 
-from cloudify.exceptions import NonRecoverableError
 from cloudify.mocks import MockCloudifyContext
+from cloudify.exceptions import NonRecoverableError
 
 from cloudify_gcp import utils
 from . import TestGCP
@@ -168,6 +168,19 @@ class TestUtilsWithCTX(TestGCP):
                 '🙎:public 🗝 🙎@cloudify',
                 utils.get_agent_ssh_key_string())
 
+    def test_get_agent_ssh_key_string_raises(self, *args):
+        self.ctxmock.provider_context = {
+            'cloudify': {
+                'cloudify_agent': {
+                    'agent_key_path': None,
+                    'user': '🙎',
+                    }}}
+
+        with self.assertRaises(NonRecoverableError) as e:
+            utils.get_agent_ssh_key_string()
+
+        self.assertIn('key generation failure', str(e.exception))
+
     def test_get_gcp_config(self, *args):
         self.ctxmock.node.properties['gcp_config'] = {
                 'zone': '3',
@@ -193,3 +206,31 @@ class TestUtilsWithCTX(TestGCP):
                 mock_nands.return_value.__getitem__.return_value,
                 utils.get_network('hi'),
                 )
+
+    @patch('cloudify_gcp.utils.response_to_operation')
+    def test_async_operation_failing_operation(self, mock_r2o, *args):
+        self.ctxmock.instance.runtime_properties['_operation'] = 'rhinoplasty'
+        mock_r2o.return_value.has_finished.side_effect = utils.GCPError('nooo')
+        mock_r2o.return_value.last_response = {
+                'status': 'DONE',
+                'error': 'YEP! IT FAILED.',
+            }
+
+        class FakeNodeType(object):
+            @utils.async_operation()
+            def star_jump(self):
+                return {
+                        'a': 'response',
+                        }
+
+        fake_obj = FakeNodeType()
+
+        with self.assertRaises(utils.GCPError) as e:
+            fake_obj.star_jump()
+
+        self.assertIs(
+                e.exception,
+                mock_r2o.return_value.has_finished.side_effect)
+        self.assertNotIn(
+                '_operation',
+                self.ctxmock.instance.runtime_properties)

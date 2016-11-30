@@ -16,7 +16,7 @@
 
 from functools import partial
 
-from mock import patch
+from mock import patch, Mock
 
 from cloudify.exceptions import NonRecoverableError
 
@@ -172,6 +172,32 @@ class TestGCPInstance(TestGCP):
                 project='not really a project',
                 zone='zone'
                 )
+
+    def test_create_2_boot_disks_raises(self, *args):
+        self.ctxmock.instance.relationships = []
+        for i in 1, 2:
+            rel = Mock()
+            rel.target.instance.runtime_properties = {
+                    'kind': 'compute#disk',
+                    'gcp_disk': {
+                        'source': 'disk_{}'.format(i),
+                        'boot': True,
+                        },
+                    }
+            self.ctxmock.instance.relationships.append(rel)
+
+        with self.assertRaises(NonRecoverableError) as e:
+            instance.create(
+                'type',
+                'image',
+                'name',
+                external_ip=True,
+                startup_script=None,
+                scopes='scopes',
+                tags=['tags'],
+                )
+        for name in 'disk_1', 'disk_2':
+            self.assertIn(name, str(e.exception))
 
     def test_create_with_external_ip(self, mock_build, *args):
         instance.create(

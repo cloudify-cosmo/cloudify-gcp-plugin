@@ -371,11 +371,9 @@ def create(instance_type,
     if zone:
         zone = props['zone'] = utils.get_gcp_resource_name(zone)
     else:
-        if props.get('zone', False):
-            zone = props['zone']
-        else:
-            zone = props['zone'] = utils.get_gcp_resource_name(
-                    gcp_config['zone'])
+        zone = props.setdefault(
+                'zone',
+                utils.get_gcp_resource_name(gcp_config['zone']))
 
     disks = [
             disk.target.instance.runtime_properties[constants.DISK]
@@ -385,11 +383,15 @@ def create(instance_type,
                 filter_resource_types='compute#disk'
                 )
             ]
+    # There must be exactly one boot disk and that disk must be first in the
+    # `disks` list.
     disks.sort(key=lambda disk: disk['boot'], reverse=True)
-    if len(disks) > 1:
-        if disks[1]['boot']:
-            raise NonRecoverableError(
-                    'Only one disk per Instance may be a boot disk')
+    boot_disks = [x for x in disks if x['boot']]
+    if len(boot_disks) > 1:
+        raise NonRecoverableError(
+                'Only one disk per Instance may be a boot disk. '
+                'Disks: {}'.format(boot_disks)
+                )
 
     instance_name = utils.get_final_resource_name(name)
     instance = Instance(

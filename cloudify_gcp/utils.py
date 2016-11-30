@@ -152,64 +152,49 @@ def sync_operation(func):
     return wraps(func)(_decorator)
 
 
-def async_operation(get=False, relationship=False):
+def async_operation(get=False):
     """
     Decorator for node methods which return an Operation
     Handles the operation if it exists
 
     :param get: if True, update runtime_properties with the result of
                 self.get() when the Operation is complete
-    :param relationship: if True, this method is called as part of a
-                relationship operation (e.g. establish, unlink), and the
-                operation data should be stored under
-                runtime_properties['_operations'][target_id] to avoid
-                collisions.
-    (relationship = True implies get = False)
     """
     def decorator(func):
         def wrapper(self, *args, **kwargs):
-            if relationship:
-                props = ctx.source.instance.runtime_properties
-                response = props.setdefault('_operations', {}).get(
-                        ctx.target.instance.id)
-            else:
-                props = ctx.instance.runtime_properties
-                response = props.get('_operation', None)
-
-            props.dirty = True
+            props = ctx.instance.runtime_properties
+            response = props.get('_operation')
 
             if response:
                 operation = response_to_operation(
                         response,
                         get_gcp_config(),
                         ctx.logger)
-                response = operation.get()
 
-                if response['status'] in ('PENDING', 'RUNNING'):
+                try:
+                    has_finished = operation.has_finished()
+                except GCPError:
+                    # If the operation has an error, clear it from
+                    # runtime_properties so the next try will start from
+                    # scratch.
+                    props.pop('_operation')
+                    raise
+
+                if has_finished:
+                    for key in '_operation', 'name', 'selfLink':
+                        props.pop(key, None)
+                    if get:
+                        props.update(self.get())
+                else:
                     ctx.operation.retry(
                         'Operation not completed yet: {}'.format(
-                            response['status']),
+                            operation.last_response['status']),
                         constants.RETRY_DEFAULT_DELAY)
-                elif response['status'] == 'DONE':
-                    if relationship:
-                        props['_operations'].pop(ctx.target.instance.id)
-                    else:
-                        for key in '_operation', 'name', 'selfLink':
-                            props.pop(key, None)
-                        if get:
-                            props.update(self.get())
-                else:
-                    raise NonRecoverableError(
-                            'Unknown status response from operation')
 
             else:
                 # Actually run the method
                 response = func(self, *args, **kwargs)
-                if relationship:
-                    props.setdefault('_operations', {})[
-                            ctx.target.instance.id] = response
-                else:
-                    props['_operation'] = response
+                props['_operation'] = response
 
                 ctx.operation.retry('Operation started')
 
@@ -335,10 +320,14 @@ def get_agent_ssh_key_string():
         ctx.logger.debug('agent to be installed but key file info not found')
         return ''
 
-    public_key = check_output([
-        'ssh-keygen', '-y',  # generate public key from private key
-        '-P', '',  # don't prompt for passphrase (would hang forever)
-        '-f', expanduser(cloudify_agent['agent_key_path'])])
+    try:
+        public_key = check_output([
+            'ssh-keygen', '-y',  # generate public key from private key
+            '-P', '',  # don't prompt for passphrase (would hang forever)
+            '-f', expanduser(cloudify_agent['agent_key_path'])])
+    except Exception as e:
+        # any failure here is fatal
+        raise NonRecoverableError('key generation failure', e)
     # add the agent user to the key. GCP uses this to create user accounts on
     # the instance.
     full_key = '{user}:{key} {user}@cloudify'.format(
@@ -428,11 +417,15 @@ def get_relationships(
     for rel in relationships:
         res_type = get_resource_type(rel.target)
         if not any([
+                # if the instance runtime_properties doesn't have a 'kind' key
+                # filter it out regardless as it's not a GCP node.
                 (not res_type),
 
+                # filter on the GCP type ('kind' attribute)
                 (filter_resource_types and
                  res_type not in filter_resource_types),
 
+                # Filter by relationship type
                 (filter_relationships and
                  rel.type not in filter_relationships),
                 ]):
@@ -489,4 +482,4 @@ def get_network(ctx):
 
 
 def get_resource_type(ctx):
-    return ctx.instance.runtime_properties.get('kind', False)
+    return ctx.instance.runtime_properties.get('kind')
