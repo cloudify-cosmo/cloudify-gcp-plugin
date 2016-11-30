@@ -66,12 +66,16 @@ node_types:
       startup_script:
         description: >
           A script which will be run when the Instance is first started
-          example:
+
+          Example::
+
             type: string
             script: |
               yum install some stuff
               systemctl start it
-          or:
+
+          or::
+
             type: file
             script: <path to script file>
         default:
@@ -150,7 +154,13 @@ node_types:
       named_ports:
         description: >
           A list of named ports defined for this instance group, the expected
-          format is: [{name: 'name', port: 1234}, ... ].
+          format is::
+            
+            - name: 'name'
+              port: 1234
+            - name: 'enam'
+              port: 4321
+            - ...
         default: []
       additional_settings:
         description: >
@@ -381,16 +391,18 @@ node_types:
       allowed:
         description: >
           Dictionary of allowed ports per protocol, in the form
-            protocol: [port, ...]
+          protocol: [port, ...]
           If no ports are specified then all ports are opened for that protocol
-          eg:
+          eg::
+
             tcp: 80, 443
             udp:
       sources:
         description: |
           List of CIDR formatted ranges and instance tags which
           will be permitted to connect to targets by this rule
-          e.g.:
+          e.g.::
+
             - 10.100.101.0/24
             - a-tag
       target_tags:
@@ -834,14 +846,16 @@ node_types:
       private_key:
         description: >
           Dictionary describing private key in PEM format used to generate this SSL certificate.
-          Expected format is:
+          Expected format is::
+
             type: text|file
             data: Private key in PEM format if text, otherwise path to a file with private key
         default: {}
       certificate:
         description: >
           Certificate (self-signed or obtained from CA) in PEM format.
-          Expected format is:
+          Expected format is::
+
             type: text|file
             data: Certificate in PEM format if text, otherwise path to a file with certificate
         default: {}
@@ -991,10 +1005,10 @@ node_types:
         description: >
           List of resources which will form this record.
           (can be augmented using relationships
-            cloudify.gcp.relationships.dns_record_connected_to_instance
-            and
-            cloudify.gcp.relationships.dns_record_connected_to_ip
-            )
+          cloudify.gcp.relationships.dns_record_connected_to_instance
+          and
+          cloudify.gcp.relationships.dns_record_connected_to_ip
+          )
         default: []
       ttl:
         description: >
@@ -1026,24 +1040,28 @@ node_types:
     properties:
       type:
         default: AAAA
+        description: overridden default
 
   cloudify.gcp.nodes.DNSMXRecord:
     derived_from: cloudify.gcp.nodes.DNSRecord
     properties:
       type:
         default: MX
+        description: overridden default
 
   cloudify.gcp.nodes.DNSNSRecord:
     derived_from: cloudify.gcp.nodes.DNSRecord
     properties:
       type:
         default: NS
+        description: overridden default
 
   cloudify.gcp.nodes.DNSTXTRecord:
     derived_from: cloudify.gcp.nodes.DNSRecord
     properties:
       type:
         default: TXT
+        description: overridden default
 
 
 relationships:
