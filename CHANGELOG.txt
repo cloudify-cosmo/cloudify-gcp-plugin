@@ -1,0 +1,12 @@
+1.0
+  - new Cloud DNS support
+  - New SubNetwork node type
+  - Network node type now supports auto- and manual-subnet operation instead
+    of legacy networks
+  - New Route node type
+  - New Address node type
+  - GlobalAddress node type replaces StaticIP
+  - Node Instances which map directly to a GCP entity now
+    store the entire GCP resource data in their runtime_properties.
+  - Removed `resource_id` property from node types which support
+    `use_external_resource`
