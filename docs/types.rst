@@ -87,7 +87,7 @@ Compute
 
 .. cfy:node:: cloudify.gcp.nodes.Instance
 
-    A GCP Instance (i.e. a VM). :cfy:node:`cloudify.nodes.Compute`.
+    A GCP Instance (i.e. a VM).
 
 
 .. cfy:node:: cloudify.gcp.nodes.Address
