@@ -13,8 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import copy
-from time import sleep
 from contextlib import contextmanager
 
 from cosmo_tester.framework.handlers import (
@@ -25,7 +23,7 @@ from cosmo_tester.framework.handlers import (
 class GCPCleanupContext(BaseHandler.CleanupContext):
     def __init__(self, context_name, env):
         super(GCPCleanupContext, self).__init__(context_name, env)
-        #self.before_run = self.env.handler.gcp_infra_state()
+        # self.before_run = self.env.handler.gcp_infra_state()
 
     @classmethod
     def clean_resources(cls, env, resources):
@@ -79,7 +77,7 @@ class GCPCleanupContext(BaseHandler.CleanupContext):
             resources_to_be_removed['key_pairs'].pop(env.agent_keypair_name,
                                                      None)
 
-        failed_to_remove = cls.clean_resources(env, resources_to_be_removed)
+        cls.clean_resources(env, resources_to_be_removed)
 
 
 class CloudifyGCPInputsConfigReader(BaseCloudifyInputsConfigReader):
@@ -142,8 +140,7 @@ class GCPHandler(BaseHandler):
     CloudifyConfigReader = CloudifyGCPInputsConfigReader
 
     def gcp_client(self):
-        credentials = self._client_credentials()
-        return GCPConnection(**credentials)
+        raise NotImplementedError()
 
     def remove_keypairs_from_local_env(self, env):
         """TODO: remove the keypairs"""
