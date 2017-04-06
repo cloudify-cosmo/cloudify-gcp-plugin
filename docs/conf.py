@@ -239,7 +239,6 @@ texinfo_documents = [
 
 intersphinx_mapping = {
         'python': ('https://docs.python.org/2/', None),
-        'cfy': ('https://funkyhat.github.io/demo-docs-root/', None),
         }
 
 
