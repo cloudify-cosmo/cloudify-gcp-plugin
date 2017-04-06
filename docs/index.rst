@@ -3,9 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-cloudify-gcp-plugin documentation
-=================================
-The Cloudify GCP plugin allows users to Cloudify to manage resources on `Google Cloud Platform`_.
+Cloudify GCP Plugin
+===================
+
+The Cloudify GCP plugin allows users to Cloudify
+to manage resources on `Google Cloud Platform`_.
 See :ref:`node_types` for the supported resource types.
 
 .. _Google Cloud Platform: https://cloud.google.com
@@ -14,7 +16,6 @@ See :ref:`node_types` for the supported resource types.
 Contents:
 
 .. toctree::
-    :maxdepth: 2
 
     requirements
     types
