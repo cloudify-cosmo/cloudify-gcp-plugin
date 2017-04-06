@@ -91,9 +91,6 @@ definitions.
 Nodes describe resources in your cloud infrastructure.
 
 
-Types
-=====
-
 Compute
 -------
 
