@@ -18,8 +18,8 @@ Contents:
 
     requirements
     types
-    manager
     examples
+    misc
 
 
 Indices and tables
