@@ -2,6 +2,18 @@ Types
 ^^^^^
 
 
+.. _account-info:
+
+Account Information
+===================
+
+The plugin needs access to your GCP auth credentials
+(via the :ref:`gcp_config <common-properties>` parameter)
+in order to operate
+(but see :ref:`manager-config` if using a manager).
+
+
+
 .. _common-properties:
 
 Common Properties
