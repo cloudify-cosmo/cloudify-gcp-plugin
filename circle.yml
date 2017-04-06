@@ -1,18 +1,8 @@
 test:
   override:
+    - tox -e docs
     - mkdir -p $CIRCLE_TEST_REPORTS/nose
     - tox -e flake8
     - tox -e py27 -- --with-xunit --xunit-file=$CIRCLE_TEST_REPORTS/nose/nosetests.xml
-    - tox -e docs
+    - mv .tox/docs/tmp/html $CIRCLE_ARTIFACTS
 
-general:
-  artifacts:
-    - .tox/docs/tmp/html
-
-# Docs deployment
-deployment:
-  docs:
-    branch: sphinx-docs
-    commands:
-      - pip install git+https://github.com/cloudify-cosmo/sphinxify.git@initial-work
-      - sphinxify-gh-pages sphinx-docs
