@@ -1,4 +1,14 @@
 
+Terminology
+===========
+
+* ``region`` refers to a general geographical area,
+  such as "Central Europe" or "East US".
+* ``zone`` refers to a distinct area within a region.
+  Zones are usually referred to as '{region}-{zone},
+  i.e. 'us-east1-b' is a zone within the reigon 'us-east1'.
+
+
 Using the GCP Plugin with a Manager
 ===================================
 
@@ -26,4 +36,4 @@ Instances in GCP are not able to communicate internally with instances in a diff
 This means that if you want to run Cloudify agents on your nodes they must be in the same network as the manager.
 
 Additionally, a given network must choose either auto-subnets or manual subnets operation when created.
-For maximum flexibility, ``auto_subnets = false`` is recommended, though this requires that subnets are created for any region you wish to place instances in.
+For maximum flexibility, ``auto_subnets: false`` is recommended, though this requires that subnets are created for any region you wish to place instances in.

@@ -43,13 +43,6 @@ The plugin needs access to your GCP auth credentials (via the :ref:`gcp_config <
 
 
 
-Terminology
------------
-
-* ``region`` refers to a general geographical area, such as "Central Europe" or "East US".
-* ``zone`` refers to a distinct area within a region. Zones are usually referred to as '{region}-{zone}, i.e. 'us-east1-b' is a zone within the reigon 'us-east1'.
-
-
 
 Indices and tables
 ==================
