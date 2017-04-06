@@ -102,15 +102,21 @@ Compute
 .. cfy:node:: cloudify.gcp.nodes.Address
 
     A GCP Address. This can be connected to an Instance using the
-    ``cloudify.gcp.relationships.instance_connected_to_ip`` relationship type
+    :cfy:rel:`cloudify.gcp.relationships.instance_connected_to_ip`
+    relationship type
 
 
-.. cfy:node:: cloudify.gcp.nodes.ExternalIP
+.. admonition:: Deprecated
+    :class: warning
 
-    *Deprecated* use the ``external_ip`` property on the ``Instance``
-    or an ``Address`` node instead.
+    use the ``external_ip`` property on the ``Instance``
+    or a :cfy:node:`cloudify.gcp.nodes.Address` node instead.
 
-    When used with the ``cloudify.gcp.relationships.instance_connected_to_ip`` the connected Instance will be created with an ephemeral external IP.
+    .. cfy:node:: cloudify.gcp.nodes.ExternalIP
+
+        When used with the
+        :cfy:rel:`cloudify.gcp.relationships.instance_connected_to_ip`
+        the connected Instance will be created with an ephemeral external IP.
 
 
 .. cfy:node:: cloudify.gcp.nodes.Volume
@@ -128,7 +134,7 @@ Compute
 .. cfy:node:: cloudify.gcp.nodes.KeyPair
 
     An SSH key-pair which will be uploaded to any Instances connected to it via
-    ``cloudify.gcp.relationships.instance_connected_to_keypair``.
+    :cfy:rel:`cloudify.gcp.relationships.instance_connected_to_keypair`.
 
     Unlike other cloud providers,
     users are dynamically created on Instances based on the username specified by the uploaded SSH key,
@@ -150,14 +156,18 @@ Compute
     This describes allowed traffic directed to either the whole of the specified network, or to Instances specified by matching tags.
 
 
-.. cfy:node:: cloudify.gcp.nodes.SecurityGroup
+.. admonition:: Deprecated
+    :class: warning
 
-    *Deprecated* please use a ``FirewallRule`` instead.
+    please use :cfy:node:`cloudify.gcp.nodes.FirewallRule` instead.
 
-    A virtual SecurityGroup.
-    Google Cloud Platform has no entity equivalent to a Security Group on AWS or OpenStack,
-    so as a convenience Cloudify includes a virtual one.
-    It is implemented behind the scenes using a specially constructed tag and a number of FirewallRules.
+    .. cfy:node:: cloudify.gcp.nodes.SecurityGroup
+
+
+        A virtual SecurityGroup.
+        Google Cloud Platform has no entity equivalent to a Security Group on AWS or OpenStack,
+        so as a convenience Cloudify includes a virtual one.
+        It is implemented behind the scenes using a specially constructed tag and a number of FirewallRules.
 
 
 .. cfy:node:: cloudify.gcp.nodes.Route
@@ -177,7 +187,8 @@ Compute
 .. cfy:node:: cloudify.gcp.nodes.SubNetwork
 
     A GCP Subnetwork.
-    Must be connected to a Network using ``cloudify.gcp.relationships.contained_in_network``.
+    Must be connected to a Network using
+    :cfy:rel:`cloudify.gcp.relationships.contained_in_network`.
 
     Only networks with the ``auto_subnets`` property disabled can be used.
 
@@ -186,12 +197,16 @@ Compute
 
     A GCP GlobalAddress.
 
-    GlobalAddress can only be used together with GlobalForwardingRule. If you want to connect a static IP to an Instance, use StaticIP instead.
+    GlobalAddress can only be used together with GlobalForwardingRule.
+    If you want to connect a static IP to an Instance, use StaticIP instead.
 
 
-.. cfy:node:: cloudify.gcp.nodes.StaticIP
+.. admonition:: Deprecated
+    :class: warning
 
-    *Deprecated* alias for ``GlobalAddress``
+    alias for :cfy:node:`cloudify.gcp.nodes.GlobalAddress`
+
+    .. cfy:node:: cloudify.gcp.nodes.StaticIP
 
 
 .. cfy:node:: cloudify.gcp.nodes.BackendService
@@ -209,7 +224,8 @@ Compute
 
     A GCP GlobalForwardingRule.
 
-    Can only be used in conjunction with a GlobalAddress to set up HTTP and HTTPS forwarding.
+    Can only be used in conjunction with a GlobalAddress
+    to set up HTTP and HTTPS forwarding.
 
 
 .. cfy:node:: cloudify.gcp.nodes.TargetProxy
@@ -221,15 +237,19 @@ Compute
 
 .. cfy:node:: cloudify.gcp.nodes.SslCertificate
 
-    A TLS/SSL certificate and key. This will be used by a HTTPS TargetProxy to provide authenticated encryption for connecting users.
+    A TLS/SSL certificate and key.
+    This will be used by a HTTPS TargetProxy
+    to provide authenticated encryption for connecting users.
 
 
 .. cfy:node:: cloudify.gcp.nodes.HealthCheck
 
     A GCP HealthCheck.
 
-    This describes a method that a TargetProxy can use to verify that particualr backend Instances are functioning. Backends which fail the health check verification will be removed from the list of candidates.
-
+    This describes a method that a TargetProxy can use
+    to verify that particualr backend Instances are functioning.
+    Backends which fail the health check verification
+    will be removed from the list of candidates.
 
 
 DNS
@@ -238,17 +258,24 @@ DNS
 .. cfy:node:: cloudify.gcp.nodes.DNSZone
 
     A Cloud DNS zone.
-    Represents a particular DNS domain which you wish to manage through Google Cloud DNS.
-    DNS nameservers can vary between different DNSZones. In order to find the correct nameserver entries for your domain, use the ``nameServers`` attribute from the created zone.
+    Represents a particular DNS domain which you wish to manage
+    through Google Cloud DNS.
+
+    .. note::
+        DNS nameservers can vary between different DNSZones.
+        In order to find the correct nameserver entries for your domain,
+        use the ``nameServers`` attribute from the created zone.
 
 
 .. cfy:node:: cloudify.gcp.nodes.DNSRecord
 
-    Corresponds to a particular subdomain (or `@` for the root) and record-type in the containing DNSZone.
+    Corresponds to a particular subdomain (or `@` for the root)
+    and record-type in the containing DNSZone.
 
     e.g. the ``A`` record for ``special_service.getcloudify.org``
 
-    A number of convenience types are provided which update the default type (see DNSAAAARecord, DNSMXRecord, DNSTXTRecord, DNSNSRecord)
+    A number of convenience types are provided which update the default type
+    (see DNSAAAARecord, DNSMXRecord, DNSTXTRecord, DNSNSRecord)
 
 
 .. cfy:node:: cloudify.gcp.nodes.DNSAAAARecord
