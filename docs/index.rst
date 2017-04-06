@@ -20,6 +20,7 @@ Contents:
     types
     examples
     misc
+    changelog
 
 
 Indices and tables
