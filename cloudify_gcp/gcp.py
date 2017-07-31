@@ -39,6 +39,14 @@ def check_response(func):
     return wraps(func)(_decorator)
 
 
+def create_auth_file(auth):
+    data = {}
+    for key, value in auth.iteritems():
+        data[key] = value
+
+    return data
+
+
 class GoogleCloudPlatform(object):
     """
     Class using google-python-api-client library to connect to Google Cloud
@@ -63,7 +71,7 @@ class GoogleCloudPlatform(object):
         :param api_version: version of used API to communicate with GCP
         :return:
         """
-        self.auth = config['auth']
+        self.auth = create_auth_file(config['auth'])
         self.project = config['project']
         self.zone = config['zone']
         self.config = config
