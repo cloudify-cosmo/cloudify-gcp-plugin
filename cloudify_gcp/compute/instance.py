@@ -189,6 +189,7 @@ class Instance(GoogleCloudPlatform):
             project=self.project,
             zone=basename(self.zone)).execute()
 
+    @utils.sync_operation
     @check_response
     def add_access_config(self, ip_address=''):
         """
@@ -215,6 +216,7 @@ class Instance(GoogleCloudPlatform):
             networkInterface=self.NETWORK_INTERFACE,
             body=body).execute()
 
+    @utils.sync_operation
     @check_response
     def delete_access_config(self):
         """
