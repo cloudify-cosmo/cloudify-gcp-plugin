@@ -1,3 +1,6 @@
+1.0.1
+  - GCP-43 Instance add & delete access config methods now wait for the
+    operation to finish.
 1.0
   - new Cloud DNS support
   - New SubNetwork node type
