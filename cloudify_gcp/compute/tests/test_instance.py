@@ -199,6 +199,55 @@ class TestGCPInstance(TestGCP):
         for name in 'disk_1', 'disk_2':
             self.assertIn(name, str(e.exception))
 
+    def test_create_with_metadata(self, mock_build, *args):
+        metadata = {'metadata': {'items': [{'key': 'k', 'value': 'v'}]}}
+        instance.create(
+            'type',
+            'image',
+            'name',
+            external_ip=True,
+            startup_script=None,
+            scopes='scopes',
+            tags=['tags'],
+            additional_settings=metadata
+        )
+
+        mock_build().instances().insert.call_args[1][
+            'body']['tags']['items'].sort()
+        mock_build().instances().insert.assert_called_with(
+            body={
+                'machineType': 'zones/a very fake zone/machineTypes/type',
+                'tags': {'items': ['name', 'tags']},
+                'canIpForward': False,
+                'metadata': {'items': [
+                    {'key': 'k',
+                     'value': 'v'},
+                    {'value': 'not really a project',
+                     'key': 'bucket'},
+                    {'value': '',
+                     'key': 'sshKeys'}
+                ]},
+                'networkInterfaces': [{
+                    'network': 'projects/not really a project/'
+                               'global/networks/not a real network',
+                    'accessConfigs': [{
+                        'type': 'ONE_TO_ONE_NAT',
+                        'name': 'External NAT'}]
+                }],
+                'serviceAccounts': [{
+                    'email': 'default',
+                    'scopes': 'scopes'}],
+                'name': 'name',
+                'description': 'Cloudify generated instance',
+                'disks': [{
+                    'autoDelete': True,
+                    'boot': True,
+                    'initializeParams': {'sourceImage': 'image'}}]
+            },
+            project='not really a project',
+            zone='a very fake zone',
+        )
+
     def test_create_with_external_ip(self, mock_build, *args):
         instance.create(
                 'type',
