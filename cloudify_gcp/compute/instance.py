@@ -304,11 +304,12 @@ class Instance(GoogleCloudPlatform):
                 {'email': 'default',
                  'scopes': self.scopes
                  }],
-            'metadata': {
-                'items': [{'key': 'bucket', 'value': self.project}]
-            }
         }
         self.body.update(body)
+        self.body.setdefault('metadata', {}).setdefault('items', [])
+        add_key_value_to_metadata('bucket',
+                                  self.project,
+                                  self.body)
         ssh_keys_str = '\n'.join(self.ssh_keys)
         add_key_value_to_metadata(KeyPair.KEY_VALUE,
                                   ssh_keys_str,
@@ -335,6 +336,7 @@ class Instance(GoogleCloudPlatform):
                 'name': self.ACCESS_CONFIG,
                 }]
 
+        ctx.logger.debug('Body that being used: {0}'.format(self.body))
         return self.body
 
 
