@@ -392,7 +392,12 @@ class TestGCPInstance(TestGCP):
                 'a')
 
     @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
-                'networkInterfaces': [{'accessConfigs': [{'natIP': '🕷'}]}]})
+        'networkInterfaces': [
+            {
+                'networkIP': 'a',
+                'accessConfigs': [{'natIP': '🕷'}],
+            },
+        ]})
     def test_start_with_external_ip(self, mock_getitem, mock_build, *args):
         self.ctxmock.node.properties['external_ip'] = True
         self.ctxmock.instance.runtime_properties['name'] = 'name'
@@ -402,6 +407,9 @@ class TestGCPInstance(TestGCP):
                 self.ctxmock.instance.runtime_properties[
                     'networkInterfaces'][0]['accessConfigs'][0]['natIP'],
                 '🕷')
+        public_ip_address = self.ctxmock.instance.runtime_properties[
+            'public_ip_address']
+        self.assertEqual(public_ip_address, '🕷')
 
     def test_delete(self, mock_build, *args):
         instance.delete('delete-name', 'a very fake zone')

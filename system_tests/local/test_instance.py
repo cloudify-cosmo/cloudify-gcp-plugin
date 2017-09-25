@@ -70,11 +70,8 @@ class GCPExternalIPPropertyTest(GCPTest, TestCase):
 
     def assertions(self):
         vm = self.test_env.storage.get_node_instances('vm')[0]
-
-        ephemeral_ip = vm['runtime_properties']['networkInterfaces'][0][
-                'accessConfigs'][0]['natIP']
-
-        self.assertIP(ephemeral_ip)
+        public_ip = vm.runtime_properties['public_ip_address']
+        self.assertIP(public_ip)
 
 
 class GCPInstanceScriptTest(GCPTest, TestCase):
