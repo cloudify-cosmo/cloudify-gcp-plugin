@@ -1,3 +1,7 @@
+1.0.2
+  - GCP-48 support metadata in additional_settings
+  - GCP-49 expose public_ip_address on Instances with a public address
+  - GCP-50 enable startup_script input directly as a string
 1.0.1
   - GCP-43 Instance add & delete access config methods now wait for the
     operation to finish.
