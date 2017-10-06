@@ -356,16 +356,7 @@ def create(instance_type,
     props = ctx.instance.runtime_properties
     gcp_config = utils.get_gcp_config()
 
-    script = ''
-
-    if startup_script:
-        if startup_script.get('type') == 'file':
-            script = ctx.get_resource(startup_script.get('script'))
-        elif startup_script.get('type') == 'string':
-            script = startup_script.get('script')
-        else:
-            raise NonRecoverableError(
-                'invalid script type: {}'.format(startup_script.get('type')))
+    script = _get_script(startup_script)
     ctx.logger.info('The script is {0}'.format(str(startup_script)))
 
     ssh_keys = get_ssh_keys()
@@ -643,3 +634,16 @@ def validate_contained_in_network(**kwargs):
                     'It is invalid to connect an instance directly to a '
                     'network with custom Subtneworks (i.e. `auto_subnets` '
                     'disabled')
+
+
+def _get_script(startup_script):
+    if not startup_script:
+        return ''
+    if not hasattr(startup_script, 'get'):
+        return startup_script
+    if startup_script.get('type') == 'file':
+        return ctx.get_resource(startup_script.get('script'))
+    if startup_script.get('type') == 'string':
+        return startup_script.get('script')
+    raise NonRecoverableError(
+        'invalid script type: {}'.format(startup_script.get('type')))
