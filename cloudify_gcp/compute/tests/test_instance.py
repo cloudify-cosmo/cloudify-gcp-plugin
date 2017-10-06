@@ -15,6 +15,7 @@
 #    * limitations under the License.
 
 from functools import partial
+from unittest import TestCase
 
 from mock import patch, Mock
 
@@ -28,6 +29,24 @@ utils_get_ssh_keys_patch = partial(
         patch,
         'cloudify_gcp.utils.get_agent_ssh_key_string',
         )
+
+
+class TestHelpers(TestCase):
+
+    def test__get_script_string(self):
+        response = instance._get_script({
+            'type': 'string',
+            'script': '📜',
+            })
+
+        self.assertEqual('📜', response)
+
+    def test__get_script_bare_string(self):
+        self.assertEqual('🐻', instance._get_script('🐻'))
+
+    def test__get_script_raises(self):
+        with self.assertRaises(NonRecoverableError):
+            instance._get_script({'type': 'bad'})
 
 
 @patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
@@ -44,6 +63,14 @@ class TestGCPInstance(TestGCP):
         self.ctxmock.node.properties.update({
                 'install_agent': False,
                 })
+
+    def test__get_script_file(self, *args):
+        instance._get_script({
+            'type': 'file',
+            'script': '/dev/null',
+            })
+
+        self.ctxmock.get_resource.assert_called_once_with('/dev/null')
 
     def test_create(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties.update({
