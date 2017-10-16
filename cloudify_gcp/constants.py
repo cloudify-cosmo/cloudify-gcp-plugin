@@ -66,12 +66,17 @@ GCP_DEFAULT_CONFIG_PATH = os.path.join(MANAGER_PLUGIN_FILES, 'gcp_config')
 RETRY_DEFAULT_DELAY = 30
 
 REGION_ZONES = {
-        'us-west1': 'ab',
+        'us-west1': 'abc',
         'us-central1': 'abcf',
         'us-east1': 'bcd',
+        'us-east4': 'abc',
         'europe-west1': 'bcd',
+        'europe-west2': 'abc',
+        'europe-west3': 'abc',
         'asia-east1': 'abc',
-        }
+        'asia-southeast1': 'ab',
+        'asia-northeast1': 'abc',
+}
 
 # As specified & listed at
 # https://cloud.google.com/compute/docs/regions-zones/regions-zones
