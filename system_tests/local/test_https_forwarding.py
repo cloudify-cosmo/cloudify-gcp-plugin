@@ -75,7 +75,7 @@ class GCPHttpsForwardingTest(GCPTest, TestCase):
         ssl_context.load_verify_locations('https-forwarder-test-cert')
 
         for i in range(40):
-            sleep(5)
+            sleep(10)
 
             try:
                 http = HTTPSConnection(

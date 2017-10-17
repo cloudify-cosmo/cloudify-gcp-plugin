@@ -32,7 +32,7 @@ class GCPHttpForwardingTest(GCPTest, TestCase):
     def assertions(self):
 
         for i in range(40):
-            sleep(5)
+            sleep(10)
             try:
                 text = urlopen('http://{}/'.format(
                     self.outputs['ip_ip'])).read()
