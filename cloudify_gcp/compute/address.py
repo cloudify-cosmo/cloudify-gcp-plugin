@@ -19,7 +19,6 @@ from os.path import basename
 from cloudify import ctx
 from cloudify.decorators import operation
 
-from .. import constants
 from .. import utils
 from cloudify_gcp.gcp import GoogleCloudPlatform
 from cloudify_gcp.gcp import check_response
@@ -46,7 +45,7 @@ class Address(GoogleCloudPlatform):
         self.region = region
 
     def _get_resource_type(self):
-        if self.region:
+        if 'cloudify.gcp.nodes.Address' in ctx.node.type_hierarchy:
             return self.discovery.addresses()
         return self.discovery.globalAddresses()
 
@@ -59,8 +58,11 @@ class Address(GoogleCloudPlatform):
 
     def _common_kwargs(self):
         args = {'project': self.project}
-        if self.region:
-            args['region'] = self.region
+        if 'cloudify.gcp.nodes.Address' in ctx.node.type_hierarchy:
+            if self.region:
+                args['region'] = self.region
+            else:
+                args['region'] = self.ZONES[self.config['zone']]['region_name']
         return args
 
     @check_response
@@ -89,9 +91,6 @@ class Address(GoogleCloudPlatform):
 def create(name, additional_settings, region=None, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
-
-    if not region and ctx.node.type == 'cloudify.gcp.nodes.Address':
-        region = constants.ZONE_REGIONS[gcp_config['zone']]
 
     address = Address(
             gcp_config,

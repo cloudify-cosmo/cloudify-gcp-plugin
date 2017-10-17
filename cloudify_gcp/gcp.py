@@ -14,6 +14,7 @@
 #    * limitations under the License.
 
 from functools import wraps
+from os.path import basename
 
 import httplib2
 from Crypto.Random import atfork
@@ -127,6 +128,25 @@ class GoogleCloudPlatform(object):
         metadata = self.discovery.projects().get(
             project=self.project).execute()
         return metadata['commonInstanceMetadata']
+
+    @property
+    def ZONES(self):
+        if not hasattr(self, '_ZONES'):
+            zones = {}
+            request = self.discovery.zones().list(project=self.project)
+            while request is not None:
+                response = request.execute()
+
+                for zone in response['items']:
+                    zones[zone['name']] = zone
+                    zone['region_name'] = basename(zone['region'])
+
+                request = self.discovery.zones().list_next(
+                        previous_request=request,
+                        previous_response=response)
+
+        self._ZONES = zones
+        return self._ZONES
 
 
 class GCPError(Exception):

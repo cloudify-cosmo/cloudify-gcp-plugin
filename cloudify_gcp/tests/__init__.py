@@ -21,28 +21,33 @@ from cloudify.state import current_ctx
 from cloudify.manager import DirtyTrackingDict
 
 
+def ctx_mock():
+    ctx = Mock()
+    ctx.node.name = 'name'
+    ctx.node.id = 'id'
+    ctx.node.properties = {
+        'agent_config': {'install_method': 'none'},
+        'gcp_config': {
+            'auth': {
+                'type': 'service_account',
+                'client_email': 'nobody@invalid',
+                'private_key_id': "This isn't even an ID!",
+                'private_key': 'nope!'
+                },
+            'zone': 'a very fake zone',
+            'network': 'not a real network',
+            'project': 'not really a project',
+            },
+        }
+    ctx.instance.runtime_properties = DirtyTrackingDict()
+    ctx.instance.relationships = []
+    return ctx
+
+
 class TestGCP(unittest.TestCase):
 
     def setUp(self):
         super(TestGCP, self).setUp()
 
-        ctx = self.ctxmock = Mock()
-        ctx.node.name = 'name'
-        ctx.node.id = 'id'
-        ctx.node.properties = {
-            'agent_config': {'install_method': 'none'},
-            'gcp_config': {
-                'auth': {
-                    'type': 'service_account',
-                    'client_email': 'nobody@invalid',
-                    'private_key_id': "This isn't even an ID!",
-                    'private_key': 'nope!'
-                    },
-                'zone': 'a very fake zone',
-                'network': 'not a real network',
-                'project': 'not really a project',
-                },
-            }
-        ctx.instance.runtime_properties = DirtyTrackingDict()
-        ctx.instance.relationships = []
-        current_ctx.set(ctx)
+        self.ctxmock = ctx_mock()
+        current_ctx.set(self.ctxmock)
