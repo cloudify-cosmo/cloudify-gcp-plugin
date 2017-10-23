@@ -44,12 +44,22 @@ class TestHelpers(TestCase):
         }
         self.assertEqual(new_script_format, response)
 
-    def test__get_script_bare_string(self):
+    def test__get_script_bare_string_old_format_input(self):
         new_script_format = {
             'key': 'startup-script',
             'value': '🐻'
         }
         self.assertEqual(new_script_format, instance._get_script('🐻'))
+
+    def test__get_script_bare_string_new_format_input(self):
+        new_script_format = {
+            'key': 'startup-script',
+            'value': '🐻'
+        }
+        self.assertEqual(new_script_format,
+                         instance._get_script({
+                                'key': 'startup-script',
+                                'value': '🐻'}))
 
 
 @patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
