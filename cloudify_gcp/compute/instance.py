@@ -14,6 +14,7 @@
 #    * limitations under the License.
 
 from os.path import basename
+import re
 
 from cloudify import ctx
 from cloudify.decorators import operation
@@ -28,6 +29,8 @@ from ..gcp import (
         GoogleCloudPlatform,
         )
 
+PS_OPEN = '<powershell>'
+PS_CLOSE = '</powershell>'
 POWERSHELL_SCRIPTS = ['sysprep-specialize-script-ps1',
                       'windows-startup-script-ps1']
 
@@ -643,14 +646,14 @@ def validate_contained_in_network(**kwargs):
 
 def _get_script(startup_script):
     """In plugin versions 1.0.0-1.0.1, startup-script was a either a string or
-    a dict. The dict would have the keys type and script. 1.0.2 Introduces a
+    a dict. The dict would have the keys type and script. 1.1.0 Introduces a
     structure that is more consistent with the GCP API. This method supports
     both.
     """
 
     if hasattr(startup_script, 'get'):
         startup_script_metadata = {
-                'key': startup_script.get('key', 'startup-script')
+            'key': startup_script.get('key', 'startup-script')
         }
         if startup_script.get('type') == 'file':
             startup_script_metadata['value'] = \
@@ -668,18 +671,19 @@ def _get_script(startup_script):
 
     install_agent_script = ctx.agent.init_script()
     os_family = ctx.node.properties['os_family']
-    PS_CLOSE = '</powershell>'
 
     if install_agent_script:
         existing_startup_script_value = startup_script_metadata['value']
         if startup_script_metadata.get('key') in POWERSHELL_SCRIPTS and \
                 os_family == 'windows':
-            split_agent_script = install_agent_script.split(PS_CLOSE)
-            split_agent_script.append(existing_startup_script_value)
-            split_agent_script.append(PS_CLOSE)
+            split_agent_script = re.split('{0}|{1}'.format(PS_OPEN, PS_CLOSE),
+                                          install_agent_script)
+            split_agent_script.insert(0, existing_startup_script_value)
+            split_agent_script.insert(0, PS_OPEN)
+            split_agent_script.insert(len(split_agent_script), PS_CLOSE)
         else:
-            split_agent_script = [install_agent_script,
-                                  existing_startup_script_value]
+            split_agent_script = [existing_startup_script_value,
+                                  install_agent_script]
         new_startup_script_value = '\n'.join(split_agent_script)
         startup_script_metadata['value'] = new_startup_script_value
 

@@ -450,7 +450,7 @@ class TestGCPInstance(TestGCP):
                             {'key': 'bucket', 'value': 'not really a project'},
                             {'key': 'sshKeys', 'value': ''},
                             {'key': 'startup-script',
-                             'value': 'SCRIPT STRING\nCyrillic'},
+                             'value': 'Cyrillic\nSCRIPT STRING'},
                             ]},
                         'tags': {'items': ['name', 'tags']},
                         'disks': [{
@@ -498,8 +498,9 @@ class TestGCPInstance(TestGCP):
                             {'key': 'bucket', 'value': 'not really a project'},
                             {'key': 'sshKeys', 'value': ''},
                             {'key': 'sysprep-specialize-script-ps1',
-                             'value': '<powershell>SCRIPT STRING1\n'
-                                      'SCRIPT_STRING2\n\nCyrillic\n'
+                             'value': '<powershell>\nCyrillic\n'
+                                      '\nSCRIPT STRING1\n'
+                                      'SCRIPT_STRING2\n\n'
                                       '</powershell>'},
                             ]},
                         'tags': {'items': ['name', 'tags']},
