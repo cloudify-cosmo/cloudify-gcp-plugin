@@ -46,3 +46,6 @@ class TestGCP(unittest.TestCase):
         ctx.instance.runtime_properties = DirtyTrackingDict()
         ctx.instance.relationships = []
         current_ctx.set(ctx)
+
+    def tearDown(self):
+        current_ctx.clear()
