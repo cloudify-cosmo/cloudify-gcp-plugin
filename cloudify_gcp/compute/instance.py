@@ -14,6 +14,7 @@
 #    * limitations under the License.
 
 from os.path import basename
+import re
 
 from cloudify import ctx
 from cloudify.decorators import operation
@@ -27,6 +28,11 @@ from ..gcp import (
         check_response,
         GoogleCloudPlatform,
         )
+
+PS_OPEN = '<powershell>'
+PS_CLOSE = '</powershell>'
+POWERSHELL_SCRIPTS = ['sysprep-specialize-script-ps1',
+                      'windows-startup-script-ps1']
 
 
 class Instance(GoogleCloudPlatform):
@@ -314,9 +320,11 @@ class Instance(GoogleCloudPlatform):
         add_key_value_to_metadata(KeyPair.KEY_VALUE,
                                   ssh_keys_str,
                                   self.body)
-        if self.startup_script:
-            add_key_value_to_metadata('startup-script',
-                                      self.startup_script,
+        if self.startup_script.get('value'):
+            key = self.startup_script['key']
+            value = self.startup_script['value']
+            add_key_value_to_metadata(key,
+                                      value,
                                       self.body)
 
         if not self.disks:
@@ -637,13 +645,46 @@ def validate_contained_in_network(**kwargs):
 
 
 def _get_script(startup_script):
-    if not startup_script:
-        return ''
-    if not hasattr(startup_script, 'get'):
-        return startup_script
-    if startup_script.get('type') == 'file':
-        return ctx.get_resource(startup_script.get('script'))
-    if startup_script.get('type') == 'string':
-        return startup_script.get('script')
-    raise NonRecoverableError(
-        'invalid script type: {}'.format(startup_script.get('type')))
+    """In plugin versions 1.0.0-1.0.1, startup-script was a either a string or
+    a dict. The dict would have the keys type and script. 1.1.0 Introduces a
+    structure that is more consistent with the GCP API. This method supports
+    both.
+    """
+
+    if hasattr(startup_script, 'get'):
+        startup_script_metadata = {
+            'key': startup_script.get('key', 'startup-script')
+        }
+        if startup_script.get('type') == 'file':
+            startup_script_metadata['value'] = \
+                ctx.get_resource(startup_script.get('script'))
+        elif startup_script.get('type') == 'string':
+            startup_script_metadata['value'] = startup_script.get('script')
+        else:
+            startup_script_metadata['value'] = startup_script.get('value')
+    else:
+        startup_script_metadata = {
+            'key': 'startup-script',
+            'value': startup_script if isinstance(startup_script,
+                                                  basestring) else ''
+        }
+
+    install_agent_script = ctx.agent.init_script()
+    os_family = ctx.node.properties['os_family']
+
+    if install_agent_script:
+        existing_startup_script_value = startup_script_metadata['value']
+        if startup_script_metadata.get('key') in POWERSHELL_SCRIPTS and \
+                os_family == 'windows':
+            split_agent_script = re.split('{0}|{1}'.format(PS_OPEN, PS_CLOSE),
+                                          install_agent_script)
+            split_agent_script.insert(0, existing_startup_script_value)
+            split_agent_script.insert(0, PS_OPEN)
+            split_agent_script.insert(len(split_agent_script), PS_CLOSE)
+        else:
+            split_agent_script = [existing_startup_script_value,
+                                  install_agent_script]
+        new_startup_script_value = '\n'.join(split_agent_script)
+        startup_script_metadata['value'] = new_startup_script_value
+
+    return startup_script_metadata

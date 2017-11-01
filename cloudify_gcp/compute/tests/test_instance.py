@@ -38,15 +38,28 @@ class TestHelpers(TestCase):
             'type': 'string',
             'script': '📜',
             })
+        new_script_format = {
+            'key': 'startup-script',
+            'value': '📜'
+        }
+        self.assertEqual(new_script_format, response)
 
-        self.assertEqual('📜', response)
+    def test__get_script_bare_string_old_format_input(self):
+        new_script_format = {
+            'key': 'startup-script',
+            'value': '🐻'
+        }
+        self.assertEqual(new_script_format, instance._get_script('🐻'))
 
-    def test__get_script_bare_string(self):
-        self.assertEqual('🐻', instance._get_script('🐻'))
-
-    def test__get_script_raises(self):
-        with self.assertRaises(NonRecoverableError):
-            instance._get_script({'type': 'bad'})
+    def test__get_script_bare_string_new_format_input(self):
+        new_script_format = {
+            'key': 'startup-script',
+            'value': '🐻'
+        }
+        self.assertEqual(new_script_format,
+                         instance._get_script({
+                                'key': 'startup-script',
+                                'value': '🐻'}))
 
 
 @patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
@@ -56,6 +69,8 @@ class TestGCPInstance(TestGCP):
 
     def setUp(self):
         super(TestGCPInstance, self).setUp()
+        # Default from types.yaml.
+        self.ctxmock.node.properties['os_family'] = 'linux'
         self.ctxmock.instance.runtime_properties['zone'] = 'a very fake zone'
         self.ctxmock.source.instance.runtime_properties = {
                 'zone': 'a very fake zone',
@@ -63,6 +78,9 @@ class TestGCPInstance(TestGCP):
         self.ctxmock.node.properties.update({
                 'install_agent': False,
                 })
+        self.ctxmock.agent.init_script = lambda: None \
+            if self.ctxmock.node.properties['install_agent'] is False \
+            else "SCRIPT STRING"
 
     def test__get_script_file(self, *args):
         instance._get_script({
@@ -388,6 +406,102 @@ class TestGCPInstance(TestGCP):
                             {'key': 'bucket', 'value': 'not really a project'},
                             {'key': 'sshKeys', 'value': ''},
                             {'key': 'startup-script', 'value': 'Cyrillic'},
+                            ]},
+                        'tags': {'items': ['name', 'tags']},
+                        'disks': [{
+                            'boot': True,
+                            'initializeParams': {'sourceImage': 'image_id'},
+                            'autoDelete': True}],
+                        'machineType': 'zones/zone/machineTypes/instance_type',
+                        'serviceAccounts': [{
+                            'email': 'default', 'scopes': 'scopes'}],
+                        'name': 'name',
+                        'canIpForward': False,
+                        'description': 'Cloudify generated instance',
+                        'networkInterfaces': [{
+                            'network': 'projects/not really a project/global'
+                                       '/networks/not a real network'}]
+                        },
+                project='not really a project', zone='zone'
+                )
+
+    def test_create_with_script_and_agent(self, mock_build, *args):
+        self.ctxmock.node.properties['install_agent'] = True
+        instance.create(
+                'instance_type',
+                'image_id',
+                'name',
+                zone='zone',
+                external_ip=False,
+                startup_script={
+                    'type': 'string',
+                    'script': 'Cyrillic',
+                    },
+                scopes='scopes',
+                tags=['tags'],
+                )
+
+        mock_build().instances().insert.call_args[1][
+                'body']['tags']['items'].sort()
+        mock_build().instances().insert.assert_called_with(
+                body={
+                    'metadata': {
+                        'items': [
+                            {'key': 'bucket', 'value': 'not really a project'},
+                            {'key': 'sshKeys', 'value': ''},
+                            {'key': 'startup-script',
+                             'value': 'Cyrillic\nSCRIPT STRING'},
+                            ]},
+                        'tags': {'items': ['name', 'tags']},
+                        'disks': [{
+                            'boot': True,
+                            'initializeParams': {'sourceImage': 'image_id'},
+                            'autoDelete': True}],
+                        'machineType': 'zones/zone/machineTypes/instance_type',
+                        'serviceAccounts': [{
+                            'email': 'default', 'scopes': 'scopes'}],
+                        'name': 'name',
+                        'canIpForward': False,
+                        'description': 'Cloudify generated instance',
+                        'networkInterfaces': [{
+                            'network': 'projects/not really a project/global'
+                                       '/networks/not a real network'}]
+                        },
+                project='not really a project', zone='zone'
+                )
+
+    def test_create_with_script_and_windows_agent(self, mock_build, *args):
+        self.ctxmock.node.properties['os_family'] = 'windows'
+        self.ctxmock.node.properties['install_agent'] = True
+        ps1 = '<powershell>SCRIPT STRING1\nSCRIPT_STRING2</powershell>'
+        self.ctxmock.agent.init_script = Mock(return_value=ps1)
+        instance.create(
+                'instance_type',
+                'image_id',
+                'name',
+                zone='zone',
+                external_ip=False,
+                startup_script={
+                    'key': 'sysprep-specialize-script-ps1',
+                    'value': 'Cyrillic',
+                    },
+                scopes='scopes',
+                tags=['tags'],
+                )
+
+        mock_build().instances().insert.call_args[1][
+                'body']['tags']['items'].sort()
+        mock_build().instances().insert.assert_called_with(
+                body={
+                    'metadata': {
+                        'items': [
+                            {'key': 'bucket', 'value': 'not really a project'},
+                            {'key': 'sshKeys', 'value': ''},
+                            {'key': 'sysprep-specialize-script-ps1',
+                             'value': '<powershell>\nCyrillic\n'
+                                      '\nSCRIPT STRING1\n'
+                                      'SCRIPT_STRING2\n\n'
+                                      '</powershell>'},
                             ]},
                         'tags': {'items': ['name', 'tags']},
                         'disks': [{
