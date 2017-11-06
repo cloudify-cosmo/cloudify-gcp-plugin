@@ -13,71 +13,82 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from mock import patch
+import pytest
+from mock import patch, PropertyMock
 
 from .. import address
-from ...tests import TestGCP
 
 
-@patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
+@pytest.fixture(autouse=True)
+def patch_zones():
+    with patch(
+            'cloudify_gcp.gcp.GoogleCloudPlatform.ZONES',
+            new_callable=PropertyMock,
+            return_value={
+                'a very fake zone': {
+                    'region_name': 'expected region name',
+                    },
+                },
+            ):
+        yield
+
+
 @patch('cloudify_gcp.gcp.build')
-class TestAddress(TestGCP):
+@pytest.mark.parametrize(
+        'region, node_type, section', [
+            ('region', 'cloudify.gcp.nodes.Address', 'addresses'),
+            (None, 'cloudify.gcp.nodes.Address', 'addresses'),
+            (None, 'cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
+            ],
+        )
+def test_create(mock_build, region, node_type, section, ctx):
+    ctx.node.type_hierarchy = [node_type]
 
-    def setUp(self):
-        super(TestAddress, self).setUp()
+    address.create(
+            'name',
+            additional_settings={},
+            region=region,
+            )
 
-        self.ctxmock.node.properties['gcp_config']['zone'] = 'us-central1-b'
+    expected = {
+            'body': {
+                'description': 'Cloudify generated Address',
+                'name': 'name',
+                },
+            'project': 'not really a project',
+            }
+    if region:
+        expected['region'] = 'region'
+    elif section == 'addresses':
+        expected['region'] = 'expected region name'
 
-    def test_create(self, mock_build, *args):
-        address.create(
-                'name',
-                additional_settings={},
-                region='region',
-                )
+    getattr(mock_build(), section)().insert.assert_called_once_with(**expected)
 
-        mock_build().addresses().insert.assert_called_once_with(
-                body={
-                    'description': 'Cloudify generated Address',
-                    'name': 'name',
-                    },
-                project='not really a project',
-                region='region',
-                )
 
-    def test_delete(self, mock_build, *args):
-        self.ctxmock.instance.runtime_properties.update({
-            'gcp_name': 'delete me',
-            'region': 'Costa Del Sol',
-            'name': 'delete me',
-            })
+@patch('cloudify_gcp.gcp.build')
+@pytest.mark.parametrize(
+        'node_type, section', [
+            ('cloudify.gcp.nodes.Address', 'addresses'),
+            ('cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
+            ],
+        )
+def test_delete(mock_build, node_type, section, ctx):
+    ctx.node.type_hierarchy = [node_type]
+    ctx.instance.runtime_properties.update({
+        'gcp_name': 'delete me',
+        'region': 'Costa Del Sol',
+        'name': 'delete me',
+        })
 
-        address.delete()
+    address.delete()
 
-        mock_build().addresses().delete.assert_called_once_with(
-                project='not really a project',
-                address='delete me',
-                region='Costa Del Sol',
-                )
+    expected = dict(
+            project='not really a project',
+            address='delete me',
+            )
+    if section == 'addresses':
+        expected['region'] = 'Costa Del Sol'
 
-    def test_create_global(self, mock_build, *args):
-        address.create('name', '')
-
-        mock_build().globalAddresses().insert.assert_called_once_with(
-                body={
-                    'description': 'Cloudify generated Address',
-                    'name': 'name',
-                    },
-                project='not really a project',
-                )
-
-    def test_delete_global(self, mock_build, *args):
-        self.ctxmock.instance.runtime_properties.update({
-            'name': 'delete me',
-            })
-
-        address.delete()
-
-        mock_build().globalAddresses().delete.assert_called_once_with(
-                project='not really a project',
-                address='delete me',
-                )
+    getattr(mock_build(), section)().delete.assert_called_once_with(
+            **expected
+            )

@@ -45,23 +45,6 @@ class TestGCP(unittest.TestCase):
 
         instance.logger.error.assert_called_once()
 
-    @patch('cloudify_gcp.gcp.GoogleCloudPlatform.create_discovery')
-    @patch('cloudify_gcp.gcp.build')
-    def test_get_common_instance_metadata(self, mock_build, mock_discovery):
-        instance = gcp.GoogleCloudPlatform(
-                config=MagicMock(),
-                logger=MagicMock(),
-                name='fred')
-
-        metadata = instance.get_common_instance_metadata()
-
-        mock_discovery().projects().get().execute(
-                ).__getitem__.assert_called_once_with('commonInstanceMetadata')
-
-        self.assertEqual(
-                mock_discovery().projects().get().execute().__getitem__(),
-                metadata)
-
     def test_is_missing_resource_error(self):
         for exception, output in [
                 (None, False),
@@ -83,3 +66,71 @@ class TestGCP(unittest.TestCase):
             self.assertIs(
                     gcp.is_resource_used_error(exception),
                     output)
+
+
+@patch('cloudify_gcp.gcp.GoogleCloudPlatform.create_discovery')
+@patch('cloudify_gcp.gcp.build')
+class TestGCPWithPatches(unittest.TestCase):
+
+    def test_get_common_instance_metadata(self, mock_build, mock_discovery):
+        instance = gcp.GoogleCloudPlatform(
+                config=MagicMock(),
+                logger=MagicMock(),
+                name='fred')
+
+        metadata = instance.get_common_instance_metadata()
+
+        mock_discovery().projects().get().execute(
+                ).__getitem__.assert_called_once_with('commonInstanceMetadata')
+
+        self.assertEqual(
+                mock_discovery().projects().get().execute().__getitem__(),
+                metadata)
+
+    def test_ZONES(self, mock_build, mock_discovery):
+        mock_discovery().zones().list.return_value.execute.return_value = {
+                'items': [
+                    {
+                        'name': 'Bob',
+                        'region': 'http://some.place/stuff/bob',
+                        },
+                    {
+                        'name': 'Sarah',
+                        'region': 'http://some.place/stuff/things/Sarah',
+                        },
+                    ],
+                }
+        mock_discovery().zones().list_next.return_value = None
+        config = {
+                'auth': {
+                    },
+                'project': 'proj',
+                'zone': 'zn',
+                }
+        instance = gcp.GoogleCloudPlatform(
+                config=config,
+                logger=MagicMock(),
+                name='fred')
+
+        zones = instance.ZONES
+
+        mock_discovery().zones().list.assert_called_once_with(project='proj')
+        mock_discovery().zones().list_next.assert_called_once_with(
+                previous_request=mock_discovery().zones().list(),
+                previous_response=(
+                    mock_discovery().zones().
+                    list.return_value.execute.return_value),
+                )
+
+        assert zones == {
+                'Bob': {
+                    'name': 'Bob',
+                    'region': 'http://some.place/stuff/bob',
+                    'region_name': 'bob',
+                    },
+                'Sarah': {
+                    'name': 'Sarah',
+                    'region': 'http://some.place/stuff/things/Sarah',
+                    'region_name': 'Sarah',
+                    },
+                }
