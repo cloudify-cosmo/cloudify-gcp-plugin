@@ -15,7 +15,6 @@
 #    * limitations under the License.
 
 from functools import partial
-from unittest import TestCase
 
 from mock import patch, Mock
 
@@ -29,37 +28,6 @@ utils_get_ssh_keys_patch = partial(
         patch,
         'cloudify_gcp.utils.get_agent_ssh_key_string',
         )
-
-
-class TestHelpers(TestCase):
-
-    def test__get_script_string(self):
-        response = instance._get_script({
-            'type': 'string',
-            'script': '📜',
-            })
-        new_script_format = {
-            'key': 'startup-script',
-            'value': '📜'
-        }
-        self.assertEqual(new_script_format, response)
-
-    def test__get_script_bare_string_old_format_input(self):
-        new_script_format = {
-            'key': 'startup-script',
-            'value': '🐻'
-        }
-        self.assertEqual(new_script_format, instance._get_script('🐻'))
-
-    def test__get_script_bare_string_new_format_input(self):
-        new_script_format = {
-            'key': 'startup-script',
-            'value': '🐻'
-        }
-        self.assertEqual(new_script_format,
-                         instance._get_script({
-                                'key': 'startup-script',
-                                'value': '🐻'}))
 
 
 @patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
@@ -89,6 +57,34 @@ class TestGCPInstance(TestGCP):
             })
 
         self.ctxmock.get_resource.assert_called_once_with('/dev/null')
+
+    def test__get_script_string(self, *_):
+        response = instance._get_script({
+            'type': 'string',
+            'script': '📜',
+            })
+        new_script_format = {
+            'key': 'startup-script',
+            'value': '📜'
+        }
+        self.assertEqual(new_script_format, response)
+
+    def test__get_script_bare_string_old_format_input(self, *_):
+        new_script_format = {
+            'key': 'startup-script',
+            'value': '🐻'
+        }
+        self.assertEqual(new_script_format, instance._get_script('🐻'))
+
+    def test__get_script_bare_string_new_format_input(self, *_):
+        new_script_format = {
+            'key': 'startup-script',
+            'value': '🐻'
+        }
+        self.assertEqual(new_script_format,
+                         instance._get_script({
+                                'key': 'startup-script',
+                                'value': '🐻'}))
 
     def test_create(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties.update({

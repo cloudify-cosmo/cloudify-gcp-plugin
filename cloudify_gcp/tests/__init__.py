@@ -51,3 +51,6 @@ class TestGCP(unittest.TestCase):
 
         self.ctxmock = ctx_mock()
         current_ctx.set(self.ctxmock)
+
+    def tearDown(self):
+        current_ctx.clear()
