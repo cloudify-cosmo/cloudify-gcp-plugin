@@ -2,7 +2,6 @@ test:
   override:
     - tox -e flake8
     - tox -e docs
-    - mkdir -p $CIRCLE_TEST_REPORTS/nose
-    - tox -e py27 -- --with-xunit --xunit-file=$CIRCLE_TEST_REPORTS/nose/nosetests.xml
+    - tox -e py27
     - mv .tox/docs/tmp/html $CIRCLE_ARTIFACTS
 
