@@ -1,0 +1,41 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.4/types.yaml
+  - plugin.yaml
+
+
+inputs:
+  gcp_auth:
+  project:
+  zone:
+  network:
+
+dsl_definitions:
+  - &gcp_config
+    auth: { get_input: gcp_auth }
+    project: { get_input: project }
+    zone: { get_input: zone }
+    network: { get_input: network }
+
+
+node_templates:
+
+  kubernetes-network-policy:
+    type: cloudify.gcp.nodes.KubernetesClusterNetworkPolicy
+    properties:
+      cluster_id: { get_property: [ kubernetes-cluster, name] }
+      gcp_config: *gcp_config
+      network_policy_config:
+        provider: 'CALICO'
+        enabled: true
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: kubernetes-cluster
+
+  kubernetes-cluster:
+    type: cloudify.gcp.nodes.KubernetesCluster
+    properties:
+      name: 'cluster-1'
+      gcp_config: *gcp_config

@@ -26,6 +26,7 @@ setup(
     packages=[
         'cloudify_gcp',
         'cloudify_gcp.compute',
+        'cloudify_gcp.container_engine',
         'cloudify_gcp.dns',
         ],
 
