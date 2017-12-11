@@ -20,9 +20,11 @@ ID_HASH_CONST = 6
 COMPUTE_SCOPE = 'https://www.googleapis.com/auth/compute'
 STORAGE_SCOPE_RW = 'https://www.googleapis.com/auth/devstorage.read_write'
 STORAGE_SCOPE_FULL = 'https://www.googleapis.com/auth/devstorage.full_control'
+CONTAINER_SCOPE = 'https://www.googleapis.com/auth/cloud-platform'
 
 COMPUTE_DISCOVERY = 'compute'
 STORAGE_DISCOVERY = 'storage'
+CONTAINER_DISCOVERY = 'container'
 
 CHUNKSIZE = 2 * 1024 * 1024
 
@@ -30,6 +32,12 @@ API_V1 = 'v1'
 API_BETA = 'beta'
 
 DISK = 'gcp_disk'
+KUBERNETES_CLUSTER = 'gcp_kubernetes_cluster'
+KUBERNETES_NODE_POOL = 'gcp_kubernetes_node_pool'
+KUBERNETES_RUNNING_STATUS = 'RUNNING'
+KUBERNETES_PROVISIONING_STATUS = 'PROVISIONING'
+KUBERNETES_STOPPING_STATUS = 'STOPPING'
+KUBERNETES_ERROR_STATUS = 'ERROR'
 GCP_ZONE = 'gcp_zone'
 HEALTH_CHECK_TYPE = 'gcp_health_check_type'
 TARGET_PROXY_TYPE = 'gcp_target_proxy_type'

@@ -1,9 +1,9 @@
 plugins:
   gcp_plugin:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.1.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.2.0.dev0.zip
     package_name: cloudify-gcp-plugin
-    package_version: '1.1.0'
+    package_version: '1.2.0.dev0'
 
 node_types:
   cloudify.gcp.nodes.Instance:
@@ -11,7 +11,7 @@ node_types:
     properties:
       use_external_resource:
         description: >
-          Indicate whether the resource exists and use existing (true) 
+          Indicate whether the resource exists and use existing (true)
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
@@ -26,7 +26,7 @@ node_types:
         default: {}
       instance_type:
         description: >
-          The instance's type. All available instance types can be found here: 
+          The instance's type. All available instance types can be found here:
           https://cloud.google.com/compute/docs/machine-types
         type: string
         default: n1-standard-1
@@ -59,7 +59,7 @@ node_types:
         default: false
       scopes:
         description: >
-          Optional scopes. If not will set by default: 
+          Optional scopes. If not will set by default:
           'https://www.googleapis.com/auth/devstorage.read_write',
           'https://www.googleapis.com/auth/logging.write'
         default: []
@@ -444,9 +444,9 @@ node_types:
         default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
-        create: 
+        create:
           implementation: gcp_plugin.cloudify_gcp.compute.security_group.create
-          inputs: 
+          inputs:
             rules:
               default: { get_property: [SELF, rules] }
             name:
@@ -493,18 +493,18 @@ node_types:
         create:
           implementation: gcp_plugin.cloudify_gcp.compute.keypair.create
           inputs:
-            user: 
+            user:
               default: { get_property: [SELF, user] }
-            private_key_path: 
+            private_key_path:
               default: { get_property: [SELF, private_key_path] }
             public_key_path:
               default: { get_property: [SELF, public_key_path] }
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.keypair.delete
           inputs:
-            user: 
+            user:
               default: { get_property: [SELF, user] }
-            private_key_path: 
+            private_key_path:
               default: { get_property: [SELF, private_key_path] }
 
   cloudify.gcp.nodes.ExternalIP:
@@ -933,7 +933,7 @@ node_types:
     properties:
       use_external_resource:
         description: >
-          Indicate whether the resource exists and use existing (true) 
+          Indicate whether the resource exists and use existing (true)
           or if Cloudify should create new resource (false).
         type: boolean
         default: false
@@ -1045,7 +1045,222 @@ node_types:
       type:
         default: TXT
 
+  cloudify.gcp.nodes.KubernetesCluster:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Kubernetes cluster name
+        type: string
+        default: ''
+      additional_settings:
+        description: >
+          Additional setting for instance group
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.cluster.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
+        start:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.cluster.start
+        stop:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.cluster.stop
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.cluster.delete
 
+  cloudify.gcp.nodes.KubernetesNodePool:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Node Pool name of Kubernetes cluster.
+        type: string
+        default: ''
+      cluster_id:
+        description: >
+          Kubernetes cluster name (id)
+        type: string
+        required: true
+      additional_settings:
+        description: >
+          Additional setting for instance group
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.node_pool.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            cluster_id:
+               default: { get_property: [SELF, cluster_id]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
+        start:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.node_pool.start
+        stop:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.node_pool.stop
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.node_pool.delete
+
+  cloudify.gcp.nodes.KubernetesClusterMonitoring:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      monitoring_service:
+        description: >
+          The monitoring service the cluster should use to write metrics.
+          Currently available options:
+          "monitoring.googleapis.com" - the Google Cloud Monitoring service
+          "none" - no metrics will be exported from the cluster
+        type: string
+        default: 'none'
+      cluster_id:
+        description: >
+          Kubernetes cluster name (id)
+        type: string
+        required: true
+      additional_settings:
+        description: >
+          Additional setting for instance group
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.monitoring.set_monitoring_service
+          inputs:
+            monitoring_service:
+              default: { get_property: [SELF, monitoring_service]}
+            cluster_id:
+               default: { get_property: [SELF, cluster_id]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.monitoring.unset_monitoring_service
+
+  cloudify.gcp.nodes.KubernetesClusterlegacyAbac:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      enabled:
+        description: >
+          Whether ABAC authorization will be enabled in the cluster.
+        type: boolean
+        default: false
+      cluster_id:
+        description: >
+          Kubernetes cluster name (id)
+        type: string
+        required: true
+      additional_settings:
+        description: >
+          Additional setting for instance group
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.legacy_abac.enable_legacy_abac
+          inputs:
+            enabled:
+              default: { get_property: [SELF, enabled]}
+            cluster_id:
+               default: { get_property: [SELF, cluster_id]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.legacy_abac.disable_legacy_abac
+
+  cloudify.gcp.nodes.KubernetesClusterNetworkPolicy:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      network_policy_config:
+        description: >
+          Configuration options for the NetworkPolicy feature.
+        required: true
+      cluster_id:
+        description: >
+          Kubernetes cluster name (id)
+        type: string
+        required: true
+      additional_settings:
+        description: >
+          Additional setting for instance group
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.enable_network_policy_addon
+          inputs:
+           network_policy_config:
+             default: { get_property: [SELF, network_policy_config]}
+           cluster_id:
+             default: { get_property: [SELF, cluster_id]}
+           additional_settings:
+             default: { get_property: [SELF, additional_settings]}
+        start:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.create_network_policy_config
+          inputs:
+           network_policy_config:
+             default: { get_property: [SELF, network_policy_config]}
+           additional_settings:
+             default: { get_property: [SELF, additional_settings]}
+        stop:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.delete_network_policy_config
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.disable_network_policy_addon
 relationships:
 
   cloudify.gcp.relationships.instance_connected_to_security_group:
@@ -1055,7 +1270,7 @@ relationships:
         establish:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.add_instance_tag
           inputs:
-            instance_name: 
+            instance_name:
               default: { get_attribute: [SOURCE, name] }
             zone:
               default: { get_attribute: [SOURCE, zone] }
@@ -1064,7 +1279,7 @@ relationships:
         unlink:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.remove_instance_tag
           inputs:
-            instance_name: 
+            instance_name:
               default: { get_attribute: [SOURCE, name] }
             zone:
               default: { get_attribute: [SOURCE, zone] }
@@ -1078,14 +1293,14 @@ relationships:
         establish:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.add_external_ip
           inputs:
-            instance_name: 
+            instance_name:
               default: { get_attribute: [SOURCE, name] }
             zone:
               default: { get_attribute: [SOURCE, zone] }
         unlink:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.remove_external_ip
           inputs:
-            instance_name: 
+            instance_name:
               default: { get_attribute: [SOURCE, name] }
             zone:
               default: { get_attribute: [SOURCE, zone] }
@@ -1107,20 +1322,20 @@ relationships:
         establish:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.attach_disk
           inputs:
-            instance_name: 
+            instance_name:
               default: { get_attribute: [TARGET, name] }
             zone:
               default: { get_attribute: [TARGET, zone] }
-            disk: 
+            disk:
               default: { get_attribute: [SOURCE, gcp_disk] }
         unlink:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.detach_disk
           inputs:
-            instance_name: 
+            instance_name:
               default: { get_property: [TARGET, name] }
             zone:
               default: { get_attribute: [TARGET, zone] }
-            disk_name: 
+            disk_name:
               default: { get_attribute: [SOURCE, name] }
 
   cloudify.gcp.relationships.instance_connected_to_instance_group:
