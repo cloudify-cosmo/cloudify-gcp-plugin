@@ -123,6 +123,14 @@ def start(**kwargs):
         elif cluster_status == constants.KUBERNETES_ERROR_STATUS:
             raise NonRecoverableError('Kubernetes cluster failed to start')
 
+        else:
+            ctx.logger.warn(
+                'cluster status is neither {0}, {1}, {2}.'
+                ' Unknown Status: {3}'.format(
+                    constants.KUBERNETES_RUNNING_STATUS,
+                    constants.KUBERNETES_PROVISIONING_STATUS,
+                    constants.KUBERNETES_ERROR_STATUS, cluster_status))
+
 
 @operation
 @utils.throw_cloudify_exceptions
