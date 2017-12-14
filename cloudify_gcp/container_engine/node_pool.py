@@ -137,10 +137,10 @@ def start(**kwargs):
     created_node = get_node(node_pool)
     if not created_node:
         ctx.operation.retry(
-            'Kubernetes node pool {} is not starting yet,'
-            ' re-try after 15 seconds'.format(name), 15)
+            'Kubernetes node pool {0} '
+            'is still provisioning'.format(name), 15)
 
-    ctx.logger.debug('Node Pool {} started successfully'.format(name))
+    ctx.logger.debug('Node pool {0} started successfully'.format(name))
     ctx.instance.runtime_properties[
         constants.KUBERNETES_NODE_POOL] = created_node
 
@@ -161,7 +161,8 @@ def stop(**kwargs):
         if remote_mode:
             utils.delete_if_not_external(node_pool)
         else:
-            ctx.operation.retry('Node Pool {} already stopped'.format(name))
+            ctx.operation.retry(
+                'Node pool {0} stopped'.format(name))
 
 
 @operation
@@ -178,4 +179,4 @@ def delete(**kwargs):
         remote_mode = get_node(node_pool)
         if not remote_mode:
             ctx.operation.retry(
-                'Node Pool {} deleted successfully'.format(name))
+                'Node pool {0} deleted successfully'.format(name))

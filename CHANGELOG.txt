@@ -1,14 +1,16 @@
-1.1.0
+1.2.0:
+  - GKE cluster, node-pool, monitoring, network policy, and legacy abac.
+1.1.0:
   - GCP-48 support metadata in additional_settings
   - GCP-49 expose public_ip_address on Instances with a public address
   - GCP-50 enable startup_script input directly as a string
   - (GCP-51 add missing zones)
   - GCP-44 fetch availability zones from API
   - switched unit test runner from nose to pytest
-1.0.1
+1.0.1:
   - GCP-43 Instance add & delete access config methods now wait for the
     operation to finish.
-1.0
+1.0:
   - new Cloud DNS support
   - New SubNetwork node type
   - Network node type now supports auto- and manual-subnet operation instead
