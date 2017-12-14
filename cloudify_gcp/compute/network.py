@@ -109,6 +109,71 @@ class Network(GoogleCloudPlatform):
         return self.body
 
 
+class NetworkPeering(GoogleCloudPlatform):
+    def __init__(self,
+                 config,
+                 logger,
+                 name,
+                 network,
+                 peerNetwork,
+                 autoCreateRoutes=True
+                 ):
+        """
+        Create VPN Network Peering object
+
+        :param config: gcp auth file
+        :param logger: logger object
+        :param name:  name of peering
+        :param network name of the network resource to add peering to
+        :param peerNetwork name of  the peer network
+        :param autoCreateRoutes `hether Google Compute Engine manages
+               the routes automatically
+        """
+        super(NetworkPeering, self).__init__(
+            config,
+            logger,
+            utils.get_gcp_resource_name(name),
+            additional_settings=None,
+            )
+        self.network = network
+        self.peerNetwork = peerNetwork
+        self.autoCreateRoutes = autoCreateRoutes
+
+    @check_response
+    def create(self):
+        """
+        Create a peering to the specified network
+        Global operation.
+
+        :return: REST response with operation responsible for the peering
+        creation process and its status
+        """
+        self.logger.info('VPN peering network {0}'.format(self.name))
+        return self.discovery.networks().addPeering(
+            project=self.project,
+            network=self.network,
+            body={
+                "name": self.name,
+                "peerNetwork": 'global/networks/{}'.format(self.peerNetwork),
+                "autoCreateRoutes": self.autoCreateRoutes}).execute()
+
+    @utils.async_operation()
+    @check_response
+    def delete(self):
+        """
+        Delete a peering from the specified network.
+        Global operation
+
+        :return: REST response with operation responsible for the network
+        deletion process and its status
+        """
+        self.logger.info('Delete peering network {0}'.format(self.name))
+        return self.discovery.networks().removePeering(
+            project=self.project,
+            network=self.network,
+            body={"name": self.name}).execute()
+
+
 @operation
 @utils.throw_cloudify_exceptions
 def create(name, auto_subnets, additional_settings, **kwargs):
@@ -143,3 +208,51 @@ def delete(name, **kwargs):
             name)
 
     utils.delete_if_not_external(network)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def add_peering(name, network, peerNetwork, autoCreateRoutes, **kwargs):
+    gcp_config = utils.get_gcp_config()
+    name = utils.get_final_resource_name(name)
+
+    peer = NetworkPeering(
+            config=gcp_config,
+            logger=ctx.logger,
+            name=name,
+            network=network,
+            peerNetwork=peerNetwork,
+            autoCreateRoutes=autoCreateRoutes)
+
+    utils.create(peer)
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def remove_peering(name, network, peerNetwork,  **kwargs):
+    gcp_config = utils.get_gcp_config()
+    props = ctx.instance.runtime_properties
+
+    if props.get('name'):
+        name = props['name']
+    else:
+        name = utils.get_final_resource_name(name)
+
+    if props.get('network'):
+        network = props['network']
+    else:
+        network = utils.get_final_resource_name(network)
+
+    if props.get('peerNetwork'):
+        peerNetwork = props['peerNetwork']
+    else:
+        peerNetwork = utils.get_final_resource_name(peerNetwork)
+
+    peer = NetworkPeering(
+            config=gcp_config,
+            logger=ctx.logger,
+            name=name,
+            network=network,
+            peerNetwork=peerNetwork)
+
+    utils.delete_if_not_external(peer)
