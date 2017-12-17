@@ -41,3 +41,6 @@ nosetests.xml
 .qbcache/
 
 .noseids
+
+# IDE
+.DS_Store

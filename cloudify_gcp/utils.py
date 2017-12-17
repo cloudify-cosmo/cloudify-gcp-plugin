@@ -115,6 +115,7 @@ def create_resource(func):
             try:
                 resource.body = resource.get()
             except HttpError as error:
+                ctx.logger.error(str(error))
                 if is_missing_resource_error(error):
                     name = ctx.node.properties.get(constants.RESOURCE_ID)
                     raise NonRecoverableError(
