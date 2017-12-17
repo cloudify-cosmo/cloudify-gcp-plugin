@@ -117,7 +117,8 @@ def start(**kwargs):
             ctx.logger.debug('Kubernetes cluster running.')
 
         elif cluster_status == constants.KUBERNETES_PROVISIONING_STATUS:
-            ctx.operation.retry('Kubernetes cluster is still provisioning.', 15)
+            ctx.operation.retry(
+                'Kubernetes cluster is still provisioning.', 15)
 
         elif cluster_status == constants.KUBERNETES_ERROR_STATUS:
             raise NonRecoverableError('Kubernetes cluster in error state.')
