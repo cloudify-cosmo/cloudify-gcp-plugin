@@ -1,5 +1,6 @@
 1.2.0:
   - GKE cluster, node-pool, monitoring, network policy, and legacy abac.
+  - VPC Peering.
 1.1.0:
   - GCP-48 support metadata in additional_settings
   - GCP-49 expose public_ip_address on Instances with a public address

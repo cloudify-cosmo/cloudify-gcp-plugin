@@ -7,28 +7,170 @@ imports:
 
 
 inputs:
-  gcp_auth:
-  project:
-  zone:
 
+  client_x509_cert_url:
+    type: string
+    default: { get_secret: client_x509_cert_url }
+
+  client_email:
+    type: string
+    default: { get_secret: client_email }
+
+  client_id:
+    type: string
+    default: { get_secret: client_id }
+
+  project_id:
+    type: string
+    default: { get_secret: project_id }
+
+  private_key_id:
+    type: string
+    default: { get_secret: private_key_id }
+
+  private_key:
+    type: string
+    default: { get_secret: private_key }
+
+  zone:
+    type: string
+    default: { get_secret: zone }
+
+  region:
+    type: string
+    default: { get_secret: region }
+
+  resource_prefix:
+    type: string
+    default: ex
 
 dsl_definitions:
-  - &gcp_config
-    auth: { get_input: gcp_auth }
-    project: { get_input: project }
-    zone: { get_input: zone }
 
+  - &gcp_config
+    auth:
+      type: service_account
+      auth_uri: https://accounts.google.com/o/oauth2/auth
+      token_uri: https://accounts.google.com/o/oauth2/token
+      auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+      client_x509_cert_url: { get_input: client_x509_cert_url }
+      client_email: { get_input: client_email }
+      client_id: { get_input: client_id }
+      project_id: { get_input: project_id }
+      private_key_id: { get_input: private_key_id }
+      private_key: { get_input: private_key }
+    project: { get_input: project_id }
+    zone: { get_input: zone }
 
 node_templates:
 
-  simple-network:
+  # Peering
+
+  vpc_peering_net1-net2:
+    type: cloudify.gcp.nodes.VPCNetworkPeering
+    properties:
+      gcp_config: *gcp_config
+      network: { get_property: [ net1, name] }
+      peerNetwork: { get_property: [ net2, name] }
+    relationships:
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net1
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net2
+
+  vpc_peering_net2-net1:
+    type: cloudify.gcp.nodes.VPCNetworkPeering
+    properties:
+      gcp_config: *gcp_config
+      network: { get_property: [ net2, name] }
+      peerNetwork: { get_property: [ net1, name] }
+    relationships:
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net2
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net1
+
+  vpc_peering_net3-net1:
+    type: cloudify.gcp.nodes.VPCNetworkPeering
+    properties:
+      gcp_config: *gcp_config
+      network: { get_property: [ net3, name] }
+      peerNetwork: { get_property: [ net1, name] }
+    relationships:
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net3
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net2
+
+  vpc_peering_net1-net3:
+    type: cloudify.gcp.nodes.VPCNetworkPeering
+    properties:
+      gcp_config: *gcp_config
+      network: { get_property: [ net1, name] }
+      peerNetwork: { get_property: [ net3, name] }
+    relationships:
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net1
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net3
+
+  vpc_peering_net3-net2:
+    type: cloudify.gcp.nodes.VPCNetworkPeering
+    properties:
+      gcp_config: *gcp_config
+      network: { get_property: [ net3, name] }
+      peerNetwork: { get_property: [ net2, name] }
+    relationships:
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net3
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net2
+
+  vpc_peering_net2-net3:
+    type: cloudify.gcp.nodes.VPCNetworkPeering
+    properties:
+      gcp_config: *gcp_config
+      network: { get_property: [ net2, name] }
+      peerNetwork: { get_property: [ net3, name] }
+    relationships:
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net2
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net3
+
+  vpc_peering_net3-net4:
+    type: cloudify.gcp.nodes.VPCNetworkPeering
+    properties:
+      gcp_config: *gcp_config
+      network: { get_property: [ net3, name] }
+      peerNetwork: { get_property: [ net4, name] }
+    relationships:
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net3
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net4
+
+  net4-net3:
+    type: cloudify.gcp.nodes.VPCNetworkPeering
+    properties:
+      gcp_config: *gcp_config
+      network: { get_property: [ net4, name] }
+      peerNetwork: { get_property: [ net3, name] }
+    relationships:
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net4
+      - type: cloudify.gcp.relationships.vpn_network_peering_connected_to_network
+        target: net3
+
+  # Network 1
+
+  net1:
     type: cloudify.gcp.nodes.Network
     properties:
-      name: 'network name'
+      name: 'net1'
       gcp_config: *gcp_config
       auto_subnets: false
 
-  simple-subnet_a:
+  net1-subnet_a:
     type: cloudify.gcp.nodes.SubNetwork
     properties:
       region: us-central1
@@ -36,9 +178,9 @@ node_templates:
       gcp_config: *gcp_config
     relationships:
       - type: cloudify.gcp.relationships.contained_in_network
-        target: simple-network
+        target: net1
 
-  simple-subnet_b:
+  net1-subnet_b:
     type: cloudify.gcp.nodes.SubNetwork
     properties:
       region: us-west1
@@ -46,11 +188,92 @@ node_templates:
       gcp_config: *gcp_config
     relationships:
       - type: cloudify.gcp.relationships.contained_in_network
-        target: simple-network
+        target: net1
 
+  # Network 2
 
+  net2:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      name: 'net2'
+      gcp_config: *gcp_config
+      auto_subnets: false
 
-outputs:
-  simple-network:
-    value: { get_attribute: [simple-network, name] }
-    description: should be used assigned as the nameservers for your domain
+  net2-subnet_a:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      region: us-central1
+      subnet: 10.11.20.0/22
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: net2
+
+  net2-subnet_b:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      region: us-west1
+      subnet: 10.11.24.0/22
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: net2
+
+  # Network 3
+
+  net3:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      name: 'net3'
+      gcp_config: *gcp_config
+      auto_subnets: false
+
+  net3-subnet_a:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      region: us-central1
+      subnet: 10.11.28.0/22
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: net3
+
+  net3-subnet_b:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      region: us-west1
+      subnet: 10.11.32.0/22
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: net3
+
+  # Network 4
+
+  net4:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      name: 'net4'
+      gcp_config: *gcp_config
+      auto_subnets: false
+
+  net4-subnet_a:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      region: us-central1
+      subnet: 10.11.36.0/22
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: net4
+
+  net4-subnet_b:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      region: us-west1
+      subnet: 10.11.40.0/22
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: net4
+
