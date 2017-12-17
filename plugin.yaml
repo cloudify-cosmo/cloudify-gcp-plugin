@@ -310,6 +310,50 @@ node_types:
         create:
           implementation: gcp_plugin.cloudify_gcp.compute.subnetwork.creation_validation
 
+  cloudify.gcp.nodes.VPCNetworkPeering:
+    derived_from: cloudify.nodes.Network
+    properties:
+      name:
+        description: >
+          Name of the peering, which should conform to RFC1035.
+        default: ''
+      network:
+        description: Name of the network resource to add peering to.
+        default: ''
+      peerNetwork:
+        description: name of the peer network.
+        default: ''
+      autoCreateRoutes:
+        description: >
+          Whether Google Compute Engine manages the routes automatically.
+        default: true
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.network.add_peering
+          inputs:
+            name:
+              default: { get_property: [SELF, name] }
+            network:
+              default: { get_property: [SELF, network] }
+            peerNetwork:
+              default: { get_property: [SELF, peerNetwork] }
+            autoCreateRoutes:
+              default: { get_property: [SELF, autoCreateRoutes] }
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.compute.network.remove_peering
+          inputs:
+            name:
+              default: { get_property: [SELF, name] }
+            network:
+              default: { get_property: [SELF, network] }
+            peerNetwork:
+              default: { get_property: [SELF, peerNetwork] }
+
   cloudify.gcp.nodes.Route:
     derived_from: cloudify.nodes.Router
     properties:
@@ -1408,3 +1452,7 @@ relationships:
 
   cloudify.gcp.relationships.forwarding_rule_connected_to_target_proxy:
     derived_from: cloudify.relationships.connected_to
+
+  cloudify.gcp.relationships.vpn_network_peering_connected_to_network:
+    derived_from: cloudify.relationships.connected_to
+
