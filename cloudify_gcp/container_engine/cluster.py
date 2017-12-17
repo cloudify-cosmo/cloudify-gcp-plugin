@@ -114,14 +114,14 @@ def start(**kwargs):
         cluster = Cluster(gcp_config, ctx.logger, name=name, )
         cluster_status = cluster.get()['status'] if cluster.get() else None
         if cluster_status == constants.KUBERNETES_RUNNING_STATUS:
-            ctx.logger.debug('Kubernetes cluster started !!')
+            ctx.logger.debug('Kubernetes cluster running.')
 
         elif cluster_status == constants.KUBERNETES_PROVISIONING_STATUS:
-            ctx.operation.retry('Kubernetes cluster is not starting yet , '
-                                're-try after 15 seconds', 15)
+            ctx.operation.retry(
+                'Kubernetes cluster is still provisioning.', 15)
 
         elif cluster_status == constants.KUBERNETES_ERROR_STATUS:
-            raise NonRecoverableError('Kubernetes cluster failed to start')
+            raise NonRecoverableError('Kubernetes cluster in error state.')
 
         else:
             ctx.logger.warn(
@@ -142,16 +142,16 @@ def delete(**kwargs):
         try:
             cluster_status = cluster.get()['status'] if cluster.get() else None
             if cluster_status == constants.KUBERNETES_STOPPING_STATUS:
-                ctx.operation.retry('Kubernetes cluster is not deleting yet, '
-                                    're-try after 15 seconds', 15)
+                ctx.operation.retry(
+                    'Kubernetes cluster is still de-provisioning', 15)
 
             elif cluster_status == constants.KUBERNETES_ERROR_STATUS:
                 raise NonRecoverableError(
-                    'Kubernetes cluster failed to delete')
+                    'Kubernetes cluster failed to delete.')
 
         except HttpError as e:
             if e.resp.status == http_client.NOT_FOUND:
-                ctx.logger.debug('Kubernetes cluster deleted')
+                ctx.logger.debug('Kubernetes cluster deleted.')
             else:
                 raise e
 
