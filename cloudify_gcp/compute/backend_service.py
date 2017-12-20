@@ -33,6 +33,7 @@ class BackendService(GoogleCloudPlatform):
                  logger,
                  name,
                  health_check=None,
+                 protocol=None,
                  additional_settings=None,
                  backends=None):
         super(BackendService, self).__init__(config, logger, name,
@@ -40,6 +41,7 @@ class BackendService(GoogleCloudPlatform):
         self.health_check = health_check
         self.additional_settings = copy(additional_settings) or {}
         self.backends = backends or []
+        self.protocol = protocol
 
     def to_dict(self):
         body = {
@@ -47,7 +49,8 @@ class BackendService(GoogleCloudPlatform):
             'name': self.name,
             'healthChecks': [
                 self.health_check
-            ]
+            ],
+            'protocol': self.protocol
         }
         gcp_settings = {utils.camel_farm(key): value
                         for key, value in self.additional_settings.iteritems()}
@@ -108,13 +111,14 @@ class BackendService(GoogleCloudPlatform):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, health_check, additional_settings, **kwargs):
+def create(name, health_check, protocol, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     backend_service = BackendService(gcp_config,
                                      ctx.logger,
                                      name,
                                      health_check,
+                                     protocol,
                                      additional_settings)
 
     utils.create(backend_service)

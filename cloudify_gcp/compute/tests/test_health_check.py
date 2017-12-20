@@ -34,6 +34,7 @@ class TestHealthCheck(TestGCP):
         health_check.create(
                 'name',
                 'http',
+                None,
                 {},
                 )
 
@@ -49,6 +50,7 @@ class TestHealthCheck(TestGCP):
         health_check.create(
                 'name',
                 'https',
+                None,
                 {},
                 )
 
@@ -56,6 +58,42 @@ class TestHealthCheck(TestGCP):
         mock_build().httpsHealthChecks().insert.assert_called_with(
                 body={
                     'description': 'Cloudify generated httpsHealthCheck',
+                    'name': 'name'},
+                project='not really a project'
+                )
+
+    def test_create_tcp(self, mock_build, *args):
+        health_check.create(
+                'name',
+                'tcp',
+                110,
+                {},
+                )
+
+        mock_build.assert_called_once()
+        mock_build().healthChecks().insert.assert_called_with(
+                body={
+                    'description': 'Cloudify generated healthCheck',
+                    'tcpHealthCheck': {'port': 110},
+                    'type': 'TCP',
+                    'name': 'name'},
+                project='not really a project'
+                )
+
+    def test_create_ssl(self, mock_build, *args):
+        health_check.create(
+                'name',
+                'ssl',
+                110,
+                {},
+                )
+
+        mock_build.assert_called_once()
+        mock_build().healthChecks().insert.assert_called_with(
+                body={
+                    'description': 'Cloudify generated healthCheck',
+                    'sslHealthCheck': {'port': 110},
+                    'type': 'SSL',
                     'name': 'name'},
                 project='not really a project'
                 )
@@ -71,7 +109,7 @@ class TestHealthCheck(TestGCP):
         operation.has_finished.return_value = True
         mock_response.return_value = operation
 
-        health_check.delete()
+        health_check.delete('http')
 
         mock_build.assert_called_once()
         mock_build().httpHealthChecks().delete.assert_called_with(

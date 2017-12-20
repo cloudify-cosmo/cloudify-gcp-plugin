@@ -34,14 +34,12 @@ class TargetProxy(GoogleCloudPlatform):
                  logger,
                  name,
                  api_version,
-                 url_map=None,
                  additional_settings=None):
         super(TargetProxy, self).__init__(config,
                                           logger,
                                           name,
                                           additional_settings,
                                           api_version=api_version)
-        self.url_map = url_map
 
     @check_response
     def get(self):
@@ -96,13 +94,14 @@ class TargetHttpProxy(TargetProxy):
                  name,
                  additional_settings=None,
                  api_version=constants.API_V1,
+                 service=None,
                  url_map=None):
         super(TargetHttpProxy, self).__init__(config,
                                               logger,
                                               name,
                                               api_version,
-                                              url_map,
                                               additional_settings)
+        self.url_map = url_map
 
     def get_self_url(self):
         return 'global/targetHttpProxies/{0}'.format(self.name)
@@ -125,6 +124,45 @@ class TargetHttpProxy(TargetProxy):
         return self.discovery.targetHttpProxies()
 
 
+class TargetTcpProxy(TargetProxy):
+    kind = 'compute#targetTcpProxy'
+
+    def __init__(self,
+                 config,
+                 logger,
+                 name,
+                 additional_settings=None,
+                 api_version=constants.API_V1,
+                 service=None,
+                 url_map=None):
+        super(TargetTcpProxy, self).__init__(config,
+                                             logger,
+                                             name,
+                                             api_version,
+                                             additional_settings)
+        self.service = service
+
+    def get_self_url(self):
+        return 'global/targetTcpProxies/{0}'.format(self.name)
+
+    def gcp_get_dict(self):
+        return {
+            'project': self.project,
+            'targetTcpProxy': self.name
+        }
+
+    def to_dict(self):
+        self.body.update({
+            'description': 'Cloudify generated TargetTcpProxy',
+            'name': self.name,
+            'service': self.service
+        })
+        return self.body
+
+    def _gcp_target_proxies(self):
+        return self.discovery.targetTcpProxies()
+
+
 class TargetHttpsProxy(TargetProxy):
     kind = 'compute#targetHttpsProxy'
 
@@ -134,13 +172,14 @@ class TargetHttpsProxy(TargetProxy):
                  name,
                  url_map=None,
                  ssl_certificate=None,
+                 service=None,
                  additional_settings=None):
         super(TargetHttpsProxy, self).__init__(config,
                                                logger,
                                                name,
                                                constants.API_BETA,
-                                               url_map,
                                                additional_settings)
+        self.url_map = url_map
         self.ssl_certificate = ssl_certificate
 
     def get_self_url(self):
@@ -167,9 +206,52 @@ class TargetHttpsProxy(TargetProxy):
         return self.discovery.targetHttpsProxies()
 
 
+class TargetSslProxy(TargetProxy):
+    kind = 'compute#targetSslProxy'
+
+    def __init__(self,
+                 config,
+                 logger,
+                 name,
+                 url_map=None,
+                 ssl_certificate=None,
+                 service=None,
+                 additional_settings=None):
+        super(TargetSslProxy, self).__init__(config,
+                                             logger,
+                                             name,
+                                             constants.API_BETA,
+                                             additional_settings)
+        self.ssl_certificate = ssl_certificate
+        self.service = service
+
+    def get_self_url(self):
+        return 'global/targetSslProxies/{0}'.format(self.name)
+
+    def gcp_get_dict(self):
+        return {
+            'project': self.project,
+            'targetSslProxy': self.name
+        }
+
+    def to_dict(self):
+        self.body.update({
+            'description': 'Cloudify generated TargetSslProxy',
+            'name': self.name,
+            'service': self.service,
+            'sslCertificates': [
+                self.ssl_certificate
+            ]
+        })
+        return self.body
+
+    def _gcp_target_proxies(self):
+        return self.discovery.targetSslProxies()
+
+
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, target_proxy_type, url_map, ssl_certificate,
+def create(name, target_proxy_type, url_map, ssl_certificate, service,
            additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
@@ -179,6 +261,7 @@ def create(name, target_proxy_type, url_map, ssl_certificate,
             logger=ctx.logger,
             name=name,
             url_map=url_map,
+            service=service,
             ssl_certificate=ssl_certificate,
             additional_settings=additional_settings)
 
@@ -192,11 +275,15 @@ def create(name, target_proxy_type, url_map, ssl_certificate,
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name')
-    if ctx.instance.runtime_properties.get(
-            'kind') == 'compute#targetHttpProxy':
+    kind = ctx.instance.runtime_properties.get('kind')
+    if kind == 'compute#targetHttpProxy':
         target_proxy_type = 'http'
-    else:
+    elif kind == 'compute#targetHttpsProxy':
         target_proxy_type = 'https'
+    elif kind == 'compute#targetTcpProxy':
+        target_proxy_type = 'tcp'
+    elif kind == 'compute#targetSslProxy':
+        target_proxy_type = 'ssl'
 
     if name:
         target_proxy = target_proxy_of_type(target_proxy_type,
@@ -214,14 +301,19 @@ def creation_validation(*args, **kwargs):
 
 
 def target_proxy_of_type(target_proxy_type, **kwargs):
-    if target_proxy_type == 'http':
+    if target_proxy_type in ['http', 'tcp']:
         if kwargs.get('ssl_certificate'):
             raise NonRecoverableError(
                 'TargetHttpProxy should not have SSL certificate')
         kwargs.pop('ssl_certificate', None)
-        return TargetHttpProxy(**kwargs)
+        if target_proxy_type == 'http':
+            return TargetHttpProxy(**kwargs)
+        elif target_proxy_type == 'tcp':
+            return TargetTcpProxy(**kwargs)
     elif target_proxy_type == 'https':
         return TargetHttpsProxy(**kwargs)
+    elif target_proxy_type == 'ssl':
+        return TargetSslProxy(**kwargs)
     else:
         raise NonRecoverableError(
             'Unexpected type of target proxy: {}'.format(target_proxy_type))
