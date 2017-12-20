@@ -1,34 +1,225 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
-
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
-  - ../plugin.yaml
-
+  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
+  - http://www.getcloudify.org/spec/gcp-plugin/1.3.0/plugin.yaml
 
 inputs:
-  gcp_auth:
-  project:
-  network:
-    default: default
+
+  client_x509_cert_url:
+    type: string
+    default: { get_secret: client_x509_cert_url }
+
+  client_email:
+    type: string
+    default: { get_secret: client_email }
+
+  client_id:
+    type: string
+    default: { get_secret: client_id }
+
+  project_id:
+    type: string
+    default: { get_secret: project_id }
+
+  private_key_id:
+    type: string
+    default: { get_secret: private_key_id }
+
+  private_key:
+    type: string
+    default: { get_secret: private_key }
+
   zone:
-    default: us-east1-b
+    type: string
+    default: { get_secret: zone }
+
+  region:
+    type: string
+    default: { get_secret: region }
+
+  network_name:
+    type: string
+    default: { get_secret: management_network_name }
+
+  subnetwork_name:
+    type: string
+    default: { get_secret: management_subnetwork_name }
+
   group_name:
+    type: string
+    default: 'group'
+
+  firewall_rule_target_tags:
+    default:
+    - http-forwarding-fw
+
+  ssl_cert:
+    type: string
+    # Example:
+    # default: |
+    #   -----BEGIN CERTIFICATE-----
+    #   MIIDAzCCAeugAwIBAgIJAMci/QU151y+MA0GCSqGSIb3DQEBBQUAMBgxFjAUBgNV
+    #   BAMTDTM1LjE5NS4xNDUuNDYwHhcNMTcxMjIwMTIxNTUyWhcNMjcxMjE4MTIxNTUy
+    #   WjAYMRYwFAYDVQQDEw0zNS4xOTUuMTQ1LjQ2MIIBIjANBgkqhkiG9w0BAQEFAAOC
+    #   AQ8AMIIBCgKCAQEAnqZhiNeHeaVklHNxQkQj13odfXS4msFyjiMhb0ntUFLqVzSw
+    #   xUrtDB9vCANPIHA4V6wFNJUE0jlaR2wHSo53tksCtsQgAR/KpdlM2UzThI9yYFEx
+    #   EKt80mHr/FbRJmYAHtK/Fz15KW33yFc2YkZ3HIjRIu43cQI3l2CAGASh2C6IciMz
+    #   iA8rQMZd+GnrEyIb72hMCtRvsk/vgAj9yDQ93MITBIHid9rvTARtni6g6rlyQLT1
+    #   vJS/LtgcrKrVWZDGqvgP2b0QZP9m1fiigdW0yW/cLZgOHveGpKt5kVWE0hl5XbI9
+    #   WDVSyn+hVCbRzxos/MjfG2xQx3WS4IA8hqwUuwIDAQABo1AwTjBMBgNVHREERTBD
+    #   gg0zNS4xOTUuMTQ1LjQ2ggkxMjcuMC4wLjGCCjEwLjExLjEyLjKCCWxvY2FsaG9z
+    #   dIcEI8ORLocEfwAAAYcECgsMAjANBgkqhkiG9w0BAQUFAAOCAQEAKeE3JRcyV7Ds
+    #   5x3J9MMIWKv1Ge+iFT7TNWgYiEV6fhKy2o+fWX8VSPXX4z4T6hRagYuCcymyaMYT
+    #   OcdEXy6cpmfXKybV+5MhZkN84FyhRmKY+7nz+Tgi+8m9qqGsyB4HKgNjK9cuy0LQ
+    #   KmV1Xv2GxSVstBoA6aAVu7aqOJ7LUWNgu+TipdVU9TnoH4rhQJDQVNVfhjv3S9W6
+    #   54MngQIpTMTSVZdhOD0JFT9yW04G5909u7AVJ2XjqNKe1f2aXFPKlqYYpNyM+uuv
+    #   bdj6qOBNda4G9rBSUuJvxevlWxJ3MGNCfG8mcd596wkJ8xjjCv4Hoil55D+3LRax
+    #   KBqLDPGrVQ==
+    #   -----END CERTIFICATE-----
+
+  ssl_key:
+    type: string
+    # Example:
+    # default: |
+    #   -----BEGIN PRIVATE KEY-----
+    #   MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCepmGI14d5pWSU
+    #   c3FCRCPXeh19dLiawXKOIyFvSe1QUupXNLDFSu0MH28IA08gcDhXrAU0lQTSOVpH
+    #   bAdKjne2SwK2xCABH8ql2UzZTNOEj3JgUTEQq3zSYev8VtEmZgAe0r8XPXkpbffI
+    #   VzZiRncciNEi7jdxAjeXYIAYBKHYLohyIzOIDytAxl34aesTIhvvaEwK1G+yT++A
+    #   CP3IND3cwhMEgeJ32u9MBG2eLqDquXJAtPW8lL8u2BysqtVZkMaq+A/ZvRBk/2bV
+    #   +KKB1bTJb9wtmA4e94akq3mRVYTSGXldsj1YNVLKf6FUJtHPGiz8yN8bbFDHdZLg
+    #   gDyGrBS7AgMBAAECggEAGWQ1rgoYw65l56CGWv2+4sjHmYGp3hLh+7/BpScm1TlA
+    #   Ck8Dj8ALKmqJgbXN3zo2ukls19qV1/OX8GBo1lTw8fsVZx0CpktpSpv5wbmbDNdM
+    #   jf/Qo4NeyekkNNHMTaH7mPNP5C9RigDwrF7Q9G+ktqtrFXUc6HhbX13xgmaTZJ7l
+    #   Za5zR6IcIBLLDfhYXf0l5vvhQY4ba7zMsO4ALoh3pltyUYOxyX1XK23Peiw+elMd
+    #   POFNQtrWcNhYa0uvQo/FQwz/FKX/3A/McDMFOR+5R5AZ0N/fZwwsF5BVZgMCNiGR
+    #   QXpsfS34kTiq5ak3rCCWVrsNGcijkECzA2kAtAoXSQKBgQDR2ldExmCXOvfeZoY3
+    #   nDyWyL5YFavZPJE5cDDicXkVpJdQzVZu6QYXl7nHLMoPZFkf3nVr75/EuVkNAcQx
+    #   Gi/hZhncCljiYgBldyoIfSAYs3jXtTgxyK+Vy5nkilceBKVP8to2FW8MrUi1dH7h
+    #   igAu5MsfA8aQShD7TVi9uc48xwKBgQDBiZJCz4LMfrGyDGBDgOpB9OeAFtrnAVhK
+    #   fAu5TyYzG+bkXHZrvkyKXZmhyB2zUGYkKHC9Bq0LjSCHPm+SsXpt2i5G55nDmQgG
+    #   CDOV4+JJx68VCve2GA4FTpmgAHefkZcHfb4JRZgtF73i9Q7HjSrrV3zKWN44Wla5
+    #   AlNZ30YsbQKBgEPqX/f4I+aNxQ6LK8DvpYQ/L6seSGGkAnQOZSPECaYBgJ879U8r
+    #   xzb3eb6GNlbI6TcxLdtiz9hBDBrziWVCzmAqRRA7oQyTHwG3kTjyFeMoomFdWvRx
+    #   uLHIFOQsCYnDgyTeudRrF2eI5VEkhLPFj82dakd9V1P3RIuwOpoceiydAoGBAKaX
+    #   IIrZzCDyPUqhVItGgF5dzJd5FNwbUEBtHjpYYu1Day/OVzDPEVtYzlFvzAD5h7JA
+    #   DSrogDOdOw6vM6L1mgjM8WCfIsA3Da0DikPPcI1JkO9wDWF0uzzeN2Z+gHmd/H66
+    #   QcYBXcgS06R0hFBIt1T0bbpPXJjtShDea5jEk8bRAoGAZhvJAjhpsEcQzgwFj1fX
+    #   0Y3gNmqDnRwbsf8ov+TvEDMV75k7LE9d51l7kAihQ/QbCF1oQUrGanonvl8Tmodo
+    #   Yqnbp0OQT3b4bwM9BTi7EvTGwwCbPItu+efz717tcFso+D83EzayoS8HNpYF74IR
+    #   4Y13mK5km3uGGEMTEXOUqQg=
+    #   -----END PRIVATE KEY-----
+
   balancer_port:
     default: 110
-  ssl_cert:
-  ssl_key:
-
 
 dsl_definitions:
+
   - &gcp_config
-    auth: { get_input: gcp_auth }
-    project: { get_input: project }
-    network: { get_input: network }
+    auth:
+      type: service_account
+      auth_uri: https://accounts.google.com/o/oauth2/auth
+      token_uri: https://accounts.google.com/o/oauth2/token
+      auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+      client_x509_cert_url: { get_input: client_x509_cert_url }
+      client_email: { get_input: client_email }
+      client_id: { get_input: client_id }
+      project_id: { get_input: project_id }
+      private_key_id: { get_input: private_key_id }
+      private_key: { get_input: private_key }
+    project: { get_input: project_id }
     zone: { get_input: zone }
 
-
 node_templates:
+
+
+  static_ip:
+    type: cloudify.gcp.nodes.GlobalAddress
+    properties:
+      gcp_config: *gcp_config
+
+  tcp_rule:
+    type: cloudify.gcp.nodes.GlobalForwardingRule
+    properties:
+      target_proxy: { get_attribute: [ proxy, selfLink ] }
+      port_range: { get_input: balancer_port }
+      ip_address: { get_attribute: [ static_ip, address ] }
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.forwarding_rule_connected_to_target_proxy
+        target: proxy
+      - type: cloudify.relationships.connected_to
+        target: static_ip
+
+  proxy:
+    type: cloudify.gcp.nodes.TargetProxy
+    properties:
+      service: { get_attribute: [ backend, selfLink ] }
+      ssl_certificate: { get_attribute: [ cert, selfLink ] }
+      target_proxy_type: ssl
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: backend
+      - type: cloudify.relationships.depends_on
+        target: cert
+
+  backend:
+    type: cloudify.gcp.nodes.BackendService
+    properties:
+      health_check: { get_attribute: [ healthcheck, selfLink ] }
+      protocol: SSL
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: healthcheck
+      - type: cloudify.gcp.relationships.uses_as_backend
+        target: instance_group
+
+  healthcheck:
+    type: cloudify.gcp.nodes.HealthCheck
+    properties:
+      health_check_type: ssl
+      port: { get_input: balancer_port }
+      gcp_config: *gcp_config
+
+  instance_group:
+    type: cloudify.gcp.nodes.InstanceGroup
+    properties:
+      gcp_config: *gcp_config
+      use_external_resource: true
+      name: { get_input: group_name }
+
+  fw_rule:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      sources:
+      - 0.0.0.0/0
+      allowed:
+        tcp:
+        - { get_input: balancer_port }
+      target_tags:
+      - { get_input: firewall_rule_target_tags }
+      gcp_config: *gcp_config
+
+  subnetwork:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      use_external_resource: true
+      name: { get_input: subnetwork_name }
+      region: { get_input: region }
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: network
+
+  network:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      use_external_resource: true
+      name: { get_input: network_name }
+      gcp_config: *gcp_config
 
   cert:
     type: cloudify.gcp.nodes.SslCertificate
@@ -41,76 +232,7 @@ node_templates:
         data: { get_input: ssl_cert }
       gcp_config: *gcp_config
 
-  proxy:
-    type: cloudify.gcp.nodes.TargetProxy
-    properties:
-      service: { get_attribute: [backend, selfLink] }
-      ssl_certificate: { get_attribute: [cert, selfLink] }
-      target_proxy_type: ssl
-      gcp_config: *gcp_config
-    relationships:
-      - type: cloudify.relationships.connected_to
-        target: backend
-      - type: cloudify.relationships.depends_on
-        target: cert
-
-  static_ip:
-    type: cloudify.gcp.nodes.GlobalAddress
-    properties:
-      gcp_config: *gcp_config
-
-  fw_rule:
-    type: cloudify.gcp.nodes.FirewallRule
-    properties:
-      sources:
-        - 0.0.0.0/0
-      allowed:
-        tcp:
-          - { get_input: balancer_port }
-      target_tags: [http-forwarding-fw]
-      gcp_config: *gcp_config
-
-
-  instance_group:
-    type: cloudify.gcp.nodes.InstanceGroup
-    properties:
-      gcp_config: *gcp_config
-      use_external_resource: true
-      name: { get_input: group_name }
-
-  healthcheck:
-    type: cloudify.gcp.nodes.HealthCheck
-    properties:
-      health_check_type: ssl
-      port: { get_input: balancer_port }
-      gcp_config: *gcp_config
-
-  backend:
-    type: cloudify.gcp.nodes.BackendService
-    properties:
-      health_check: { get_attribute: [healthcheck, selfLink] }
-      protocol: SSL
-      gcp_config: *gcp_config
-    relationships:
-      - type: cloudify.relationships.depends_on
-        target: healthcheck
-      - type: cloudify.gcp.relationships.uses_as_backend
-        target: instance_group
-
-  http_rule:
-    type: cloudify.gcp.nodes.GlobalForwardingRule
-    properties:
-      target_proxy: { get_attribute: [proxy, selfLink] }
-      port_range: { get_input: balancer_port }
-      ip_address: { get_attribute: [static_ip, address] }
-      gcp_config: *gcp_config
-    relationships:
-      - type: cloudify.gcp.relationships.forwarding_rule_connected_to_target_proxy
-        target: proxy
-      - type: cloudify.relationships.connected_to
-        target: static_ip
-
-
 outputs:
-  ip_ip:
-    value: { get_attribute: [static_ip, address] }
+
+  ip:
+    value: { get_attribute: [ static_ip, address ] }
