@@ -1,0 +1,116 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
+  - ../plugin.yaml
+
+
+inputs:
+  gcp_auth:
+  project:
+  network:
+    default: default
+  zone:
+    default: us-east1-b
+  group_name:
+  balancer_port:
+    default: 110
+  ssl_cert:
+  ssl_key:
+
+
+dsl_definitions:
+  - &gcp_config
+    auth: { get_input: gcp_auth }
+    project: { get_input: project }
+    network: { get_input: network }
+    zone: { get_input: zone }
+
+
+node_templates:
+
+  cert:
+    type: cloudify.gcp.nodes.SslCertificate
+    properties:
+      private_key:
+        type: text
+        data: { get_input: ssl_key }
+      certificate:
+        type: text
+        data: { get_input: ssl_cert }
+      gcp_config: *gcp_config
+
+  proxy:
+    type: cloudify.gcp.nodes.TargetProxy
+    properties:
+      service: { get_attribute: [backend, selfLink] }
+      ssl_certificate: { get_attribute: [cert, selfLink] }
+      target_proxy_type: ssl
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: backend
+      - type: cloudify.relationships.depends_on
+        target: cert
+
+  static_ip:
+    type: cloudify.gcp.nodes.GlobalAddress
+    properties:
+      gcp_config: *gcp_config
+
+  fw_rule:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      sources:
+        - 0.0.0.0/0
+      allowed:
+        tcp:
+          - { get_input: balancer_port }
+      target_tags: [http-forwarding-fw]
+      gcp_config: *gcp_config
+
+
+  instance_group:
+    type: cloudify.gcp.nodes.InstanceGroup
+    properties:
+      gcp_config: *gcp_config
+      use_external_resource: true
+      name: { get_input: group_name }
+
+  healthcheck:
+    type: cloudify.gcp.nodes.HealthCheck
+    properties:
+      health_check_type: ssl
+      port: { get_input: balancer_port }
+      gcp_config: *gcp_config
+
+  backend:
+    type: cloudify.gcp.nodes.BackendService
+    properties:
+      health_check: { get_attribute: [healthcheck, selfLink] }
+      protocol: SSL
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: healthcheck
+      - type: cloudify.gcp.relationships.uses_as_backend
+        target: instance_group
+
+  http_rule:
+    type: cloudify.gcp.nodes.GlobalForwardingRule
+    properties:
+      target_proxy: { get_attribute: [proxy, selfLink] }
+      port_range: { get_input: balancer_port }
+      ip_address: { get_attribute: [static_ip, address] }
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.forwarding_rule_connected_to_target_proxy
+        target: proxy
+      - type: cloudify.relationships.connected_to
+        target: static_ip
+
+
+outputs:
+  ip_ip:
+    value: { get_attribute: [static_ip, address] }
