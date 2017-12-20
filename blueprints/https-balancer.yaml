@@ -9,12 +9,13 @@ imports:
 inputs:
   gcp_auth:
   project:
-    default: trammell-project
   network:
     default: default
   zone:
+    default: us-east1-b
   group_name:
-
+  ssl_cert:
+  ssl_key:
 
 
 dsl_definitions:
@@ -27,31 +28,43 @@ dsl_definitions:
 
 node_templates:
 
-  proxy:
+  cert:
+    type: cloudify.gcp.nodes.SslCertificate
+    properties:
+      private_key:
+        type: text
+        data: { get_input: ssl_key }
+      certificate:
+        type: text
+        data: { get_input: ssl_cert }
+      gcp_config: *gcp_config
+
+  https_proxy:
     type: cloudify.gcp.nodes.TargetProxy
     properties:
       url_map: { get_attribute: [url_map, selfLink] }
+      ssl_certificate: { get_attribute: [cert, selfLink] }
+      target_proxy_type: https
       gcp_config: *gcp_config
     relationships:
-      - type: cloudify.relationships.connected_to
-        target: url_map
+      - type: cloudify.relationships.depends_on
+        target: cert
 
   static_ip:
     type: cloudify.gcp.nodes.GlobalAddress
     properties:
       gcp_config: *gcp_config
 
-  fw_rule:
-    type: cloudify.gcp.nodes.FirewallRule
+  https_systemtest_sg:
+    type: cloudify.gcp.nodes.SecurityGroup
     properties:
-      sources:
-        - 0.0.0.0/0
-      allowed:
-        tcp:
-          - 80
-      target_tags: [http-forwarding-fw]
+      rules:
+        - sources:
+            - 0.0.0.0/0
+          allowed:
+            tcp:
+              - 80
       gcp_config: *gcp_config
-
 
   instance_group:
     type: cloudify.gcp.nodes.InstanceGroup
@@ -69,6 +82,7 @@ node_templates:
     type: cloudify.gcp.nodes.BackendService
     properties:
       health_check: { get_attribute: [healthcheck, selfLink] }
+      protocol: HTTPS
       gcp_config: *gcp_config
     relationships:
       - type: cloudify.relationships.depends_on
@@ -82,19 +96,19 @@ node_templates:
       default_service: { get_attribute: [backend, selfLink] }
       gcp_config: *gcp_config
     relationships:
-      - type: cloudify.relationships.depends_on
+      - type: cloudify.relationships.connected_to
         target: backend
 
-  http_rule:
+  https_rule:
     type: cloudify.gcp.nodes.GlobalForwardingRule
     properties:
-      target_proxy: { get_attribute: [proxy, selfLink] }
-      port_range: 80
+      target_proxy: { get_attribute: [https_proxy, selfLink] }
+      port_range: 443-443
       ip_address: { get_attribute: [static_ip, address] }
       gcp_config: *gcp_config
     relationships:
-      - type: cloudify.gcp.relationships.forwarding_rule_connected_to_target_proxy
-        target: proxy
+      - type: cloudify.relationships.connected_to
+        target: https_proxy
       - type: cloudify.relationships.connected_to
         target: static_ip
 
