@@ -92,6 +92,7 @@ class HttpHealthCheck(HealthCheck):
                  config,
                  logger,
                  name,
+                 port=None,
                  api_version=constants.API_V1,
                  additional_settings=None):
         super(HttpHealthCheck, self).__init__(
@@ -106,11 +107,80 @@ class HttpHealthCheck(HealthCheck):
         return self.discovery.httpHealthChecks()
 
 
+class TcpHealthCheck(HealthCheck):
+    def __init__(self,
+                 config,
+                 logger,
+                 name,
+                 port=None,
+                 api_version=constants.API_V1,
+                 additional_settings=None):
+        super(TcpHealthCheck, self).__init__(
+            config, logger, name, api_version,
+            'healthCheck', additional_settings)
+
+        self.port = port
+
+    def get_self_url(self):
+        return '{0}/projects/{1}/global/healthChecks/{2}'.format(
+            self.api_version, self.project, self.name)
+
+    def to_dict(self):
+        body = {
+            'description': 'Cloudify generated {0}'.format(self.name_keyword),
+            'name': self.name,
+            'type': 'TCP',
+            'tcpHealthCheck': {'port': self.port}
+        }
+        gcp_settings = {utils.camel_farm(key): value
+                        for key, value in self.additional_settings.iteritems()}
+        body.update(gcp_settings)
+        return body
+
+    def _gcp_health_checks(self):
+        return self.discovery.healthChecks()
+
+
+class SslHealthCheck(HealthCheck):
+    def __init__(self,
+                 config,
+                 logger,
+                 name,
+                 port=None,
+                 api_version=constants.API_V1,
+                 additional_settings=None):
+        super(SslHealthCheck, self).__init__(
+            config, logger, name, api_version,
+            'healthCheck', additional_settings)
+
+        self.port = port
+
+    def get_self_url(self):
+        return '{0}/projects/{1}/global/healthChecks/{2}'.format(
+            self.api_version, self.project, self.name)
+
+    def to_dict(self):
+        body = {
+            'description': 'Cloudify generated {0}'.format(self.name_keyword),
+            'name': self.name,
+            'type': 'SSL',
+            'sslHealthCheck': {'port': self.port}
+        }
+        gcp_settings = {utils.camel_farm(key): value
+                        for key, value in self.additional_settings.iteritems()}
+        body.update(gcp_settings)
+        return body
+
+    def _gcp_health_checks(self):
+        return self.discovery.healthChecks()
+
+
 class HttpsHealthCheck(HealthCheck):
     def __init__(self,
                  config,
                  logger,
                  name,
+                 port=None,
                  additional_settings=None):
         super(HttpsHealthCheck, self).__init__(
             config, logger, name, constants.API_BETA,
@@ -126,7 +196,7 @@ class HttpsHealthCheck(HealthCheck):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, health_check_type, additional_settings, **kwargs):
+def create(name, health_check_type, port, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     health_check = health_check_of_type(
@@ -134,6 +204,7 @@ def create(name, health_check_type, additional_settings, **kwargs):
             config=gcp_config,
             logger=ctx.logger,
             name=name,
+            port=port,
             additional_settings=additional_settings)
 
     utils.create(health_check)
@@ -142,12 +213,9 @@ def create(name, health_check_type, additional_settings, **kwargs):
 @operation
 @utils.retry_on_failure('Retrying deleting health check')
 @utils.throw_cloudify_exceptions
-def delete(**kwargs):
-    props = ctx.instance.runtime_properties
+def delete(health_check_type, **kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name')
-    health_check_type = 'https' if 'https' in props['kind'] else 'http'
-
     health_check = health_check_of_type(health_check_type,
                                         config=gcp_config,
                                         logger=ctx.logger,
@@ -161,6 +229,10 @@ def health_check_of_type(health_check_type, **kwargs):
         return HttpHealthCheck(**kwargs)
     elif health_check_type == 'https':
         return HttpsHealthCheck(**kwargs)
+    elif health_check_type == 'tcp':
+        return TcpHealthCheck(**kwargs)
+    elif health_check_type == 'ssl':
+        return SslHealthCheck(**kwargs)
     else:
         raise NonRecoverableError(
             'Unexpected type of health check: {}'.format(health_check_type))

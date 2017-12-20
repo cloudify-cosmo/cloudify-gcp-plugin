@@ -40,6 +40,7 @@ class TestTargetProxy(TestGCP):
                 'http',
                 'url map',
                 ssl_certificate=None,
+                service=None,
                 additional_settings={},
                 )
 
@@ -62,6 +63,7 @@ class TestTargetProxy(TestGCP):
                 'https',
                 'url map',
                 ssl_certificate='cert',
+                service=None,
                 additional_settings={},
                 )
 
@@ -71,6 +73,53 @@ class TestTargetProxy(TestGCP):
                     'urlMap': 'url map',
                     'sslCertificates': ['cert'],
                     'description': 'Cloudify generated TargetHttpsProxy',
+                    'name': 'name'},
+                project='not really a project'
+                )
+
+    def test_create_tcp(self, mock_build, *args):
+        self.ctxmock.node.properties.update({
+            'service': 'link'
+            })
+
+        target_proxy.create(
+                'name',
+                'tcp',
+                None,
+                service='link',
+                ssl_certificate=None,
+                additional_settings={},
+                )
+
+        mock_build.assert_called_once()
+        mock_build().targetTcpProxies().insert.assert_called_with(
+                body={
+                    'service': 'link',
+                    'description': 'Cloudify generated TargetTcpProxy',
+                    'name': 'name'},
+                project='not really a project'
+                )
+
+    def test_create_ssl(self, mock_build, *args):
+        self.ctxmock.node.properties.update({
+            'service': 'link'
+            })
+
+        target_proxy.create(
+                'name',
+                'ssl',
+                None,
+                ssl_certificate='cert',
+                service='link',
+                additional_settings={},
+                )
+
+        mock_build.assert_called_once()
+        mock_build().targetSslProxies().insert.assert_called_with(
+                body={
+                    'service': 'link',
+                    'sslCertificates': ['cert'],
+                    'description': 'Cloudify generated TargetSslProxy',
                     'name': 'name'},
                 project='not really a project'
                 )

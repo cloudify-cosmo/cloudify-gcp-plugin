@@ -30,6 +30,7 @@ class TestGCPBackendService(TestGCP):
         backend_service.create(
                 'name',
                 'health check',
+                'tcp',
                 additional_settings={},
                 )
 
@@ -37,6 +38,7 @@ class TestGCPBackendService(TestGCP):
         mock_build().backendServices().insert.assert_called_with(
                 body={
                     'healthChecks': ['health check'],
+                    'protocol': 'tcp',
                     'description': 'Cloudify generated backend service',
                     'name': 'name'},
                 project='not really a project'

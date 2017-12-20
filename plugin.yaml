@@ -693,9 +693,13 @@ node_types:
       health_check_type:
         description: >
           This field indicates if this health check is a HTTP or HTTPS based
-          health check. Possible values are: 'http' and 'https'.
+          health check. Possible values are: 'http', 'https', 'tcp' and 'ssl'.
         type: string
         default: 'http'
+      port:
+        description: >
+          The TCP port number for the health check request. The default value is 80. Valid values are 1 through 65535.
+        default: 80
       additional_settings:
         description: >
           Optional additional settings. Possible fields in dictionary are:
@@ -711,10 +715,15 @@ node_types:
               default: { get_property: [SELF, name]}
             health_check_type:
               default: { get_property: [SELF, health_check_type]}
+            port:
+              default: { get_property: [SELF, port]}
             additional_settings:
               default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.health_check.delete
+          inputs:
+            health_check_type:
+              default: { get_property: [SELF, health_check_type]}
 
   cloudify.gcp.nodes.BackendService:
     derived_from: cloudify.nodes.Root
@@ -739,6 +748,10 @@ node_types:
           URL of a health check assigned to this backend service.
         type: string
         default: ''
+      protocol:
+        description: >
+          The protocol this BackendService uses to communicate with backends. 
+        default: 'HTTP'
       additional_settings:
         description: >
           Optional additional settings. Possible fields in dictionary are:
@@ -753,6 +766,8 @@ node_types:
               default: { get_property: [SELF, name]}
             health_check:
               default: { get_property: [SELF, health_check]}
+            protocol:
+              default: { get_property: [SELF, protocol]}
             additional_settings:
               default: { get_property: [SELF, additional_settings]}
         delete:
@@ -819,8 +834,8 @@ node_types:
         default: ''
       target_proxy_type:
         description: >
-          This field indicates if this target proxy is a HTTP or HTTPS based
-          target proxy. Possible values are: 'http' and 'https'.
+          This field indicates if this target proxy is a HTTP, HTTPS, TCP or SSL based
+          target proxy. Possible values are: 'http', 'https', 'tcp', 'ssl'.
         type: string
         default: 'http'
       url_map:
@@ -834,6 +849,9 @@ node_types:
           URL of a SSL certificate associated with this target proxy.
           Can and must be used only with https type proxy.
         type: string
+        default: ''
+      service:
+        description: URL to the BackendService resource.
         default: ''
       additional_settings:
         description: >
@@ -852,6 +870,8 @@ node_types:
               default: { get_property: [SELF, url_map]}
             ssl_certificate:
               default: { get_property: [SELF, ssl_certificate]}
+            service:
+              default: { get_property: [SELF, service]}
             additional_settings:
               default: { get_property: [SELF, additional_settings]}
         delete:
