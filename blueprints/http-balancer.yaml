@@ -1,0 +1,166 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
+  - http://www.getcloudify.org/spec/gcp-plugin/1.3.0/plugin.yaml
+
+inputs:
+
+  client_x509_cert_url:
+    type: string
+    default: { get_secret: client_x509_cert_url }
+
+  client_email:
+    type: string
+    default: { get_secret: client_email }
+
+  client_id:
+    type: string
+    default: { get_secret: client_id }
+
+  project_id:
+    type: string
+    default: { get_secret: project_id }
+
+  private_key_id:
+    type: string
+    default: { get_secret: private_key_id }
+
+  private_key:
+    type: string
+    default: { get_secret: private_key }
+
+  zone:
+    type: string
+    default: { get_secret: zone }
+
+  region:
+    type: string
+    default: { get_secret: region }
+
+  network_name:
+    type: string
+    default: { get_secret: management_network_name }
+
+  subnetwork_name:
+    type: string
+    default: { get_secret: management_subnetwork_name }
+
+  group_name:
+    type: string
+    default: 'group'
+
+  firewall_rule_target_tags:
+    default:
+    - http-forwarding-fw
+
+dsl_definitions:
+
+  - &gcp_config
+    auth:
+      type: service_account
+      auth_uri: https://accounts.google.com/o/oauth2/auth
+      token_uri: https://accounts.google.com/o/oauth2/token
+      auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+      client_x509_cert_url: { get_input: client_x509_cert_url }
+      client_email: { get_input: client_email }
+      client_id: { get_input: client_id }
+      project_id: { get_input: project_id }
+      private_key_id: { get_input: private_key_id }
+      private_key: { get_input: private_key }
+    project: { get_input: project_id }
+    zone: { get_input: zone }
+
+node_templates:
+
+  static_ip:
+    type: cloudify.gcp.nodes.GlobalAddress
+    properties:
+      gcp_config: *gcp_config
+
+  http_rule:
+    type: cloudify.gcp.nodes.GlobalForwardingRule
+    properties:
+      target_proxy: { get_attribute: [ proxy, selfLink ] }
+      port_range: 80
+      ip_address: { get_attribute: [ static_ip, address ] }
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.forwarding_rule_connected_to_target_proxy
+        target: proxy
+      - type: cloudify.relationships.connected_to
+        target: static_ip
+
+  proxy:
+    type: cloudify.gcp.nodes.TargetProxy
+    properties:
+      url_map: { get_attribute: [ url_map, selfLink ] }
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: url_map
+
+  url_map:
+    type: cloudify.gcp.nodes.UrlMap
+    properties:
+      default_service: { get_attribute: [ backend, selfLink ] }
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: backend
+
+  backend:
+    type: cloudify.gcp.nodes.BackendService
+    properties:
+      health_check: { get_attribute: [ healthcheck, selfLink ] }
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: healthcheck
+      - type: cloudify.gcp.relationships.uses_as_backend
+        target: instance_group
+
+  healthcheck:
+    type: cloudify.gcp.nodes.HealthCheck
+    properties:
+      gcp_config: *gcp_config
+
+  instance_group:
+    type: cloudify.gcp.nodes.InstanceGroup
+    properties:
+      gcp_config: *gcp_config
+      use_external_resource: true
+      name: { get_input: group_name }
+
+  fw_rule:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      sources:
+        - 0.0.0.0/0
+      allowed:
+        tcp:
+          - 80
+      target_tags: { get_input: firewall_rule_target_tags }
+      gcp_config: *gcp_config
+
+  subnetwork:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      use_external_resource: true
+      name: { get_input: subnetwork_name }
+      region: { get_input: region }
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: network
+
+  network:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      use_external_resource: true
+      name: { get_input: network_name }
+      gcp_config: *gcp_config
+
+outputs:
+  ip:
+    value: { get_attribute: [static_ip, address] }
