@@ -76,6 +76,7 @@ node_templates:
   healthcheck:
     type: cloudify.gcp.nodes.HealthCheck
     properties:
+      health_check_type: https
       gcp_config: *gcp_config
 
   backend:
