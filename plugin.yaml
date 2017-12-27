@@ -1396,7 +1396,7 @@ relationships:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.detach_disk
           inputs:
             instance_name:
-              default: { get_property: [TARGET, name] }
+              default: { get_attribute: [TARGET, name] }
             zone:
               default: { get_attribute: [TARGET, zone] }
             disk_name:
