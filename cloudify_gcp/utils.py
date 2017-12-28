@@ -209,6 +209,7 @@ def retry_on_failure(msg, delay=constants.RETRY_DEFAULT_DELAY):
             try:
                 return func(*args, **kwargs)
             except HttpError as error:
+                ctx.logger.error('Error Message {0}'.format(error.resp))
                 if is_resource_used_error(error):
                     ctx.operation.retry(msg, delay)
                 else:
@@ -224,6 +225,7 @@ def throw_cloudify_exceptions(func):
         try:
             return func(*args, **kwargs)
         except GCPError as e:
+            ctx.logger.error('Error Message {0}'.format(e.message))
             raise NonRecoverableError(e.message)
 
     return wraps(func)(_decorator)

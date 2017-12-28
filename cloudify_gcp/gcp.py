@@ -35,6 +35,7 @@ def check_response(func):
         if 'error' in response:
             self.logger.error('Response with error {0}'
                               .format(response['error']))
+
             raise GCPError(response['error'])
         return response
     return wraps(func)(_decorator)
