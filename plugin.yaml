@@ -1325,6 +1325,245 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.delete_network_policy_config
         delete:
           implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.disable_network_policy_addon
+
+  cloudify.gcp.nodes.MonitoringGroup:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+       description: >
+          Output only. The name of this group.
+          The format is "projects/{project_id_or_number}/groups/{groupId}".
+          When creating a group, this field is ignored and a new name is created
+          consisting of the project specified in the call to groups.
+          create and a unique {groupId} that is generated automatically
+       type: string
+       default: ""
+      display_name:
+        description: >
+          A user-assigned name for this group, used only for display purposes
+        type: string
+        required: true
+      parent_name:
+        description: >
+          The name of the group's parent
+        type: string
+        default: ""
+      filter_criteria:
+        description: >
+          The filter used to determine which monitored resources belong to this group
+          This link https://cloud.google.com/monitoring/api/v3/filters
+          describes the use of monitoring filters to specify monitored resources,
+          metric types, and time series.
+        type: string
+        required: true
+      is_cluster:
+        description: >
+          If true, the members of this group are considered to be a cluster.
+          The system can perform additional analysis on groups that are clusters.
+        type: boolean
+        default: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.group.create
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           display_name:
+             default: { get_property: [SELF, display_name]}
+           parent_name:
+             default: { get_property: [SELF, parent_name]}
+           filter_criteria:
+             default: { get_property: [SELF, filter_criteria]}
+           is_cluster:
+             default: { get_property: [SELF, is_cluster]}
+        update:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.group.update
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           display_name:
+             default: { get_property: [SELF, display_name]}
+           parent_name:
+             default: { get_property: [SELF, parent_name]}
+           filter_criteria:
+             default: { get_property: [SELF, filter_criteria]}
+           is_cluster:
+             default: { get_property: [SELF, is_cluster]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.group.delete
+
+  cloudify.gcp.nodes.MonitoringTimeSeries:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      time_series:
+        description: >
+          The new data to be added to a list of time series.
+          Adds at most one data point to each of several time series.
+          The new data point must be more recent than any other point in its time series.
+          Each TimeSeries value must fully specify a unique time series by supplying all label values
+          for the metric and the monitored resource.
+        default: []
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.time_series.create
+          inputs:
+           time_series:
+             default: { get_property: [SELF, time_series]}
+
+  cloudify.gcp.nodes.MonitoringUptimeCheckConfigs:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          A unique resource name for this UptimeCheckConfig
+        type: string
+        default: ""
+      display_name:
+        description: >
+          A human-friendly name for the uptime check configuration.
+          The display name should be unique within a Stackdriver Account
+          in order to make it easier to identify; however, uniqueness is not enforced. Required.
+        type: string
+        required: true
+      period:
+        description: >
+          How often the uptime check is performed.
+          Currently, only 1, 5, 10, and 15 minutes are supported.
+          A duration in seconds with up to nine fractional digits,
+          terminated by 's'. Example: "3.5s".
+        type: string
+        required: true
+      timeout:
+        description: >
+          The maximum amount of time to wait for the request to complete (must be between 1 and 60 seconds)
+          A duration in seconds with up to nine fractional digits, terminated by 's'. Example: "3.5s".
+        type: string
+        required: true
+      content_matchers:
+        description: >
+          The expected content on the page the check is run against.
+          Currently, only the first entry in the list is supported,
+          and other entries will be ignored. The server will look for an exact
+          match of the string in the page response's content
+        default: []
+      selected_regions:
+        description: >
+          The list of regions from which the check will be run.
+          If this field is specified, enough regions to include a minimum of 3
+          locations must be provided, or an error message is returned.
+          Not specifying this field will result in uptime checks running from all regions
+        default: []
+      is_internal:
+        description: >
+            Denotes whether this is a check that egresses from InternalCheckers.
+        type: boolean
+        default: false
+      internal_checkers:
+        description: >
+          The internal checkers that this check will egress from.
+          If isInternal is true and this list is empty,
+          the check will egress from all InternalCheckers configured
+          for the project that owns this CheckConfig.
+        default: []
+#      resource:
+#        description: >
+#          The resource the check is checking. Required.
+#          resource can be only one of the following:
+#           1. monitoredResource
+#           2. resourceGroup
+#        default: {}
+#        required: true
+#      check_request_type:
+#        description: >
+#            The type of uptime check request.
+#            check_request_type can be only one of the following:
+#              1. httpCheck
+#              2. tcpCheck
+#        default: {}
+#        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.uptime_check_config.create
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           display_name:
+             default: { get_property: [SELF, display_name]}
+           period:
+             default: { get_property: [SELF, period]}
+           timeout:
+             default: { get_property: [SELF, timeout]}
+           content_matchers:
+             default: { get_property: [SELF, content_matchers]}
+           selected_regions:
+             default: { get_property: [SELF, selected_regions]}
+           is_internal:
+             default: { get_property: [SELF, is_internal]}
+           internal_checkers:
+             default: { get_property: [SELF, internal_checkers]}
+#           resource:
+#             default: { get_property: [SELF, resource]}
+#           check_request_type:
+#             default: { get_property: [SELF, check_request_type]}
+        update:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.uptime_check_config.update
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           display_name:
+             default: { get_property: [SELF, display_name]}
+           period:
+             default: { get_property: [SELF, period]}
+           timeout:
+             default: { get_property: [SELF, timeout]}
+           content_matchers:
+             default: { get_property: [SELF, content_matchers]}
+           selected_regions:
+             default: { get_property: [SELF, selected_regions]}
+           is_internal:
+             default: { get_property: [SELF, is_internal]}
+           internal_checkers:
+             default: { get_property: [SELF, internal_checkers]}
+#           resource:
+#             default: { get_property: [SELF, resource]}
+#           check_request_type:
+#             default: { get_property: [SELF, check_request_type]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.uptime_check_config.delete
+
 relationships:
 
   cloudify.gcp.relationships.instance_connected_to_security_group:

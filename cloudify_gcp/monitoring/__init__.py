@@ -22,26 +22,25 @@ from cloudify_gcp.gcp import check_response
 from cloudify_gcp.gcp import GoogleCloudPlatform
 
 
-class ContainerEngineBase(GoogleCloudPlatform):
+class MonitoringBase(GoogleCloudPlatform):
     def __init__(self,
                  config,
                  logger,
                  name,
                  additional_settings=None):
         """
-         Kubernetes Engine Base Class
-
+         Monitoring Base Class
         :param config: dictionary with project properties: path to auth file,
         project and zone
         :param logger: logger object that the class methods will be logging to
-        :param name: name of the kubernetes resource, if None project name
-        will be taken
         """
-        super(ContainerEngineBase, self).\
+        super(MonitoringBase, self).\
             __init__(config, logger,
-                     name, additional_settings,
-                     scope=constants.CLOUD_PLATFORM_SCOPE,
-                     discovery=constants.CONTAINER_DISCOVERY)
+                     additional_settings,
+                     scope=constants.MONITORING_SCOPE,
+                     discovery=constants.MONITORING_DISCOVERY,
+                     api_version=constants.API_V3, )
+
         self.name = name if name else self.project
 
     @check_response
@@ -56,5 +55,5 @@ class ContainerEngineBase(GoogleCloudPlatform):
         raise NotImplementedError()
 
     @property
-    def discovery_container(self):
-        return self.discovery.projects().zones() if self.discovery else None
+    def discovery_monitoring(self):
+        return self.discovery.projects() if self.discovery else None
