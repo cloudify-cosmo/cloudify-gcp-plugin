@@ -21,14 +21,17 @@ COMPUTE_SCOPE = 'https://www.googleapis.com/auth/compute'
 STORAGE_SCOPE_RW = 'https://www.googleapis.com/auth/devstorage.read_write'
 STORAGE_SCOPE_FULL = 'https://www.googleapis.com/auth/devstorage.full_control'
 CONTAINER_SCOPE = 'https://www.googleapis.com/auth/cloud-platform'
+LOGGING_SCOPE = 'https://www.googleapis.com/auth/logging.admin'
 
 COMPUTE_DISCOVERY = 'compute'
 STORAGE_DISCOVERY = 'storage'
 CONTAINER_DISCOVERY = 'container'
+LOGGING_DISCOVERY = 'logging'
 
 CHUNKSIZE = 2 * 1024 * 1024
 
 API_V1 = 'v1'
+API_V2 = 'v2'
 API_BETA = 'beta'
 
 DISK = 'gcp_disk'
