@@ -1,0 +1,103 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.4/types.yaml
+  - ../../../plugin.yaml
+
+
+inputs:
+
+  client_x509_cert_url:
+    type: string
+    default: { get_secret: client_x509_cert_url }
+
+  client_email:
+    type: string
+    default: { get_secret: client_email }
+
+  client_id:
+    type: string
+    default: { get_secret: client_id }
+
+  project_id:
+    type: string
+    default: { get_secret: project_id }
+
+  private_key_id:
+    type: string
+    default: { get_secret: private_key_id }
+
+  private_key:
+    type: string
+    default: { get_secret: private_key }
+
+  zone:
+    type: string
+    default: { get_secret: zone }
+
+  region:
+    type: string
+    default: { get_secret: region }
+
+  instance_id:
+    type: string
+
+dsl_definitions:
+
+  - &gcp_config
+    auth:
+      type: service_account
+      auth_uri: https://accounts.google.com/o/oauth2/auth
+      token_uri: https://accounts.google.com/o/oauth2/token
+      auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+      client_x509_cert_url: { get_input: client_x509_cert_url }
+      client_email: { get_input: client_email }
+      client_id: { get_input: client_id }
+      project_id: { get_input: project_id }
+      private_key_id: { get_input: private_key_id }
+      private_key: { get_input: private_key }
+    project: { get_input: project_id }
+    zone: { get_input: zone }
+
+node_templates:
+  gcp_group:
+    type: cloudify.gcp.nodes.MonitoringGroup
+    properties:
+      gcp_config: *gcp_config
+      time_series:
+        - metric:
+           type: 'compute.googleapis.com/instance/cpu/utilization'
+           labels:
+             instance_name: 'cloudify-monitoring-resource'
+          resource:
+            type: 'gce_instance'
+            labels:
+              project_id: { get_input: project }
+              instance_id: { get_input: instance_id }
+              zone: { get_input: zone }
+          metric_kind: 'DELTA'
+          value_type: 'DOUBLE'
+          points:
+            - interval:
+                end_time: '2018-01-11T15:01:23.045123456Z'
+                start_time: '2018-01-04T15:01:23.045123456Z'
+              value:
+                double_value: 200
+
+  gcp_uptime_config:
+    type: cloudify.gcp.nodes.MonitoringUptimeCheckConfigs
+    properties:
+      gcp_config: *gcp_config
+      name: 'uptime-config-name'
+      display_name: 'UpTime-Config-Name-1'
+      period: '10s'
+      timeout: '60s'
+      is_internal: false
+      selected_regions:
+        - USA
+        - SOUTH_AMERICA
+
+      content_matchers:
+        - content: 'test-content'
+        - content: 'test-content-1'
