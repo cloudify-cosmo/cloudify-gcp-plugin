@@ -27,11 +27,12 @@ from ..gcp import check_response
 from . import LoggingBase
 
 
-class BillingAccountsSinks(LoggingBase):
+class BillingAccountsSink(LoggingBase):
     def __init__(self,
                  config,
                  logger,
                  name,
+                 billing_account_id,
                  destination,
                  filter_sink=None,
                  include_children=False,
@@ -42,7 +43,8 @@ class BillingAccountsSinks(LoggingBase):
         project and zone
         :param logger: logger object that the class methods will be logging to
         """
-        super(BillingAccountsSinks, self).__init__(config, logger, name,)
+        super(BillingAccountsSink, self).__init__(config, logger, name, )
+        self.billing_account_id = billing_account_id
         self.destination = destination
         self.filter_sink = filter_sink
         self.include_children = include_children
@@ -56,7 +58,7 @@ class BillingAccountsSinks(LoggingBase):
     @check_response
     def create(self):
         return self.discovery_monitoring.sinks().create(
-            parent=self.project_path,
+            parent=self.billing_account_path,
             uniqueWriterIdentity=self.unique_writer_identity,
             body=self.to_dict(), ).execute()
 
@@ -70,7 +72,7 @@ class BillingAccountsSinks(LoggingBase):
 
     @check_response
     def delete(self):
-        return self.discovery_monitoring.sinks().update(
+        return self.discovery_monitoring.sinks().delete(
             sinkName=self.project_path,
             body={}, ).execute()
 
@@ -101,29 +103,36 @@ class BillingAccountsSinks(LoggingBase):
         return 'projects/{0}'.format(self.project)
 
     @property
+    def billing_account_path(self):
+        return 'billingAccounts/{0}'.format(self.billing_account_id)
+
+    @property
     def sink_path(self):
-        return '{0}/sinks/{1}'.format(self.project_path, self.name)
+        return '{0}/sinks/{1}'.format(self.billing_account_path, self.name)
 
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, destination,
+def create(name, billing_account_id, destination,
            filter_sink, include_children,
            unique_writer_identity, **kwargs):
 
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     billing_sink_account = \
-        BillingAccountsSinks(gcp_config, ctx.logger,
-                             name=name, destination=destination,
-                             filter_sink=filter_sink,
-                             include_children=include_children,
-                             unique_writer_identity=unique_writer_identity,)
+        BillingAccountsSink(gcp_config, ctx.logger,
+                            name=name,
+                            billing_account_id=billing_account_id,
+                            destination=destination,
+                            filter_sink=filter_sink,
+                            include_children=include_children,
+                            unique_writer_identity=unique_writer_identity, )
 
     response = utils.create(billing_sink_account)
     ctx.logger.info(
         'Billing accounts sink created successfully {}'.format(response))
     ctx.instance.runtime_properties.update(response)
+    ctx.instance.runtime_properties['billing_account_id'] = billing_account_id
 
 
 @operation
@@ -132,32 +141,38 @@ def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name')
     destination = ctx.instance.runtime_properties.get('destination')
-    if all([name, destination]):
-        billing_sink_account = BillingAccountsSinks(gcp_config,
-                                                    ctx.logger,
-                                                    name=name,
-                                                    destination=destination,)
+    billing_account_id =\
+        ctx.instance.runtime_properties.get('billing_account_id')
+
+    # All required params must be passed in order to delete the sink log
+    # resource
+    if all([name, destination, billing_account_id]):
+        billing_sink_account =\
+            BillingAccountsSink(gcp_config, ctx.logger, name=name,
+                                billing_account_id=billing_account_id,
+                                destination=destination, )
         billing_sink_account.delete()
-        ctx.logger.info('Billing accounts sink successfully')
+        ctx.logger.info('Billing accounts sink deleted successfully')
     else:
-        raise NonRecoverableError(
-            'Missing required parameters for delete group')
+        raise NonRecoverableError('Not all required parameters provided to '
+                                  'delete billing accounts sink')
 
 
 @operation
 @utils.throw_cloudify_exceptions
-def update(name, destination,
+def update(name, billing_account_id,  destination,
            filter_sink, include_children,
            unique_writer_identity, **kwargs):
 
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     billing_sink_account = \
-        BillingAccountsSinks(gcp_config, ctx.logger,
-                             name=name, destination=destination,
-                             filter_sink=filter_sink,
-                             include_children=include_children,
-                             unique_writer_identity=unique_writer_identity,)
+        BillingAccountsSink(gcp_config, ctx.logger,
+                            name=name, billing_account_id=billing_account_id,
+                            destination=destination,
+                            filter_sink=filter_sink,
+                            include_children=include_children,
+                            unique_writer_identity=unique_writer_identity, )
 
     response = billing_sink_account.update()
     ctx.logger.info(

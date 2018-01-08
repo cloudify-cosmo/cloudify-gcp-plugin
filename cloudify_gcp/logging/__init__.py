@@ -37,7 +37,7 @@ class LoggingBase(GoogleCloudPlatform):
         super(LoggingBase, self).\
             __init__(config, logger,
                      additional_settings,
-                     scope=constants.LOGGING_SCOPE,
+                     scope=constants.CONTAINER_SCOPE,
                      discovery=constants.LOGGING_DISCOVERY,
                      api_version=constants.API_V2, )
 
