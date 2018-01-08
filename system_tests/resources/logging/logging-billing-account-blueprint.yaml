@@ -62,7 +62,7 @@ dsl_definitions:
 
 node_templates:
   gcp_logging_billing_account_sinks:
-    type: cloudify.gcp.nodes.logging.BillingAccountsSinks
+    type: cloudify.gcp.nodes.BillingAccounts.LogSink
     properties:
       gcp_config: *gcp_config
       name: 'Billing-Account-Sink-Logging'

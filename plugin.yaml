@@ -1326,7 +1326,7 @@ node_types:
         delete:
           implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.disable_network_policy_addon
 
-  cloudify.gcp.nodes.logging.BillingAccountsSinks:
+  cloudify.gcp.nodes.BillingAccounts.LogSink:
     derived_from: cloudify.nodes.Root
     properties:
       use_external_resource:
@@ -1350,7 +1350,7 @@ node_types:
        required: true
       billing_account_id:
        description: >
-          Billing account ID associated with projects
+          Billing account ID associates with gcp account
        type: string
        required: true
       destination:
@@ -1393,7 +1393,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.create
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.create_log_sink
           inputs:
            name:
              default: { get_property: [SELF, name]}
@@ -1408,7 +1408,7 @@ node_types:
            unique_writer_identity:
              default: { get_property: [SELF, unique_writer_identity]}
         update:
-          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.update
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.update_log_sink
           inputs:
            name:
              default: { get_property: [SELF, name]}
@@ -1423,7 +1423,80 @@ node_types:
            unique_writer_identity:
              default: { get_property: [SELF, unique_writer_identity]}
         delete:
-          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.delete
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.delete_log_sink
+
+  cloudify.gcp.nodes.BillingAccounts.LogExclusion:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+       description: >
+          Required. A client-assigned identifier, such as "load-balancer-exclusion".
+          Identifiers are limited to 100 characters and can include only letters,
+          digits, underscores, hyphens, and periods.
+       type: string
+       required: true
+      billing_account_id:
+       description: >
+          Billing account ID associated with projects
+       type: string
+       required: true
+      filter_exclusions:
+        description: >
+            Required. An advanced logs filter that matches the log entries to be excluded.
+            By using the sample function, you can exclude less than 100% of the matching log entries
+        type: string
+        required: true
+      description:
+        description: >
+          Optional. A description of this exclusion
+        type: string
+        default: ""
+      disabled:
+        description: >
+          Optional. If set to True, then this exclusion is disabled and it
+          does not exclude any log entries
+        type: boolean
+        default: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.create_log_exclusion
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           billing_account_id:
+             default: { get_property: [SELF, billing_account_id]}
+           filter_exclusions:
+             default: { get_property: [SELF, filter_exclusions]}
+           description:
+             default: { get_property: [SELF, description]}
+           disabled:
+             default: { get_property: [SELF, disabled]}
+        update:
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.update_log_exclusion
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           billing_account_id:
+             default: { get_property: [SELF, billing_account_id]}
+           filter_exclusions:
+             default: { get_property: [SELF, filter_exclusions]}
+           description:
+             default: { get_property: [SELF, description]}
+           disabled:
+             default: { get_property: [SELF, disabled]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.delete_log_exclusion
 
 relationships:
 
