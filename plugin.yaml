@@ -1325,6 +1325,179 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.delete_network_policy_config
         delete:
           implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.disable_network_policy_addon
+
+  cloudify.gcp.nodes.BillingAccounts.LogSink:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+       description: >
+          The client-assigned sink identifier, unique within the project.
+          Example: "my-syslog-errors-to-pubsub".
+          Sink identifiers are limited to 100 characters and can include
+          only the following characters: upper and lower-case alphanumeric characters,
+          underscores, hyphens, and periods
+       type: string
+       required: true
+      billing_account_id:
+       description: >
+          Billing account ID associates with gcp account
+       type: string
+       required: true
+      destination:
+        description: >
+          The export destination
+        type: string
+        required: true
+      filter_sink:
+        description: >
+          Optional. The only exported log entries are those that are in the
+          resource owning the sink and that match the filter
+        type: string
+        default: ""
+      include_children:
+        description: >
+            Optional. This field applies only to sinks owned by organizations
+            and folders. If the field is false, the default, only the logs owned
+            by the sink's parent resource are available for export.
+            If the field is true, then logs from all the projects, folders,
+            and billing accounts contained in the sink's parent resource are also available for export.
+            Whether a particular log entry from the children is exported depends on the sink's filter expression.
+            For example, if this field is true, then the filter resource.type=gce_instance
+            would export all Compute Engine VM instance log entries from all projects in the sink's parent
+        type: boolean
+        default: false
+      unique_writer_identity:
+        description: >
+          Optional. Determines the kind of IAM identity returned as writerIdentity
+          in the new sink. If this value is omitted or set to false,
+          and if the sink's parent is a project, then the value returned as writerIdentity
+          is the same group or service account used by Stackdriver Logging
+          before the addition of writer identities to this API.
+          The sink's destination must be in the same project as the sink itself.
+          If this field is set to true, or if the sink is owned by
+          a non-project resource such as an organization,
+          then the value of writerIdentity will be a unique service account
+          used only for exports from the new sink
+        type: boolean
+        default: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.create_log_sink
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           billing_account_id:
+             default: { get_property: [SELF, billing_account_id]}
+           destination:
+             default: { get_property: [SELF, destination]}
+           filter_sink:
+             default: { get_property: [SELF, filter_sink]}
+           include_children:
+             default: { get_property: [SELF, include_children]}
+           unique_writer_identity:
+             default: { get_property: [SELF, unique_writer_identity]}
+        update:
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.update_log_sink
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           billing_account_id:
+             default: { get_property: [SELF, billing_account_id]}
+           destination:
+             default: { get_property: [SELF, destination]}
+           filter_sink:
+             default: { get_property: [SELF, filter_sink]}
+           include_children:
+             default: { get_property: [SELF, include_children]}
+           unique_writer_identity:
+             default: { get_property: [SELF, unique_writer_identity]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.delete_log_sink
+
+  cloudify.gcp.nodes.BillingAccounts.LogExclusion:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+       description: >
+          Required. A client-assigned identifier, such as "load-balancer-exclusion".
+          Identifiers are limited to 100 characters and can include only letters,
+          digits, underscores, hyphens, and periods.
+       type: string
+       required: true
+      billing_account_id:
+       description: >
+          Billing account ID associated with projects
+       type: string
+       required: true
+      filter_exclusions:
+        description: >
+            Required. An advanced logs filter that matches the log entries to be excluded.
+            By using the sample function, you can exclude less than 100% of the matching log entries
+        type: string
+        required: true
+      description:
+        description: >
+          Optional. A description of this exclusion
+        type: string
+        default: ""
+      disabled:
+        description: >
+          Optional. If set to True, then this exclusion is disabled and it
+          does not exclude any log entries
+        type: boolean
+        default: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.create_log_exclusion
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           billing_account_id:
+             default: { get_property: [SELF, billing_account_id]}
+           filter_exclusions:
+             default: { get_property: [SELF, filter_exclusions]}
+           description:
+             default: { get_property: [SELF, description]}
+           disabled:
+             default: { get_property: [SELF, disabled]}
+        update:
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.update_log_exclusion
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           billing_account_id:
+             default: { get_property: [SELF, billing_account_id]}
+           filter_exclusions:
+             default: { get_property: [SELF, filter_exclusions]}
+           description:
+             default: { get_property: [SELF, description]}
+           disabled:
+             default: { get_property: [SELF, disabled]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.logging.billing_accounts.delete_log_exclusion
+
 relationships:
 
   cloudify.gcp.relationships.instance_connected_to_security_group:
@@ -1475,4 +1648,3 @@ relationships:
 
   cloudify.gcp.relationships.vpn_network_peering_connected_to_network:
     derived_from: cloudify.relationships.connected_to
-
