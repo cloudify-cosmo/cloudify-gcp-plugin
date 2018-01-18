@@ -1502,6 +1502,275 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.delete_network_policy_config
         delete:
           implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.disable_network_policy_addon
+
+  cloudify.gcp.nodes.Topic:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Name of the topic
+        type: string
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.pubsub.topic.create
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.pubsub.topic.delete
+
+  cloudify.gcp.nodes.TopicPolicy:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      policy:
+        description: >
+          The complete policy to be applied to the resource.
+          The size of the policy is limited to a few 10s of KB.
+          An empty policy is a valid policy
+          but certain Cloud Platform services (such as Projects) might reject them
+        default: {}
+      topic:
+        description: >
+          Name of the topic
+        type: string
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.pubsub.topic_policy.set_policy
+          inputs:
+           policy:
+             default: { get_property: [SELF, policy]}
+           topic:
+             default: { get_property: [SELF, topic]}
+
+  cloudify.gcp.nodes.TopicMessage:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      messages:
+        description: >
+          The messages to publish.
+        default: []
+        required: true
+      topic:
+        description: >
+          Name of the topic
+        type: string
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.pubsub.message.publish
+          inputs:
+           topic:
+             default: { get_property: [SELF, topic]}
+           messages:
+             default: { get_property: [SELF, messages]}
+
+  cloudify.gcp.nodes.Subscription:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Name of the subscription
+        type: string
+        default : ''
+      topic:
+        description: >
+          Name of the topic
+        type: string
+        required: true
+      push_config:
+        description: >
+          If push delivery is used with this subscription,
+          this field is used to configure it.
+          An empty pushConfig signifies that the subscriber
+          will pull and ack messages using API methods..
+        default: {}
+      ack_deadline_seconds:
+        description: >
+          This value is the maximum time after a subscriber receives a message
+          before the subscriber should acknowledge the message.
+          After message delivery but before the ack deadline expires
+          and before the message is acknowledged,
+          it is an outstanding message and will not be delivered again
+          during that time (on a best-effort basis)..
+          type: integer
+          default: 0
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.pubsub.subscription.create
+          inputs:
+           name:
+             default: { get_property: [SELF, name]}
+           topic:
+             default: { get_property: [SELF, topic]}
+           push_config:
+             default: { get_property: [SELF, push_config]}
+           ack_deadline_seconds:
+             default: { get_property: [SELF, ack_deadline_seconds]}
+        delete:
+          implementation:  gcp_plugin.cloudify_gcp.pubsub.subscription.delete
+
+  cloudify.gcp.nodes.SubscriptionPolicy:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      policy:
+        description: >
+          The complete policy to be applied to the resource.
+          The size of the policy is limited to a few 10s of KB.
+          An empty policy is a valid policy
+          but certain Cloud Platform services (such as Projects) might reject them
+        default: {}
+      subscription:
+        description: >
+          Name of the Subscription
+        type: string
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.pubsub.subscription_policy.set_policy
+          inputs:
+           policy:
+             default: { get_property: [SELF, policy]}
+           subscription:
+             default: { get_property: [SELF, subscription]}
+
+  cloudify.gcp.nodes.Acknowledge:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      subscription:
+        description: >
+          Name of the subscription
+        type: string
+        default : ''
+      ack_ids:
+        description: >
+          The acknowledgment ID for the messages being acknowledged
+          that was returned by the Pub/Sub system in the subscriptions.
+          pull response. Must not be empty.
+        default: []
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.pubsub.acknowledge.create
+          inputs:
+           subscription:
+             default: { get_property: [SELF, subscription]}
+           ack_ids:
+             default: { get_property: [SELF, ack_ids]}
+
+  cloudify.gcp.nodes.PullRequest:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      subscription:
+        description: >
+          Name of the subscription
+        type: string
+        default : ''
+      return_immediately:
+        description: >
+          If this field set to true, the system will respond immediately even
+          if it there are no messages available to return in the subscriptions.
+          pull response. Otherwise, the system may wait (for a bounded amount of time)
+          until at least one message is available, rather than returning no messages.
+          The client may cancel the request if it does not wish to wait any longer for the response
+        type: boolean
+        default: false
+      max_messages:
+        description: >
+          The maximum number of messages returned for this request.
+          The Pub/Sub system may return fewer than the number specified.
+        type: integer
+        default: 1
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.pubsub.pull_request.pull
+          inputs:
+           subscription:
+             default: { get_property: [SELF, subscription]}
+           return_immediately:
+             default: { get_property: [SELF, return_immediately]}
+           max_messages:
+             default: { get_property: [SELF, max_messages]}
+
+
 relationships:
 
   cloudify.gcp.relationships.instance_connected_to_security_group:
@@ -1672,7 +1941,10 @@ relationships:
   cloudify.gcp.relationships.vpn_network_peering_connected_to_network:
     derived_from: cloudify.relationships.connected_to
 
-  cloudify.gcp.relationships.instance_remove_access_config:
+  cloudify.gcp.relationships.subscription_connected_to_topic:
+    derived_from: cloudify.relationships.connected_to
+
+cloudify.gcp.relationships.instance_remove_access_config:
     derived_from: cloudify.relationships.depends_on
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:

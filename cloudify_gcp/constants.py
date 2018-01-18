@@ -21,10 +21,12 @@ COMPUTE_SCOPE = 'https://www.googleapis.com/auth/compute'
 STORAGE_SCOPE_RW = 'https://www.googleapis.com/auth/devstorage.read_write'
 STORAGE_SCOPE_FULL = 'https://www.googleapis.com/auth/devstorage.full_control'
 CONTAINER_SCOPE = 'https://www.googleapis.com/auth/cloud-platform'
+PUB_SUB_SCOPE = 'https://www.googleapis.com/auth/pubsub'
 
 COMPUTE_DISCOVERY = 'compute'
 STORAGE_DISCOVERY = 'storage'
 CONTAINER_DISCOVERY = 'container'
+PUB_SUB_DISCOVERY = 'pubsub'
 
 CHUNKSIZE = 2 * 1024 * 1024
 
