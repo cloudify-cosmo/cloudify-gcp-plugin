@@ -16,7 +16,7 @@
 
 from mock import patch, MagicMock
 
-from .. import forwarding_rule
+from .. import global_forwarding_rule
 from ...tests import TestGCP
 
 
@@ -30,14 +30,8 @@ class TestForwardingRule(TestGCP):
         self.ctxmock.node.properties.update({
             'target_proxy': 'walmart',
             })
-        forwarding_rule.create(
+        global_forwarding_rule.create(
                 name='name',
-                region='region',
-                scheme='scheme',
-                ports=[],
-                network="network",
-                subnet="subnet",
-                backend_service="backend_service",
                 target_proxy='target',
                 port_range='range',
                 ip_address='ip',
@@ -45,37 +39,30 @@ class TestForwardingRule(TestGCP):
                 )
 
         mock_build.assert_called_once()
-        mock_build().forwardingRules().insert.assert_called_with(
+        mock_build().globalForwardingRules().insert.assert_called_with(
                 body={
-                    'network': 'network',
-                    'loadBalancingScheme': 'SCHEME',
-                    'subnetwork': "subnet",
-                    'backendService': "backend_service",
                     'portRange': 'range',
                     'IPAddress': 'ip',
                     'target': 'target',
                     'description': 'Cloudify generated Global Forwarding Rule',
                     'name': 'name'},
-                project='not really a project',
-                region='region'
+                project='not really a project'
                 )
 
     @patch('cloudify_gcp.utils.response_to_operation')
     def test_delete(self, mock_response, mock_build, *args):
         self.ctxmock.instance.runtime_properties.update({
             'name': 'delete_name',
-            'region': 'region',
             })
 
         operation = MagicMock()
         operation.has_finished.return_value = True
         mock_response.return_value = operation
 
-        forwarding_rule.delete()
+        global_forwarding_rule.delete()
 
         mock_build.assert_called_once()
-        mock_build().forwardingRules().delete.assert_called_with(
+        mock_build().globalForwardingRules().delete.assert_called_with(
                 forwardingRule='delete_name',
                 project='not really a project',
-                region='region'
                 )
