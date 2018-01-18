@@ -12,8 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from os.path import basename
-
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
@@ -25,23 +23,17 @@ from ..gcp import (
         )
 
 
-class ForwardingRule(GoogleCloudPlatform):
+class GlobalForwardingRule(GoogleCloudPlatform):
 
     def __init__(self,
                  config,
                  logger,
                  name,
-                 region=None,
-                 scheme=None,
-                 ports=None,
-                 network=None,
-                 subnet=None,
-                 backend_service=None,
                  target_proxy=None,
                  port_range=None,
                  ip_address=None,
                  additional_settings=None):
-        super(ForwardingRule, self).__init__(
+        super(GlobalForwardingRule, self).__init__(
                 config,
                 logger,
                 name,
@@ -49,74 +41,45 @@ class ForwardingRule(GoogleCloudPlatform):
         self.target_proxy = target_proxy
         self.port_range = port_range
         self.ip_address = ip_address
-        self.region = region
-        self.scheme = scheme
-        self.ports = ports
-        self.network = network
-        self.subnet = subnet
-        self.backend_service = backend_service
 
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated Global Forwarding Rule',
             'name': self.name,
-            'loadBalancingScheme': self.scheme.upper(),
+            'target': self.target_proxy,
+            'portRange': self.port_range,
+            'IPAddress': self.ip_address
         })
-
-        # internal
-        if self.ports:
-            self.body['ports'] = self.ports
-        if self.network:
-            self.body['network'] = self.network
-        if self.subnet:
-            self.body['subnetwork'] = self.subnet
-        if self.backend_service:
-            self.body['backendService'] = self.backend_service
-
-        # external
-        if self.port_range:
-            self.body['portRange'] = self.port_range
-        if self.target_proxy:
-            self.body['target'] = self.target_proxy
-        if self.ip_address:
-            self.body['IPAddress'] = self.ip_address
-
-        self.logger.info(repr(self.body))
-
         return self.body
 
     @check_response
     def get(self):
-        return self.discovery.forwardingRules().get(
-            project=self.project, region=basename(self.region),
+        return self.discovery.globalForwardingRules().get(
+            project=self.project,
             forwardingRule=self.name).execute()
 
     @check_response
     def list(self):
-        return self.discovery.forwardingRules().list(
-            project=self.project, region=basename(self.region)).execute()
+        return self.discovery.globalForwardingRules().list(
+            project=self.project).execute()
 
     @utils.async_operation(get=True)
     @check_response
     def create(self):
-        if self.scheme.lower() != 'internal':
-            required_fileds = ['target_proxy', 'port_range', 'ip_address']
-        else:
-            required_fileds = ['backend_service']
-        for name in required_fileds:
+        for name in 'target_proxy', 'port_range', 'ip_address':
             if not getattr(self, name):
                 raise NonRecoverableError(
                     'Forwarding Rule missing {}'.format(name))
 
-        return self.discovery.forwardingRules().insert(
-            project=self.project, region=self.region,
+        return self.discovery.globalForwardingRules().insert(
+            project=self.project,
             body=self.to_dict()).execute()
 
     @utils.async_operation()
     @check_response
     def delete(self):
-        return self.discovery.forwardingRules().delete(
-            project=self.project, region=basename(self.region),
+        return self.discovery.globalForwardingRules().delete(
+            project=self.project,
             forwardingRule=self.name).execute()
 
 
@@ -139,29 +102,22 @@ def creation_validation(**kwargs):
 
 @operation
 @utils.throw_cloudify_exceptions
-def create(name, region, scheme, ports, network, subnet, backend_service,
-           target_proxy, port_range, ip_address, additional_settings,
-           **kwargs):
+def create(name, target_proxy, port_range,
+           ip_address, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
 
-    if not target_proxy and scheme.lower() != 'internal':
+    if not target_proxy:
         rel = utils.get_relationships(
                 ctx,
                 filter_relationships='cloudify.gcp.relationships.'
                 'forwarding_rule_connected_to_target_proxy')[0]
         target_proxy = rel.target.instance.runtime_properties['selfLink']
 
-    forwarding_rule = ForwardingRule(
+    forwarding_rule = GlobalForwardingRule(
             gcp_config,
             ctx.logger,
             name,
-            region,
-            scheme,
-            ports,
-            network,
-            subnet,
-            backend_service,
             target_proxy,
             port_range,
             ip_address,
@@ -176,9 +132,7 @@ def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name')
     if name:
-        forwarding_rule = ForwardingRule(
-            gcp_config,
-            ctx.logger,
-            name=name,
-            region=ctx.instance.runtime_properties['region'])
+        forwarding_rule = GlobalForwardingRule(gcp_config,
+                                               ctx.logger,
+                                               name=name)
         utils.delete_if_not_external(forwarding_rule)

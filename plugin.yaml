@@ -503,6 +503,20 @@ node_types:
         create:
           implementation: gcp_plugin.cloudify_gcp.compute.security_group.creation_validation
 
+  cloudify.gcp.nodes.Access:
+    derived_from: cloudify.nodes.Root
+    properties:
+      name:
+        description: >
+          Name of access rule
+      interface:
+        description: >
+          Interface for rule
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
+
   cloudify.gcp.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
     properties:
@@ -654,6 +668,10 @@ node_types:
         description: >
           The (local system) path to the image file which will be uploaded.
         default: ''
+      family:
+        description: >
+          The name of the image family to which this image belongs.
+        default: ''
       additional_settings:
         description: >
           Additional setting for image
@@ -750,7 +768,7 @@ node_types:
         default: ''
       protocol:
         description: >
-          The protocol this BackendService uses to communicate with backends. 
+          The protocol this BackendService uses to communicate with backends.
         default: 'HTTP'
       additional_settings:
         description: >
@@ -772,6 +790,61 @@ node_types:
               default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.backend_service.delete
+
+  cloudify.gcp.nodes.RegionBackendService:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Optional health check name. By default it will be backend service id.
+        type: string
+        default: ''
+      region:
+        description: >
+          The region this subnet is in. See https://cloud.google.com/compute/docs/regions-zones/regions-zones
+        type: string
+        default: ''
+      health_check:
+        description: >
+          URL of a health check assigned to this backend service.
+        type: string
+        default: ''
+      protocol:
+        description: >
+          The protocol this BackendService uses to communicate with backends.
+        default: 'HTTP'
+      additional_settings:
+        description: >
+          Optional additional settings. Possible fields in dictionary are:
+          port_name, protocol, timeout_sec.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.region_backend_service.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            region:
+              default: { get_property: [SELF, region]}
+            health_check:
+              default: { get_property: [SELF, health_check]}
+            protocol:
+              default: { get_property: [SELF, protocol]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.compute.region_backend_service.delete
 
   cloudify.gcp.nodes.UrlMap:
     derived_from: cloudify.nodes.Root
@@ -929,6 +1002,110 @@ node_types:
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.ssl_certificate.delete
 
+  cloudify.gcp.nodes.ForwardingRule:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Optional global forwarding rule name. By default it will be
+          global forwarding rule id.
+        type: string
+        default: ''
+      region:
+        description: >
+          The region this subnet is in. See https://cloud.google.com/compute/docs/regions-zones/regions-zones
+        type: string
+        default: ''
+      scheme:
+        description: >
+          This signifies what the ForwardingRule will be used for and can only take the following values:
+          INTERNAL, EXTERNAL
+        type: string
+        default: EXTERNAL
+      ports:
+        description: >
+          This field is used along with the backend_service field for internal load balancing.
+        default: []
+      network:
+        description: >
+          This field is not used for external load balancing.
+        default: ""
+      subnet:
+        description: >
+          This field is not used for external load balancing.
+        default: ""
+      backend_service:
+        description: >
+          For internal load balancing, this field identifies the BackendService resource to receive the matched traffic.
+        default: ""
+      target_proxy:
+        description: >
+          URL of a target proxy (http or https) that will receive traffic
+          coming from specified IP address.
+        type: string
+        default: ''
+      port_range:
+        description: >
+          Port number used by this forwarding rule. If packets are redirected to
+          HTTP proxy, then possible values are 80 and 8080, in case of HTTPS proxy
+          the only accepted value is 443.
+        type: string
+        default: ""
+      ip_address:
+        description: >
+          IP address associated with this forwarding rule. This address
+          should be reserved earlier.
+        type: string
+        default: ''
+      additional_settings:
+        description: >
+          Additional setting for ssl certificate
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            region:
+              default: { get_property: [SELF, region]}
+            scheme:
+              default: { get_property: [SELF, scheme]}
+            ports:
+              default: { get_property: [SELF, ports]}
+            ports:
+              default: { get_property: [SELF, ports]}
+            network:
+              default: { get_property: [SELF, network]}
+            subnet:
+              default: { get_property: [SELF, subnet]}
+            backend_service:
+              default: { get_property: [SELF, backend_service]}
+            target_proxy:
+              default: { get_property: [SELF, target_proxy]}
+            port_range:
+              default: { get_property: [SELF, port_range]}
+            ip_address:
+              default: { get_property: [SELF, ip_address]}
+            additional_settings:
+              default: { get_property: [SELF, additional_settings]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.delete
+      cloudify.interfaces.validation:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.creation_validation
+
   cloudify.gcp.nodes.GlobalForwardingRule:
     derived_from: cloudify.nodes.Root
     properties:
@@ -974,7 +1151,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.create
+          implementation: gcp_plugin.cloudify_gcp.compute.global_forwarding_rule.create
           inputs:
             name:
               default: { get_property: [SELF, name]}
@@ -987,10 +1164,10 @@ node_types:
             additional_settings:
               default: { get_property: [SELF, additional_settings]}
         delete:
-          implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.delete
+          implementation: gcp_plugin.cloudify_gcp.compute.global_forwarding_rule.delete
       cloudify.interfaces.validation:
         create:
-          implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.creation_validation
+          implementation: gcp_plugin.cloudify_gcp.compute.global_forwarding_rule.creation_validation
 
   cloudify.gcp.nodes.DNSZone:
     derived_from: cloudify.nodes.Root
@@ -1709,6 +1886,25 @@ relationships:
             group_self_url:
               default: { get_attribute: [TARGET, selfLink] }
 
+  cloudify.gcp.relationships.uses_as_region_backend:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.cloudify_gcp.compute.region_backend_service.add_backend
+          inputs:
+            backend_service_name:
+              default: { get_attribute: [SOURCE, name] }
+            group_self_url:
+              default: { get_attribute: [TARGET, selfLink] }
+        unlink:
+          implementation: gcp_plugin.cloudify_gcp.compute.region_backend_service.remove_backend
+          inputs:
+            backend_service_name:
+              default: { get_attribute: [SOURCE, name] }
+            group_self_url:
+              default: { get_attribute: [TARGET, selfLink] }
+
   cloudify.gcp.relationships.contained_in_compute:
     derived_from: cloudify.relationships.contained_in
     source_interfaces:
@@ -1747,3 +1943,19 @@ relationships:
 
   cloudify.gcp.relationships.subscription_connected_to_topic:
     derived_from: cloudify.relationships.connected_to
+
+cloudify.gcp.relationships.instance_remove_access_config:
+    derived_from: cloudify.relationships.depends_on
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.instance_remove_access_config
+          inputs:
+            instance_name:
+              default: { get_attribute: [TARGET, name] }
+            zone:
+              default: { get_attribute: [TARGET, zone] }
+            rule_name:
+              default: { get_property: [SOURCE, name] }
+            interface:
+              default: { get_property: [SOURCE, interface] }

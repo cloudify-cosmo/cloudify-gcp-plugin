@@ -9,9 +9,9 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from os.path import basename
 import re
@@ -224,7 +224,8 @@ class Instance(GoogleCloudPlatform):
 
     @utils.sync_operation
     @check_response
-    def delete_access_config(self):
+    def delete_access_config(self, rule_name=ACCESS_CONFIG,
+                             interface=NETWORK_INTERFACE):
         """
         Set GCP instance tags.
         Zone operation.
@@ -239,8 +240,8 @@ class Instance(GoogleCloudPlatform):
             project=self.project,
             instance=self.name,
             zone=basename(self.zone),
-            accessConfig=self.ACCESS_CONFIG,
-            networkInterface=self.NETWORK_INTERFACE).execute()
+            accessConfig=rule_name,
+            networkInterface=interface).execute()
 
     @utils.sync_operation
     @check_response
@@ -688,3 +689,18 @@ def _get_script(startup_script):
         startup_script_metadata['value'] = new_startup_script_value
 
     return startup_script_metadata
+
+
+@operation
+@utils.throw_cloudify_exceptions
+def instance_remove_access_config(instance_name, zone, rule_name, interface,
+                                  **kwargs):
+    # config from source
+    gcp_config = utils.get_gcp_config()
+
+    instance = Instance(gcp_config,
+                        ctx.logger,
+                        name=instance_name,
+                        zone=zone,
+                        )
+    instance.delete_access_config(rule_name, interface)

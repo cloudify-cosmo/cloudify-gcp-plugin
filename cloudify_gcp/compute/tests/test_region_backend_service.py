@@ -16,7 +16,7 @@
 
 from mock import patch
 
-from cloudify_gcp.compute import backend_service
+from cloudify_gcp.compute import region_backend_service
 from ...tests import TestGCP
 
 
@@ -27,33 +27,37 @@ from ...tests import TestGCP
 class TestGCPBackendService(TestGCP):
 
     def test_create(self, mock_build, *args):
-        backend_service.create(
+        region_backend_service.create(
                 'name',
+                "region",
                 'health check',
                 'tcp',
                 additional_settings={},
                 )
 
         mock_build.assert_called_once()
-        mock_build().backendServices().insert.assert_called_with(
+        mock_build().regionBackendServices().insert.assert_called_with(
                 body={
                     'healthChecks': ['health check'],
                     'protocol': 'tcp',
                     'description': 'Cloudify generated backend service',
                     'name': 'name'},
-                project='not really a project'
+                project='not really a project',
+                region='region'
                 )
 
     def test_delete(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties.update({
                 'name': 'delete_name',
+                'region': 'region',
                 })
 
-        backend_service.delete()
+        region_backend_service.delete()
 
-        mock_build().backendServices().delete.assert_called_once_with(
+        mock_build().regionBackendServices().delete.assert_called_once_with(
                 backendService='delete_name',
                 project='not really a project',
+                region='region'
                 )
 
     def test_add_backend(self, mock_build, *args):
@@ -64,25 +68,27 @@ class TestGCPBackendService(TestGCP):
                 ]
         self.ctxmock.source.instance.runtime_properties = {
                 'backends': [],
+                'region': "region",
                 }
 
-        mock_build().backendServices().get().execute.return_value = {
+        mock_build().regionBackendServices().get().execute.return_value = {
                     'backends': [
                         {'group': 'group'},
                     ],
                 }
 
-        backend_service.add_backend('backend_name', 'group')
+        region_backend_service.add_backend('backend_name', 'group')
 
-        backend_service.add_backend('backend_name', 'group 2')
+        region_backend_service.add_backend('backend_name', 'group 2')
 
-        mock_build().backendServices().patch.assert_called_with(
+        mock_build().regionBackendServices().patch.assert_called_with(
                 backendService='backend_name',
                 body={'backends': [
                     {'group': 'group'},
                     {'group': 'group 2'},
                     ]},
-                project='not really a project'
+                project='not really a project',
+                region='region'
                 )
 
     def test_remove_backend(self, mock_build, *args):
@@ -91,6 +97,7 @@ class TestGCPBackendService(TestGCP):
                 {'status': 'DONE', 'name': 'Boris'},
                 ]
         self.ctxmock.source.instance.runtime_properties = {
+                'region': "region",
                 'backends': [
                     {'group': 'group 1'},
                     {'group': 'group 2'},
@@ -98,16 +105,17 @@ class TestGCPBackendService(TestGCP):
                     ],
                 }
 
-        backend_service.remove_backend(
+        region_backend_service.remove_backend(
                 'backend_name',
                 'group 1',
                 )
 
-        mock_build().backendServices().patch.assert_called_once_with(
+        mock_build().regionBackendServices().patch.assert_called_once_with(
                 backendService='backend_name',
                 body={'backends': [
                     {'group': 'group 2'},
                     {'group': 'group 3'},
                     ]},
-                project='not really a project'
+                project='not really a project',
+                region='region'
                 )

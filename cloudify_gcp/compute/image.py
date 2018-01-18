@@ -9,9 +9,9 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 from cloudify import ctx
 from cloudify.decorators import operation
 
@@ -64,6 +64,13 @@ class Image(GoogleCloudPlatform):
         self.create()
 
     @check_response
+    def update_name(self, family):
+        if not family:
+            return self.get()
+        return self.discovery.images().getFromFamily(project=self.project,
+                                                     family=family).execute()
+
+    @check_response
     def get(self):
         return self.discovery.images().get(project=self.project,
                                            image=self.name).execute()
@@ -102,7 +109,11 @@ def create(image_name, image_path, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(image_name)
     image = Image(gcp_config, ctx.logger, name, additional_settings)
-    upload_image(image, image_path)
+    if not utils.should_use_external_resource():
+        upload_image(image, image_path)
+    else:
+        response = image.update_name(ctx.node.properties['family'])
+        ctx.instance.runtime_properties['selfLink'] = response['selfLink']
     ctx.instance.runtime_properties['name'] = image.name
 
 

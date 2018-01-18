@@ -1,0 +1,483 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-gcp-plugin/master/plugin.yaml
+
+inputs:
+
+  client_x509_cert_url:
+    type: string
+    default: { get_secret: client_x509_cert_url }
+
+  client_email:
+    type: string
+    default: { get_secret: client_email }
+
+  client_id:
+    type: string
+    default: { get_secret: client_id }
+
+  project_id:
+    type: string
+    default: { get_secret: project_id }
+
+  private_key_id:
+    type: string
+    default: { get_secret: private_key_id }
+
+  private_key:
+    type: string
+    default: { get_secret: private_key }
+
+  small_instance_type:
+    default: g1-small
+
+node_templates:
+
+  # gcloud compute networks create my-custom-network --subnet-mode custom
+  network:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      name: my-custom-network
+      auto_subnets: false
+      gcp_config:
+        auth: &google_auth
+          type: service_account
+          auth_uri: https://accounts.google.com/o/oauth2/auth
+          token_uri: https://accounts.google.com/o/oauth2/token
+          auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+          client_x509_cert_url: { get_input: client_x509_cert_url }
+          client_email: { get_input: client_email }
+          client_id: { get_input: client_id }
+          project_id: { get_input: project_id }
+          private_key_id: { get_input: private_key_id }
+          private_key: { get_input: private_key }
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
+
+  # gcloud compute networks subnets create my-custom-subnet --network my-custom-network --range 10.128.0.0/20 --region us-central1
+  network_subnet:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
+      name: my-custom-subnet
+      subnet: 10.128.0.0/20
+      region: us-central1
+    relationships:
+    - type: cloudify.gcp.relationships.contained_in_network
+      target: network
+
+   # gcloud compute firewall-rules create allow-all-10-128-0-0-20 --network my-custom-network --allow tcp,udp,icmp --source-ranges 10.128.0.0/20
+  allow_all:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
+      name: allow-all-10-128-0-0-20
+      sources:
+      - 10.128.0.0/20
+      allowed:
+        tcp: []
+        udp: []
+        icmp: []
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network
+      - type: cloudify.relationships.depends_on
+        target: network_subnet
+
+  # gcloud compute firewall-rules create allow-tcp22-tcp3389-icmp --network my-custom-network --allow tcp:22,tcp:3389,icmp
+  allow_22_3389:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
+      name: allow-tcp22-tcp3389-icmp
+      sources:
+      - 0.0.0.0/0
+      allowed:
+        tcp:
+        - 22
+        - 3389
+        icmp: []
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network
+      - type: cloudify.relationships.depends_on
+        target: allow_all
+
+  debian_image:
+    type: cloudify.gcp.nodes.Image
+    properties:
+      use_external_resource: true
+      family: debian-9
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: debian-cloud
+
+  # gcloud compute instances create ig-us-central1-1 --image-family debian-9 --image-project debian-cloud --tags int-lb --zone us-central1-b --subnet my-custom-subnet --metadata startup-script="#! /bin/bash
+  #   apt-get update
+  #   apt-get install apache2 -y
+  #   a2ensite default-ssl
+  #   a2enmod ssl
+  #   service apache2 restart
+  #   echo '<!doctype html><html><body><h1>ig-us-central1-1</h1></body></html>' | tee /var/www/html/index.html
+  #   EOF"
+  ig_us_central1_1:
+    type: cloudify.gcp.nodes.Instance
+    properties:
+      name: ig-us-central1-1
+      zone: us-central1-b
+      startup_script: >
+        apt-get update && apt-get install apache2 -y && a2ensite default-ssl && a2enmod ssl && service apache2 restart && echo '<!doctype html><html><body><h1>ig-us-central1-1</h1></body></html>' | tee /var/www/html/index.html
+      tags:
+      - int-lb
+      image_id: { get_attribute: [ debian_image, selfLink ] }
+      instance_type: { get_input: small_instance_type }
+      agent_config:
+        install_method: none
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-b
+        project: { get_input: project_id }
+      # if false, delete-access-config is not required
+      external_ip: true
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: debian_image
+    - type: cloudify.gcp.relationships.contained_in_network
+      target: network_subnet
+    - type: cloudify.gcp.relationships.instance_connected_to_instance_group
+      target: group_us_ig1
+
+  # gcloud compute instances create ig-us-central1-2 --image-family debian-9 --image-project debian-cloud --tags int-lb --zone us-central1-b --subnet my-custom-subnet --metadata startup-script="#! /bin/bash
+  #   apt-get update
+  #   apt-get install apache2 -y
+  #   a2ensite default-ssl
+  #   a2enmod ssl
+  #   service apache2 restart
+  #   echo '<!doctype html><html><body><h1>ig-us-central1-2</h1></body></html>' | tee /var/www/html/index.html
+  #   EOF"
+  ig_us_central1_2:
+    type: cloudify.gcp.nodes.Instance
+    properties:
+      name: ig-us-central1-2
+      zone: us-central1-b
+      startup_script: >
+        apt-get update && apt-get install apache2 -y && a2ensite default-ssl && a2enmod ssl && service apache2 restart && echo '<!doctype html><html><body><h1>ig-us-central1-2</h1></body></html>' | tee /var/www/html/index.html
+      tags:
+      - int-lb
+      image_id: { get_attribute: [ debian_image, selfLink ] }
+      instance_type: { get_input: small_instance_type }
+      agent_config:
+        install_method: none
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-b
+        project: { get_input: project_id }
+      # if false, delete-access-config is not required
+      external_ip: true
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: debian_image
+    - type: cloudify.gcp.relationships.contained_in_network
+      target: network_subnet
+    - type: cloudify.gcp.relationships.instance_connected_to_instance_group
+      target: group_us_ig1
+
+  # gcloud compute instances create ig-us-central1-3 --image-family debian-9 --image-project debian-cloud --tags int-lb --zone us-central1-c --subnet my-custom-subnet --metadata startup-script="#! /bin/bash
+  #   apt-get update
+  #   apt-get install apache2 -y
+  #   a2ensite default-ssl
+  #   a2enmod ssl
+  #   service apache2 restart
+  #   echo '<!doctype html><html><body><h1>ig-us-central1-3</h1></body></html>' | tee /var/www/html/index.html
+  #   EOF"
+  ig_us_central1_3:
+    type: cloudify.gcp.nodes.Instance
+    properties:
+      name: ig-us-central1-3
+      zone: us-central1-c
+      startup_script: >
+        apt-get update && apt-get install apache2 -y && a2ensite default-ssl && a2enmod ssl && service apache2 restart && echo '<!doctype html><html><body><h1>ig-us-central1-3</h1></body></html>' | tee /var/www/html/index.html
+      tags:
+      - int-lb
+      image_id: { get_attribute: [ debian_image, selfLink ] }
+      instance_type: { get_input: small_instance_type }
+      agent_config:
+        install_method: none
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-c
+        project: { get_input: project_id }
+      # if false, delete-access-config is not required
+      external_ip: true
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: debian_image
+    - type: cloudify.gcp.relationships.contained_in_network
+      target: network_subnet
+    - type: cloudify.gcp.relationships.instance_connected_to_instance_group
+      target: group_us_ig2
+
+  # gcloud compute instances create ig-us-central1-4 --image-family debian-9 --image-project debian-cloud --tags int-lb --zone us-central1-c --subnet my-custom-subnet --metadata startup-script="#! /bin/bash
+  #   apt-get update
+  #   apt-get install apache2 -y
+  #   a2ensite default-ssl
+  #   a2enmod ssl
+  #   service apache2 restart
+  #   echo '<!doctype html><html><body><h1>ig-us-central1-4</h1></body></html>' | tee /var/www/html/index.html
+  #   EOF"
+  ig_us_central1_4:
+    type: cloudify.gcp.nodes.Instance
+    properties:
+      name: ig-us-central1-4
+      zone: us-central1-c
+      startup_script: >
+        apt-get update && apt-get install apache2 -y && a2ensite default-ssl && a2enmod ssl && service apache2 restart && echo '<!doctype html><html><body><h1>ig-us-central1-4</h1></body></html>' | tee /var/www/html/index.html
+      tags:
+      - int-lb
+      image_id: { get_attribute: [ debian_image, selfLink ] }
+      instance_type: { get_input: small_instance_type }
+      agent_config:
+        install_method: none
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-c
+        project: { get_input: project_id }
+      # if false, delete-access-config is not required
+      external_ip: true
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: debian_image
+    - type: cloudify.gcp.relationships.contained_in_network
+      target: network_subnet
+    - type: cloudify.gcp.relationships.instance_connected_to_instance_group
+      target: group_us_ig2
+
+  # gcloud compute instance-groups unmanaged create us-ig1 --zone us-central1-b
+  # gcloud compute instance-groups unmanaged add-instances us-ig1 --instances ig-us-central1-1,ig-us-central1-2 --zone us-central1-b
+  group_us_ig1:
+    type: cloudify.gcp.nodes.InstanceGroup
+    properties:
+      name: us-ig1
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-b
+        project: { get_input: project_id }
+        network: { get_property: [network, name] }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: network_subnet
+
+  # gcloud compute instance-groups unmanaged create us-ig2 --zone us-central1-c
+  # gcloud compute instance-groups unmanaged add-instances us-ig2 --instances ig-us-central1-3,ig-us-central1-4 --zone us-central1-c
+  group_us_ig2:
+    type: cloudify.gcp.nodes.InstanceGroup
+    properties:
+      name: us-ig2
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-c
+        project: { get_input: project_id }
+        network: { get_property: [network, name] }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: network_subnet
+
+  # gcloud compute health-checks create tcp my-tcp-health-check --port 80
+  my_tcp_health_check:
+    type: cloudify.gcp.nodes.HealthCheck
+    properties:
+      health_check_type: tcp
+      port: 80
+      name: my-tcp-health-check
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        project: { get_input: project_id }
+        zone: global
+    relationships:
+      # wait for all slaves
+      - type: cloudify.relationships.depends_on
+        target: ig_us_central1_1
+      - type: cloudify.relationships.depends_on
+        target: ig_us_central1_2
+      - type: cloudify.relationships.depends_on
+        target: ig_us_central1_3
+      - type: cloudify.relationships.depends_on
+        target: ig_us_central1_4
+
+  # gcloud compute backend-services create my-int-lb --load-balancing-scheme internal --region us-central1 --health-checks my-tcp-health-check --protocol tcp
+  # gcloud compute backend-services add-backend my-int-lb --instance-group us-ig1 --instance-group-zone us-central1-b --region us-central1
+  # gcloud compute backend-services add-backend my-int-lb --instance-group us-ig2 --instance-group-zone us-central1-c --region us-central1
+  my_int_lb:
+    type: cloudify.gcp.nodes.RegionBackendService
+    properties:
+      name: my-int-lb
+      health_check: { get_attribute: [ my_tcp_health_check, selfLink ] }
+      protocol: tcp
+      region: us-central1
+      additional_settings:
+        loadBalancingScheme: INTERNAL
+        protocol: TCP
+        timeoutSec: 30
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        project: { get_input: project_id }
+        zone: global
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: my_tcp_health_check
+      - type: cloudify.gcp.relationships.uses_as_region_backend
+        target: group_us_ig1
+      - type: cloudify.gcp.relationships.uses_as_region_backend
+        target: group_us_ig2
+
+  # gcloud compute forwarding-rules create my-int-lb-forwarding-rule --load-balancing-scheme internal --ports 80 --network my-custom-network --subnet my-custom-subnet --region us-central1 --backend-service my-int-lb
+  my_int_lb_forwarding_rule:
+    type: cloudify.gcp.nodes.ForwardingRule
+    properties:
+      name: my-int-lb-forwarding-rule
+      scheme: internal
+      ports:
+      - 80
+      network: { get_attribute: [ network, selfLink ] }
+      subnet: { get_attribute: [ network_subnet, selfLink ] }
+      region: us-central1
+      backend_service: { get_attribute: [ my_int_lb, selfLink ] }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        project: { get_input: project_id }
+        zone: global
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: network_subnet
+      - type: cloudify.relationships.depends_on
+        target: my_int_lb
+
+  # gcloud compute firewall-rules create allow-internal-lb --network my-custom-network --source-ranges 10.128.0.0/20 --target-tags int-lb --allow tcp:80,tcp:443
+  allow_internal_lb:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
+      name: allow-internal-lb
+      sources:
+      - 10.128.0.0/20
+      allowed:
+        tcp:
+        - 80
+        - 443
+        udp: []
+        icmp: []
+      target_tags:
+      - int-lb
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network
+      - type: cloudify.relationships.depends_on
+        target: my_int_lb_forwarding_rule
+
+  # gcloud compute firewall-rules create allow-health-check --network my-custom-network --source-ranges 130.211.0.0/22,35.191.0.0/16 --target-tags int-lb --allow tcp
+  allow_health_check:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
+      name: allow-health-check
+      sources:
+      - 130.211.0.0/22
+      - 35.191.0.0/16
+      allowed:
+        tcp: []
+        udp: []
+        icmp: []
+      target_tags:
+      - int-lb
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network
+      - type: cloudify.relationships.depends_on
+        target: my_int_lb_forwarding_rule
+
+  # instance for final check
+  # gcloud compute instances create standalone-instance-1 --image-family debian-9 --image-project debian-cloud --zone us-central1-b --tags standalone --subnet my-custom-subnet
+  standalone_instance_1:
+    type: cloudify.gcp.nodes.Instance
+    properties:
+      name: standalone-instance-1
+      zone: us-central1-b
+      tags:
+      - standalone
+      image_id: { get_attribute: [ debian_image, selfLink ] }
+      instance_type: { get_input: small_instance_type }
+      agent_config:
+        install_method: none
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-c
+        project: { get_input: project_id }
+      # if false, delete-access-config is not required
+      external_ip: true
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: debian_image
+    - type: cloudify.gcp.relationships.contained_in_network
+      target: network_subnet
+
+  # gcloud compute instances delete-access-config ig-us-central1-1 --access-config-name external-nat --zone us-central1-b
+  # gcloud compute instances delete-access-config ig-us-central1-2 --access-config-name external-nat --zone us-central1-b
+  # gcloud compute instances delete-access-config ig-us-central1-3 --access-config-name external-nat --zone us-central1-c
+  # gcloud compute instances delete-access-config ig-us-central1-4 --access-config-name external-nat --zone us-central1-c
+  external_access:
+    type: cloudify.gcp.nodes.Access
+    properties:
+      name: External NAT
+      interface: nic0
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        project: { get_input: project_id }
+        zone: global
+    relationships:
+    - type: cloudify.gcp.relationships.instance_remove_access_config
+      target: ig_us_central1_1
+    - type: cloudify.gcp.relationships.instance_remove_access_config
+      target: ig_us_central1_2
+    - type: cloudify.gcp.relationships.instance_remove_access_config
+      target: ig_us_central1_3
+    - type: cloudify.gcp.relationships.instance_remove_access_config
+      target: ig_us_central1_4
+    - type: cloudify.relationships.depends_on
+      target: allow_internal_lb
+
+outputs:
+  ip:
+    value: { get_attribute: [ my_int_lb_forwarding_rule, IPAddress ] }
+
+# for check run:
+# * gcloud compute --project [PROJECT_ID] ssh --zone us-central1-b standalone-instance-1
+# * curl [ip from outputs]
