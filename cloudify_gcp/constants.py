@@ -27,6 +27,7 @@ COMPUTE_DISCOVERY = 'compute'
 STORAGE_DISCOVERY = 'storage'
 CONTAINER_DISCOVERY = 'container'
 PUB_SUB_DISCOVERY = 'pubsub'
+CLOUDRESOURCES_DISCOVERY = 'cloudresourcemanager'
 
 CHUNKSIZE = 2 * 1024 * 1024
 

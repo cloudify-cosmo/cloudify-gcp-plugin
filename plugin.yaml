@@ -6,6 +6,37 @@ plugins:
     package_version: '1.3.0.1'
 
 node_types:
+
+  cloudify.gcp.project:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: >
+          Indicate whether the resource exists and use existing (true)
+          or if Cloudify should create new resource (false).
+        type: boolean
+        default: false
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          Optional project name. By default it will be instance id.
+        type: string
+        default: ''
+      id:
+        description: >
+          Optional project id. By default it will be instance id.
+        type: string
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.admin.projects.create
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.admin.projects.delete
+
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.Compute
     properties:
@@ -1944,7 +1975,7 @@ relationships:
   cloudify.gcp.relationships.subscription_connected_to_topic:
     derived_from: cloudify.relationships.connected_to
 
-cloudify.gcp.relationships.instance_remove_access_config:
+  cloudify.gcp.relationships.instance_remove_access_config:
     derived_from: cloudify.relationships.depends_on
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
