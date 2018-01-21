@@ -24,6 +24,7 @@ setup(
     description='Plugin for Google Cloud Platform',
 
     packages=[
+        'cloudify_gcp.admin',
         'cloudify_gcp',
         'cloudify_gcp.compute',
         'cloudify_gcp.container_engine',

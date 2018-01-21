@@ -41,7 +41,71 @@ def check_response(func):
     return wraps(func)(_decorator)
 
 
-class GoogleCloudPlatform(object):
+class GoogleCloudApi(object):
+    """
+    Base class for execute call by google api
+    """
+    def __init__(self, config, logger,
+                 scope=constants.COMPUTE_SCOPE,
+                 discovery=constants.COMPUTE_DISCOVERY,
+                 api_version=constants.API_V1):
+        """
+        GoogleCloudApi class constructor.
+        Create API discovery object that will be making GCP REST API calls.
+
+        :param config: dictionary with object properties
+        :param logger: logger object that the class methods will be logging to
+        :return:
+        """
+        self.auth = config['auth']
+        self.config = config
+        self.logger = logger.getChild('GCP')
+        self.scope = scope
+        self.__discovery = discovery
+        self.api_version = api_version
+
+    @property
+    def discovery(self):
+        """
+        Lazily load the discovery so we don't make API calls during __init__
+        """
+        if hasattr(self, '_discovery'):
+            return self._discovery
+        self._discovery = self.create_discovery(self.__discovery, self.scope,
+                                                self.api_version)
+        return self._discovery
+
+    def get_credentials(self, scope):
+        raise GCPError(
+            "Please implement {}: {}".format(__name__, repr(scope))
+        )
+
+    def create_discovery(self, discovery, scope, api_version):
+        """
+        Create Google Cloud API discovery object and perform authentication.
+
+        :param discovery: name of the API discovery to be created
+        :param scope: scope the API discovery will have
+        :param api_version: version of the API
+        :return: discovery object
+        :raise: GCPError if there is a problem with service account JSON file:
+        e.g. the file is not under the given path or it has wrong permissions
+        """
+        # Crypto.Random.atfork() must be called here because celery doesn't do
+        # it
+        atfork()
+
+        try:
+            credentials = self.get_credentials(scope)
+            http = httplib2.Http()
+            credentials.authorize(http)
+            return build(discovery, api_version, http=http)
+        except IOError as e:
+            self.logger.error(str(e))
+            raise GCPError(str(e))
+
+
+class GoogleCloudPlatform(GoogleCloudApi):
     """
     Class using google-python-api-client library to connect to Google Cloud
     Platform.
@@ -65,39 +129,15 @@ class GoogleCloudPlatform(object):
         :param api_version: version of used API to communicate with GCP
         :return:
         """
+        super(GoogleCloudPlatform, self).__init__(config, logger, scope,
+                                                  discovery, api_version)
         self.auth = config['auth']
         self.project = config['project']
         self.zone = config['zone']
-        self.config = config
-        self.scope = scope
         self.name = name
-        self.logger = logger.getChild('GCP')
-        self.__discovery = discovery
-        self.api_version = api_version
         self.body = additional_settings if additional_settings else {}
 
-    @property
-    def discovery(self):
-        """
-        Lazily load the discovery so we don't make API calls during __init__
-        """
-        if hasattr(self, '_discovery'):
-            return self._discovery
-        self._discovery = self.create_discovery(
-                self.__discovery, self.scope, self.api_version)
-        return self._discovery
-
-    def create_discovery(self, discovery, scope, api_version):
-        """
-        Create Google Cloud API discovery object and perform authentication.
-
-        :param discovery: name of the API discovery to be created
-        :param scope: scope the API discovery will have
-        :param api_version: version of the API
-        :return: discovery object
-        :raise: GCPError if there is a problem with service account JSON file:
-        e.g. the file is not under the given path or it has wrong permissions
-        """
+    def get_credentials(self, scope):
         # Crypto.Random.atfork() must be called here because celery doesn't do
         # it
         atfork()
@@ -106,16 +146,7 @@ class GoogleCloudPlatform(object):
         else:
             creds_func = ServiceAccountCredentials.from_json_keyfile_name
 
-        try:
-            credentials = creds_func(
-                    self.auth,
-                    scopes=scope)
-            http = httplib2.Http()
-            credentials.authorize(http)
-            return build(discovery, api_version, http=http)
-        except IOError as e:
-            self.logger.error(str(e))
-            raise GCPError(str(e))
+        return creds_func(self.auth, scopes=scope)
 
     def get_common_instance_metadata(self):
         """
@@ -143,8 +174,8 @@ class GoogleCloudPlatform(object):
                     zone['region_name'] = basename(zone['region'])
 
                 request = self.discovery.zones().list_next(
-                        previous_request=request,
-                        previous_response=response)
+                    previous_request=request,
+                    previous_response=response)
 
         self._ZONES = zones
         return self._ZONES

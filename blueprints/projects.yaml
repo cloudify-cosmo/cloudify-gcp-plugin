@@ -1,0 +1,36 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-gcp-plugin/master/plugin.yaml
+
+inputs:
+
+  project_name:
+    type: string
+
+  project_id:
+    type: string
+
+  # gcp look to ~/.config/gcloud/application_default_credentials.json
+  client_id:
+    type: string
+
+  client_secret:
+    type: string
+
+  refresh_token:
+    type: string
+
+node_templates:
+
+  project:
+    type: cloudify.gcp.project
+    properties:
+      gcp_config:
+        auth:
+          client_id: { get_input: client_id }
+          client_secret: { get_input: client_secret }
+          refresh_token: { get_input: refresh_token }
+      name: { get_input: project_name }
+      id: { get_input: project_id }

@@ -86,6 +86,9 @@ def get_gcp_resource_name(name):
         final_name = '{0}{1}'.format(
             final_name[:remain_len - constants.ID_HASH_CONST],
             final_name[-constants.ID_HASH_CONST:])
+    # remove dash at the end
+    while len(final_name) and final_name[-1] == "-":
+        final_name = final_name[:-1]
     # convert string to lowercase
     return final_name.lower()
 
@@ -253,18 +256,31 @@ def get_gcp_config():
                     constants.GCP_DEFAULT_CONFIG_PATH,
                     e,
                     ))
+    if not gcp_config.get('auth'):
+        raise NonRecoverableError("No auth provided")
 
-    # Validate the config contains what it should
-    try:
-        for key in 'project', 'auth', 'zone':
-            gcp_config[key]
-    except Exception as e:
-        raise NonRecoverableError("invalid gcp_config provided: {}".format(e))
+    if 'refresh_token' in gcp_config['auth']:
+        # admin config
+        try:
+            for key in ('client_id', 'client_secret', 'refresh_token'):
+                gcp_config['auth'][key]
+        except Exception as e:
+            raise NonRecoverableError("invalid gcp_config provided: {}"
+                                      .format(e))
+    else:
+        # Validate the config contains what it should
+        try:
+            for key in ('project', 'auth', 'zone'):
+                gcp_config[key]
+        except Exception as e:
+            raise NonRecoverableError("invalid gcp_config provided: {}"
+                                      .format(e))
 
-    # If no network is specified, assume the GCP default network, 'default'
-    gcp_config.setdefault('network', 'default')
+        # If no network is specified, assume the GCP default network, 'default'
+        gcp_config.setdefault('network', 'default')
 
-    return update_zone(gcp_config)
+        return update_zone(gcp_config)
+    return gcp_config
 
 
 def update_zone(gcp_config):

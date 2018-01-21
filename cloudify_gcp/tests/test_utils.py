@@ -63,6 +63,7 @@ class TestUtils(unittest.TestCase):
                 ('test_345%$*^&()+_sd^*()', 'test-345-sd'),  # invalid chars
                 ('a' * 70 + '_123ab', 'a' * 57 + '-123ab'),  # also too long
                 ('3', 'a3'),  # must start with alpha
+                ("a-b-c---", "a-b-c"),  # dashes at the end
                 ]:
             self.assertEqual(output, utils.get_gcp_resource_name(input))
 

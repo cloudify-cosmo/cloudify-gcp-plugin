@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
-from time import sleep
 from contextlib import contextmanager
 
 from cosmo_tester.framework.handlers import (
@@ -25,7 +23,6 @@ from cosmo_tester.framework.handlers import (
 class GCPCleanupContext(BaseHandler.CleanupContext):
     def __init__(self, context_name, env):
         super(GCPCleanupContext, self).__init__(context_name, env)
-        #self.before_run = self.env.handler.gcp_infra_state()
 
     @classmethod
     def clean_resources(cls, env, resources):
