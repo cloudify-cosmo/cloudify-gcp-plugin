@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import re
+import sys
 import string
 import time
 from functools import wraps
@@ -28,6 +29,7 @@ from googleapiclient.errors import HttpError
 from cloudify import ctx
 from cloudify.context import CloudifyContext
 from cloudify.exceptions import NonRecoverableError
+from cloudify.utils import exception_to_error_cause
 
 from . import constants
 from .gcp import (
@@ -37,6 +39,12 @@ from .gcp import (
     is_missing_resource_error,
     is_resource_used_error,
     )
+
+
+def generate_traceback_exception():
+    _, exc_value, exc_traceback = sys.exc_info()
+    response = exception_to_error_cause(exc_value, exc_traceback)
+    return response
 
 
 def camel_farm(identifier):
@@ -90,7 +98,8 @@ def get_gcp_resource_name(name):
     while len(final_name) and final_name[-1] == "-":
         final_name = final_name[:-1]
     # convert string to lowercase
-    return final_name.lower()
+    final_name = final_name.lower()
+    return final_name
 
 
 def should_use_external_resource():
@@ -230,6 +239,16 @@ def throw_cloudify_exceptions(func):
         except GCPError as e:
             ctx.logger.error('Error Message {0}'.format(e.message))
             raise NonRecoverableError(e.message)
+
+        except Exception as error:
+            response = generate_traceback_exception()
+
+            ctx.logger.error(
+                'Error traceback {0} with message {1}'.format(
+                    response['traceback'], response['message']))
+
+            ctx.logger.error('Error Message {0}'.format(error.message))
+            raise NonRecoverableError(error.message)
 
     return wraps(func)(_decorator)
 

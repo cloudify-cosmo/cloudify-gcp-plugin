@@ -20,6 +20,7 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
+from .. import constants
 from ..gcp import check_response
 from ..gcp import GoogleCloudPlatform
 
@@ -142,6 +143,7 @@ def create(name, region, subnet, **kwargs):
             )
 
     utils.create(subnetwork)
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = subnetwork.name
 
 
 @operation
@@ -157,6 +159,7 @@ def delete(**kwargs):
             )
 
     utils.delete_if_not_external(subnetwork)
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
 
 
 def creation_validation(**kwargs):

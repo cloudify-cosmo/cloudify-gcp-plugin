@@ -17,6 +17,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 
 from .. import utils
+from .. import constants
 from ..gcp import check_response
 from ..gcp import GoogleCloudPlatform
 
@@ -189,6 +190,7 @@ def create(name, auto_subnets, additional_settings, **kwargs):
             )
 
     utils.create(network)
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = network.name
 
 
 @operation
@@ -208,6 +210,7 @@ def delete(name, **kwargs):
             name)
 
     utils.delete_if_not_external(network)
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
 
 
 @operation
@@ -225,6 +228,7 @@ def add_peering(name, network, peerNetwork, autoCreateRoutes, **kwargs):
             autoCreateRoutes=autoCreateRoutes)
 
     utils.create(peer)
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = peer.name
 
 
 @operation
@@ -256,3 +260,4 @@ def remove_peering(name, network, peerNetwork,  **kwargs):
             peerNetwork=peerNetwork)
 
     utils.delete_if_not_external(peer)
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
