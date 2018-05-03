@@ -3,7 +3,7 @@ plugins:
     executor: central_deployment_agent
     source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/update-missing-resource-id.zip
     package_name: cloudify-gcp-plugin
-    package_version: '1.4.0.dev0'
+    package_version: '1.4.1'
 
 node_types:
 
