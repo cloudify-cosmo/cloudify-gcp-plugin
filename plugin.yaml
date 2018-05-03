@@ -1,9 +1,9 @@
 plugins:
   gcp_plugin:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.4.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/update-missing-resource-id.zip
     package_name: cloudify-gcp-plugin
-    package_version: '1.4.0'
+    package_version: '1.4.1'
 
 node_types:
 
@@ -262,6 +262,11 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      resource_id:
+        type: string
+        default: ''
+        description: >
+          name to give to the new resource or the name or ID of an existing resource when the ``use_external_resource`` property is set to ``true`` (see the using existing resources section). Defaults to '' (empty string).
       name:
         description: >
           Optional Network name. The instance ID will be used by default.
@@ -304,6 +309,11 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      resource_id:
+        type: string
+        default: ''
+        description: >
+          name to give to the new resource or the name or ID of an existing resource when the ``use_external_resource`` property is set to ``true`` (see the using existing resources section). Defaults to '' (empty string).
       name:
         description: >
           Optional SubNetwork name. The instance ID will be used by default.
@@ -448,6 +458,11 @@ node_types:
           Indicate whether the resource exists or if Cloudify should create the resource.
         type: boolean
         default: false
+      resource_id:
+        type: string
+        default: ''
+        description: >
+          name to give to the new resource or the name or ID of an existing resource when the ``use_external_resource`` property is set to ``true`` (see the using existing resources section). Defaults to '' (empty string).
       name:
         description: >
           Optional security group name. By default it will be network name

@@ -1,3 +1,6 @@
+1.4.1:
+  - Fix issue missing resource_id for network,firewall,subnet.
+
 1.4.0:
   - Project Node Type.
   - Internal Load Balancer DBaaS Blueprint.

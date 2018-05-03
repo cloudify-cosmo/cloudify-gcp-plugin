@@ -18,6 +18,7 @@ from mock import patch
 
 from cloudify_gcp.compute import firewall
 from ...tests import TestGCP
+from ... import constants
 
 
 @patch('cloudify_gcp.utils.assure_resource_id_correct', return_value=True)
@@ -69,7 +70,11 @@ class TestGCPFirewall(TestGCP):
                 )
 
     def test_delete(self, mock_build, *args):
+        self.ctxmock.instance.runtime_properties[constants.RESOURCE_ID]\
+            = 'delete_name'
+
         self.ctxmock.instance.runtime_properties['name'] = 'delete_name'
+
         firewall.delete()
 
         mock_build.assert_called_once()

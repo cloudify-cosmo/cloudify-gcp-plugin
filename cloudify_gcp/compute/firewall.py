@@ -17,6 +17,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 
 from .. import utils
+from .. import constants
 from cloudify_gcp.gcp import GoogleCloudPlatform
 from cloudify_gcp.gcp import check_response
 
@@ -192,6 +193,7 @@ def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
                             )
 
     utils.create(firewall)
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = firewall.name
     ctx.instance.runtime_properties['name'] = firewall.name
 
 
@@ -200,7 +202,7 @@ def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    firewall_name = ctx.instance.runtime_properties.get('name')
+    firewall_name = ctx.instance.runtime_properties.get(constants.RESOURCE_ID)
     if firewall_name:
         network = utils.get_network(ctx)
         firewall = FirewallRule(gcp_config,
@@ -208,4 +210,5 @@ def delete(**kwargs):
                                 name=firewall_name,
                                 network=network)
         utils.delete_if_not_external(firewall)
+        ctx.instance.runtime_properties.pop(constants.RESOURCE_ID)
         ctx.instance.runtime_properties.pop('name')
