@@ -49,6 +49,9 @@ inputs:
   resource_prefix:
     default: ''
 
+  image_id:
+    default: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20170517
+
 dsl_definitions:
 
   - &gcp_config
@@ -75,7 +78,7 @@ node_templates:
       gcp_config: *gcp_config
       agent_config:
         install_method: none
-      image_id: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20170517
+      image_id: { get_input: image_id }
       instance_type: n1-standard-2
       zone: { get_input: zone }
       additional_settings:
