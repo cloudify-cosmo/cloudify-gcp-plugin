@@ -1,0 +1,210 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
+  - http://www.getcloudify.org/spec/gcp-plugin/1.2.0/plugin.yaml
+
+inputs:
+
+  client_x509_cert_url:
+    type: string
+    default: { get_secret: client_x509_cert_url }
+
+  client_email:
+    type: string
+    default: { get_secret: client_email }
+
+  client_id:
+    type: string
+    default: { get_secret: client_id }
+
+  project_id:
+    type: string
+    default: { get_secret: project_id }
+
+  private_key_id:
+    type: string
+    default: { get_secret: private_key_id }
+
+  private_key:
+    type: string
+    default: { get_secret: private_key }
+
+  zone:
+    type: string
+    default: { get_secret: zone }
+
+  region:
+    type: string
+    default: { get_secret: region }
+
+  network_name:
+    type: string
+    default: { get_secret: management_network_name }
+
+  subnetwork_name:
+    type: string
+    default: { get_secret: management_subnetwork_name }
+
+  resource_prefix:
+    default: ''
+
+  image_id:
+    default: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20170517
+
+dsl_definitions:
+
+  - &gcp_config
+    auth:
+      type: service_account
+      auth_uri: https://accounts.google.com/o/oauth2/auth
+      token_uri: https://accounts.google.com/o/oauth2/token
+      auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+      client_x509_cert_url: { get_input: client_x509_cert_url }
+      client_email: { get_input: client_email }
+      client_id: { get_input: client_id }
+      project_id: { get_input: project_id }
+      private_key_id: { get_input: private_key_id }
+      private_key: { get_input: private_key }
+    project: { get_input: project_id }
+    zone: { get_input: zone }
+
+node_templates:
+
+  virtual_machine:
+    type: cloudify.gcp.nodes.Instance
+    properties:
+      name: 'virtual_machine'
+      gcp_config: *gcp_config
+      agent_config:
+        install_method: none
+      image_id: { get_input: image_id }
+      instance_type: n1-standard-2
+      zone: { get_input: zone }
+      additional_settings:
+        networkInterfaces:
+        - network: { get_attribute: [ network0, selfLink ] }
+          subnetwork: { get_attribute: [ subnetwork0, selfLink ] }
+          networkIP: { get_attribute: [ eth0_address, address ] }
+          accessConfigs:
+            natIP: { get_attribute: [ eth0_address_public, address ] }
+        - network: { get_attribute: [ network1, selfLink ] }
+          subnetwork: { get_attribute: [ subnetwork1, selfLink ] }
+          networkIP: { get_attribute: [ eth1_address, address ] }
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: eth1_address
+    - type: cloudify.relationships.depends_on
+      target: eth0_address
+    - type: cloudify.relationships.contained_in
+      target: scaling_tier
+    - type: cloudify.gcp.relationships.instance_connected_to_keypair
+      target: virtual_machine_key
+
+  virtual_machine_key:
+    type: cloudify.gcp.nodes.KeyPair
+    properties:
+      gcp_config: *gcp_config
+      private_key_path: ~/.ssh/virtual_machine_key.pem
+      public_key_path: ~/.ssh/virtual_machine_key.pub
+      user: ubuntu
+
+  eth1_address:
+    type: cloudify.gcp.nodes.Address
+    properties:
+      name: eth1
+      gcp_config: *gcp_config
+      additional_settings:
+        addressType: INTERNAL
+        subnetwork: { get_attribute: [ subnetwork1, selfLink ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: scaling_tier
+
+  eth0_address:
+    type: cloudify.gcp.nodes.Address
+    properties:
+      name: eth0
+      gcp_config: *gcp_config
+      additional_settings:
+        addressType: INTERNAL
+        subnetwork: { get_attribute: [ subnetwork0, selfLink ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: scaling_tier
+
+  eth0_address_public:
+    type: cloudify.gcp.nodes.ExternalIP
+    properties:
+      gcp_config: *gcp_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: scaling_tier
+
+  scaling_tier:
+    type: cloudify.nodes.Tier
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: subnetwork1
+    - type: cloudify.relationships.depends_on
+      target: subnetwork0
+
+  subnetwork1:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      name: subnetwork1
+      region: { get_input: region }
+      gcp_config: *gcp_config
+      subnet: 10.11.16.0/22
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: network1
+
+  subnetwork0:
+    type: cloudify.gcp.nodes.SubNetwork
+    properties:
+      name: subnetwork0
+      region: { get_input: region }
+      gcp_config: *gcp_config
+      subnet: 10.11.12.0/22
+    relationships:
+      - type: cloudify.gcp.relationships.contained_in_network
+        target: network0
+
+  firewall1:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      gcp_config: *gcp_config
+      sources:
+      - 0.0.0.0/0
+      allowed:
+        tcp: [22]
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network1
+
+  firewall0:
+    type: cloudify.gcp.nodes.FirewallRule
+    properties:
+      gcp_config: *gcp_config
+      sources:
+      - 0.0.0.0/0
+      allowed:
+        tcp: [22]
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network0
+
+  network1:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      name: network1
+      gcp_config: *gcp_config
+      auto_subnets: false
+
+  network0:
+    type: cloudify.gcp.nodes.Network
+    properties:
+      name: network0
+      gcp_config: *gcp_config
+      auto_subnets: false
