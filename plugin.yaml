@@ -261,6 +261,14 @@ node_types:
               default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.disk.delete
+      # backups related section
+      cloudify.interfaces.snapshot:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.disk.snapshot_create
+          inputs: {}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.compute.disk.snapshot_delete
+          inputs: {}
 
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.Network
