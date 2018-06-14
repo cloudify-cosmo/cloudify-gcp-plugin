@@ -149,16 +149,41 @@ class TestUtilsWithCTX(TestGCP):
 
         resource = MagicMock()
         utils.create(resource)
-        self.assertEqual(self.ctxmock.instance.runtime_properties['resource_id'], 'name-in-properties')
+        self.assertEqual(
+            self.ctxmock.instance.runtime_properties['resource_id'],
+            'name-in-properties')
 
-    def test_create_resource_external_with_runtime_resource_id(self, *args):
+    def test_create_delete_resource_external(self, *args):
         self.ctxmock.node.properties['use_external_resource'] = True
-        self.ctxmock.instance.runtime_properties = {'resource_id': 'resource_id_in_runtime_props'}
         self.ctxmock.node.properties['name'] = 'name-in-properties'
 
         resource = MagicMock()
         utils.create(resource)
-        self.assertEqual(self.ctxmock.instance.runtime_properties['resource_id'], 'resource_id_in_runtime_props')
+        utils.delete_if_not_external(resource)
+        self.assertIsNone(self.ctxmock.instance.runtime_properties.get(
+            'resource_id'))
+
+    def test_create_resource_external_unequal_name_and_res_id(self, *args):
+        self.ctxmock.node.properties['use_external_resource'] = True
+        self.ctxmock.node.properties['name'] = 'name1'
+        self.ctxmock.node.properties['resource_id'] = 'name2'
+
+        resource = MagicMock()
+        with self.assertRaises(NonRecoverableError):
+            utils.create(resource)
+
+    def test_create_resource_external_with_runtime_resource_id(self, *args):
+        self.ctxmock.node.properties['use_external_resource'] = True
+        self.ctxmock.instance.runtime_properties = {
+            'resource_id': 'resource_id_in_runtime_props'
+        }
+        self.ctxmock.node.properties['name'] = 'name-in-properties'
+
+        resource = MagicMock()
+        utils.create(resource)
+        self.assertEqual(
+            self.ctxmock.instance.runtime_properties['resource_id'],
+            'resource_id_in_runtime_props')
 
     def test_retry_on_failure_raises(self, *args):
 

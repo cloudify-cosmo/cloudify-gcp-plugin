@@ -11,7 +11,7 @@ dsl_definitions:
     true if you are bringing an existing resource, false if you want cloudify to create it.
 
   resource_id_desc: &resource_id_desc >
-    The AWS resource ID of the external resource, if
+    The GCP resource ID of the external resource, if
     use_external_resource is true. Otherwise it is an empty string.
 
   # Every resource uses this property unless noted.

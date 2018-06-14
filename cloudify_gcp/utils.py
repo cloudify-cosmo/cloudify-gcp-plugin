@@ -28,7 +28,7 @@ from googleapiclient.errors import HttpError
 
 from cloudify import ctx
 from cloudify.context import CloudifyContext
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.utils import exception_to_error_cause
 
 from . import constants
@@ -107,7 +107,8 @@ def should_use_external_resource():
 
 
 def set_resource_id_if_use_external(resource_id):
-    if should_use_external_resource() and constants.RESOURCE_ID not in ctx.instance.runtime_properties:
+    if should_use_external_resource() \
+            and constants.RESOURCE_ID not in ctx.instance.runtime_properties:
         ctx.instance.runtime_properties[constants.RESOURCE_ID] = resource_id
 
 
@@ -131,14 +132,19 @@ def create_resource(func):
         if should_use_external_resource():
             if not ctx.instance.runtime_properties.get(constants.RESOURCE_ID):
                 resource_id = ctx.node.properties.get(constants.RESOURCE_ID)
-                if not resource_id:
-                    name = ctx.node.properties.get('name')
-                    if name:
+                name = ctx.node.properties.get('name')
+                if resource_id and name and resource_id != name:
+                    raise NonRecoverableError(
+                        'resource id can\'t have different value than '
+                        'name {}!={}'.format(resource_id, name))
+                if not resource_id and name:
                         resource_id = name
-                        ctx.instance.runtime_properties[constants.RESOURCE_ID] = resource_id
 
                 if not resource_id:
                     raise NonRecoverableError('Resource id is missing.')
+
+                ctx.instance.runtime_properties[
+                    constants.RESOURCE_ID] = resource_id
 
             try:
                 resource.body = resource.get()
@@ -168,7 +174,7 @@ def delete_if_not_external(resource):
     if not should_use_external_resource():
         return resource.delete()
     else:
-        ctx.instance.runtime_properties.pop[constants.RESOURCE_ID, None]
+        ctx.instance.runtime_properties.pop(constants.RESOURCE_ID, None)
 
 
 def sync_operation(func):
@@ -254,6 +260,8 @@ def throw_cloudify_exceptions(func):
     def _decorator(*args, **kwargs):
         try:
             return func(*args, **kwargs)
+        except (RecoverableError, NonRecoverableError) as e:
+            raise e
         except GCPError as e:
             ctx.logger.error('Error Message {0}'.format(e.message))
             raise NonRecoverableError(e.message)
