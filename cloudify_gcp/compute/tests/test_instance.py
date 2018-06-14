@@ -657,6 +657,8 @@ class TestGCPInstance(TestGCP):
     def test_create_external_resource(self, mock_build, *args):
         self.ctxmock.node.properties[
                 'use_external_resource'] = True
+        self.ctxmock.node.properties[
+            'name'] = 'name'
         get_resp = object()
         mock_build().instances().get().execute.return_value = {
                 'name': 'yes',

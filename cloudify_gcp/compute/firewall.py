@@ -192,9 +192,9 @@ def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
                             additional_settings=additional_settings,
                             )
 
-    utils.create(firewall)
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = firewall.name
     ctx.instance.runtime_properties['name'] = firewall.name
+    utils.create(firewall)
 
 
 @operation

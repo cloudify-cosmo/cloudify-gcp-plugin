@@ -93,6 +93,7 @@ def pull(subscription, return_immediately,
                                return_immediately=return_immediately,
                                max_messages=max_messages)
 
+    utils.set_resource_id_if_use_external(pull_request.subscription_path)
     # Handle pull messages response
     response = pull_request.create()
     ctx.logger.info('Pull received messages {}'.format(response))

@@ -1,21 +1,40 @@
 plugins:
   gcp_plugin:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/update-missing-resource-id.zip
+    source: cloudify-gcp-plugin
     package_name: cloudify-gcp-plugin
-    package_version: '1.4.1'
+    package_version: '1.4.2'
+
+dsl_definitions:
+  use_external_resource_desc: &use_external_resource_desc >
+    Indicate whether the resource exists or if Cloudify should create the resource,
+    true if you are bringing an existing resource, false if you want cloudify to create it.
+
+  resource_id_desc: &resource_id_desc >
+    The AWS resource ID of the external resource, if
+    use_external_resource is true. Otherwise it is an empty string.
+
+  # Every resource uses this property unless noted.
+  external_resource: &external_resource
+    use_external_resource:
+      description: *use_external_resource_desc
+      type: boolean
+      default: false
+
+  # Every resource uses this property unless noted.
+  resource_id: &resource_id
+    resource_id:
+      description: *resource_id_desc
+      type: string
+      default: ''
 
 node_types:
 
   cloudify.gcp.project:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -40,12 +59,8 @@ node_types:
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.Compute
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -163,12 +178,8 @@ node_types:
   cloudify.gcp.nodes.InstanceGroup:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -204,11 +215,8 @@ node_types:
   cloudify.gcp.nodes.Volume:
     derived_from: cloudify.nodes.Volume
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       image:
         description: >
           The image of the Volume.
@@ -257,11 +265,8 @@ node_types:
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.Network
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       resource_id:
         type: string
         default: ''
@@ -304,11 +309,8 @@ node_types:
   cloudify.gcp.nodes.SubNetwork:
     derived_from: cloudify.nodes.Subnet
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       resource_id:
         type: string
         default: ''
@@ -453,11 +455,8 @@ node_types:
   cloudify.gcp.nodes.FirewallRule:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       resource_id:
         type: string
         default: ''
@@ -566,11 +565,8 @@ node_types:
   cloudify.gcp.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       private_key_path:
         description: >
           The path where the key should be saved on the machine. If this is a bootstrap
@@ -614,12 +610,8 @@ node_types:
   cloudify.gcp.nodes.ExternalIP:
     derived_from: cloudify.nodes.VirtualIP
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
-          If set to true, this node will be static IP, otherwise ephemeral IP.
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       ip_address:
         description: >
           Address of this external IP. This should be address of already existing,
@@ -635,13 +627,8 @@ node_types:
   cloudify.gcp.nodes.GlobalAddress:
     derived_from: cloudify.nodes.VirtualIP
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
-          If set to true, this node will be already existing static IP address, otherwise
-          it will be reserved static IP address.
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -697,11 +684,8 @@ node_types:
   cloudify.gcp.nodes.Image:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists or if Cloudify should create the resource.
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -739,12 +723,8 @@ node_types:
   cloudify.gcp.nodes.HealthCheck:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -792,12 +772,8 @@ node_types:
   cloudify.gcp.nodes.BackendService:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -840,12 +816,8 @@ node_types:
   cloudify.gcp.nodes.RegionBackendService:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -895,12 +867,8 @@ node_types:
   cloudify.gcp.nodes.UrlMap:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -936,12 +904,8 @@ node_types:
   cloudify.gcp.nodes.TargetProxy:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -999,12 +963,8 @@ node_types:
   cloudify.gcp.nodes.SslCertificate:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1051,12 +1011,8 @@ node_types:
   cloudify.gcp.nodes.ForwardingRule:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1155,12 +1111,8 @@ node_types:
   cloudify.gcp.nodes.GlobalForwardingRule:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1218,12 +1170,8 @@ node_types:
   cloudify.gcp.nodes.DNSZone:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       name:
         type: string
         description: >
@@ -1335,12 +1283,8 @@ node_types:
   cloudify.gcp.nodes.KubernetesCluster:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1373,12 +1317,8 @@ node_types:
   cloudify.gcp.nodes.KubernetesNodePool:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1418,12 +1358,8 @@ node_types:
   cloudify.gcp.nodes.KubernetesClusterMonitoring:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1462,12 +1398,8 @@ node_types:
   cloudify.gcp.nodes.KubernetesClusterlegacyAbac:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1503,12 +1435,8 @@ node_types:
   cloudify.gcp.nodes.KubernetesClusterNetworkPolicy:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1552,12 +1480,8 @@ node_types:
   cloudify.gcp.nodes.Topic:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1580,12 +1504,8 @@ node_types:
   cloudify.gcp.nodes.TopicPolicy:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1615,12 +1535,8 @@ node_types:
   cloudify.gcp.nodes.TopicMessage:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1648,12 +1564,8 @@ node_types:
   cloudify.gcp.nodes.Subscription:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1704,12 +1616,8 @@ node_types:
   cloudify.gcp.nodes.SubscriptionPolicy:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1739,12 +1647,8 @@ node_types:
   cloudify.gcp.nodes.Acknowledge:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
@@ -1774,12 +1678,8 @@ node_types:
   cloudify.gcp.nodes.PullRequest:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        description: >
-          Indicate whether the resource exists and use existing (true)
-          or if Cloudify should create new resource (false).
-        type: boolean
-        default: false
+      <<: *external_resource
+      <<: *resource_id
       gcp_config:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.

@@ -83,6 +83,8 @@ class Acknowledge(PubSubBase):
 def create(subscription, ack_ids, **kwargs):
     gcp_config = utils.get_gcp_config()
     ack = Acknowledge(gcp_config, ctx.logger, subscription, ack_ids,)
+
+    utils.set_resource_id_if_use_external(ack.subscription_path)
     utils.create(ack)
     ctx.instance.runtime_properties.update(
         {'sub': subscription, 'ack_ids': ack_ids})

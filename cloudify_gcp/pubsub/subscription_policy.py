@@ -91,6 +91,7 @@ def set_policy(subscription, policy, **kwargs):
     topic_policy = SubscriptionPolicy(gcp_config, ctx.logger,
                                       subscription, policy,)
 
+    utils.set_resource_id_if_use_external(topic_policy.subscription_path)
     resource = utils.create(topic_policy)
     ctx.instance.runtime_properties.update(resource)
     ctx.logger.info('Policy {0} updated successfully '.format(resource))

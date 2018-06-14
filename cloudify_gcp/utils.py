@@ -106,6 +106,11 @@ def should_use_external_resource():
     return ctx.node.properties.get(constants.USE_EXTERNAL_RESOURCE, False)
 
 
+def set_resource_id_if_use_external(resource_id):
+    if should_use_external_resource() and constants.RESOURCE_ID not in ctx.instance.runtime_properties:
+        ctx.instance.runtime_properties[constants.RESOURCE_ID] = resource_id
+
+
 def assure_resource_id_correct():
     resource_id = ctx.node.properties.get(constants.RESOURCE_ID)
     if not resource_id:
@@ -124,6 +129,17 @@ def get_final_resource_name(name):
 def create_resource(func):
     def _decorator(resource, *args, **kwargs):
         if should_use_external_resource():
+            if not ctx.instance.runtime_properties.get(constants.RESOURCE_ID):
+                resource_id = ctx.node.properties.get(constants.RESOURCE_ID)
+                if not resource_id:
+                    name = ctx.node.properties.get('name')
+                    if name:
+                        resource_id = name
+                        ctx.instance.runtime_properties[constants.RESOURCE_ID] = resource_id
+
+                if not resource_id:
+                    raise NonRecoverableError('Resource id is missing.')
+
             try:
                 resource.body = resource.get()
             except HttpError as error:
@@ -151,6 +167,8 @@ def create(resource):
 def delete_if_not_external(resource):
     if not should_use_external_resource():
         return resource.delete()
+    else:
+        ctx.instance.runtime_properties.pop[constants.RESOURCE_ID, None]
 
 
 def sync_operation(func):

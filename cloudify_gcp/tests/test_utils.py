@@ -17,7 +17,7 @@
 import unittest
 from functools import partial
 
-from mock import Mock, patch, PropertyMock
+from mock import Mock, patch, PropertyMock, MagicMock
 
 from cloudify.mocks import MockCloudifyContext
 from cloudify.exceptions import NonRecoverableError
@@ -137,10 +137,28 @@ class TestUtilsWithCTX(TestGCP):
         with self.assertRaises(NonRecoverableError):
             utils.create(resource)
 
+        self.ctxmock.node.properties['name'] = 'some-name'
         resource.get.side_effect = partial(raiser, 403)
 
         with self.assertRaises(utils.HttpError):
             utils.create(resource)
+
+    def test_create_resource_external_with_name(self, *args):
+        self.ctxmock.node.properties['use_external_resource'] = True
+        self.ctxmock.node.properties['name'] = 'name-in-properties'
+
+        resource = MagicMock()
+        utils.create(resource)
+        self.assertEqual(self.ctxmock.instance.runtime_properties['resource_id'], 'name-in-properties')
+
+    def test_create_resource_external_with_runtime_resource_id(self, *args):
+        self.ctxmock.node.properties['use_external_resource'] = True
+        self.ctxmock.instance.runtime_properties = {'resource_id': 'resource_id_in_runtime_props'}
+        self.ctxmock.node.properties['name'] = 'name-in-properties'
+
+        resource = MagicMock()
+        utils.create(resource)
+        self.assertEqual(self.ctxmock.instance.runtime_properties['resource_id'], 'resource_id_in_runtime_props')
 
     def test_retry_on_failure_raises(self, *args):
 
