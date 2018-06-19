@@ -94,6 +94,7 @@ def publish(topic, messages, **kwargs):
     gcp_config = utils.get_gcp_config()
     topic_message = TopicMessage(gcp_config, ctx.logger, topic, messages, )
 
+    utils.set_resource_id_if_use_external(topic_message.topic_path)
     resource = utils.create(topic_message)
     ctx.instance.runtime_properties.update(resource)
     ctx.logger.info('Messages genearted successfully {0}'.format(resource))

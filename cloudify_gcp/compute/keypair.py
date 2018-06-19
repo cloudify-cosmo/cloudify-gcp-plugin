@@ -147,6 +147,8 @@ def create_keypair(keypair):
         keypair.private_key = ctx.get_resource(keypair.private_key_path)
         keypair.public_key = ctx.get_resource(
                 os.path.expanduser(keypair.public_key_path))
+        ctx.instance.runtime_properties[
+            constants.RESOURCE_ID] = keypair.public_key
     else:
         keypair.create()
 
@@ -164,3 +166,4 @@ def delete(user, private_key_path, **kwargs):
     keypair.public_key = ctx.instance.runtime_properties[constants.PUBLIC_KEY]
     ctx.instance.runtime_properties.pop(constants.PRIVATE_KEY, None)
     ctx.instance.runtime_properties.pop(constants.PUBLIC_KEY, None)
+    ctx.instance.runtime_properties.pop(constants.RESOURCE_ID, None)

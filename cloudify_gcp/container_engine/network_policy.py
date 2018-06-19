@@ -96,6 +96,8 @@ def enable_network_policy_addon(cluster_id, **kwargs):
     update_network_policy_addon(cluster_id, True)
     ctx.instance.runtime_properties['cluster_id'] = cluster_id
 
+    utils.set_resource_id_if_use_external(cluster_id)
+
 
 @operation
 @utils.retry_on_failure('Retrying disable network policy addon', delay=15)

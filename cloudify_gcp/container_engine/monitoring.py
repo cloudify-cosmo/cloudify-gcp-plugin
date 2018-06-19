@@ -77,6 +77,8 @@ def set_monitoring_service(monitoring_service, cluster_id,
                                 service_type=name,
                                 cluster_id=cluster_id,
                                 additional_settings=additional_settings)
+
+    utils.set_resource_id_if_use_external(name)
     utils.create(service)
 
 

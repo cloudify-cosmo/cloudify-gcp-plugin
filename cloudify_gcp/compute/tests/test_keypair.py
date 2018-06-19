@@ -62,7 +62,8 @@ class TestGCPKeypair(TestGCP):
         self.assertEqual(
                 {'gcp_private_key': self.ctxmock.get_resource(),
                  'gcp_public_key': self.ctxmock.get_resource(),
-                 'user': 'user'},
+                 'user': 'user',
+                 'resource_id': self.ctxmock.get_resource()},
                 self.ctxmock.instance.runtime_properties)
 
     def test_create_no_user(self, *args):

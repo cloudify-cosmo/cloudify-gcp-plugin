@@ -89,6 +89,7 @@ def set_policy(topic, policy, **kwargs):
     gcp_config = utils.get_gcp_config()
     topic_policy = TopicPolicy(gcp_config, ctx.logger, topic, policy,)
 
+    utils.set_resource_id_if_use_external(topic_policy.topic_path)
     resource = utils.create(topic_policy)
     ctx.instance.runtime_properties.update(resource)
     ctx.logger.info('Policy {0} updated successfully '.format(resource))

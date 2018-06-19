@@ -15,6 +15,8 @@
 
 from cloudify import ctx
 from cloudify.decorators import operation
+from cloudify.exceptions import RecoverableError
+from googleapiclient.errors import HttpError
 
 from .. import utils
 from .. import constants
@@ -226,8 +228,13 @@ def add_peering(name, network, peerNetwork, autoCreateRoutes, **kwargs):
             network=network,
             peerNetwork=peerNetwork,
             autoCreateRoutes=autoCreateRoutes)
-
-    utils.create(peer)
+    try:
+        utils.create(peer)
+    except HttpError as e:
+        # sometimes we got a try again error from GCP
+        # "There is a peering operation in progress on the local or
+        # peer network.Try again later."
+        raise RecoverableError(e.message)
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = peer.name
 
 

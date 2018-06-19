@@ -74,6 +74,7 @@ def enable_legacy_abac(enabled, cluster_id, additional_settings, **kwargs):
                              cluster_id=cluster_id,
                              additional_settings=additional_settings)
 
+    utils.set_resource_id_if_use_external(cluster_id)
     utils.create(legacy_abac)
 
 
