@@ -1,3 +1,5 @@
+1.4.2: Support External resource for remaining resources.
+
 1.4.1:
   - Fix issue missing resource_id for network,firewall,subnet.
 
