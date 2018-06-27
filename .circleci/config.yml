@@ -1,0 +1,153 @@
+version: 2
+
+checkout:
+  post:
+    - >
+      if [ -n "$CI_PULL_REQUEST" ]; then
+        PR_ID=${CI_PULL_REQUEST##*/}
+        git fetch origin +refs/pull/$PR_ID/merge:
+        git checkout -qf FETCH_HEAD
+      fi
+jobs:
+
+  unittests:
+    docker:
+      - image: circleci/python:2.7.15-stretch
+    steps:
+      - checkout
+      - run:
+          name: Download pip
+          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+      - run:
+          name: Install pip
+          command: sudo python get-pip.py
+      - run:
+          name: Install virtualenv
+          command: pip install --user virtualenv
+      - run:
+          name: Init virtualenv
+          command: virtualenv env
+      - run:
+          name: Install tox
+          command: |
+            source env/bin/activate
+            pip install tox
+      - run:
+          name: Runt flake8 test
+          command: |
+            source env/bin/activate
+            tox -e flake8
+      - run:
+          name: Runt py27 test
+          command: |
+            source env/bin/activate
+            tox -e py27
+  wagon:
+    docker:
+      - image: amd64/centos:centos7.3.1611
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: yum -y install python-devel gcc openssl git libxslt-devel libxml2-devel openldap-devel libffi-devel openssl-devel libvirt-devel
+      - run:
+          name: Download pip
+          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+      - run:
+          name: Install pip
+          command: python get-pip.py
+      - run:
+          name: Upgrade pip
+          command: pip install --upgrade pip==9.0.1
+      - run:
+          name: Install virtualenv
+          command: pip install virtualenv
+      - run:
+          name: Init virtualenv
+          command: virtualenv env
+      - run:
+          name: Install wagon
+          command: pip install wagon==0.3.2
+      - run:
+          name: many_linux
+          command: echo "manylinux1_compatible = False" > "env/bin/_manylinux.py"
+      - run:
+          name: make workspace
+          command: mkdir -p workspace/build
+      - run:
+          name: Create wagon
+          command: source env/bin/activate && wagon create -s . -v -o workspace/build -f -a '--no-cache-dir -c constraints.txt'
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - build/*
+
+  cloudify-manager:
+    docker:
+      - image: amd64/centos:centos7.3.1611
+    steps:
+      - checkout
+      - attach_workspace:
+          at: workspace
+      - run:
+          name: Install dependencies
+          command: yum -y install python-devel gcc openssl git libxslt-devel libxml2-devel openldap-devel libffi-devel openssl-devel libvirt-devel epel-release
+      - run:
+          name: Install OpenVPN
+          command: yum -y install openvpn openssl
+      - run:
+          name: Update YUM with Google cloud sdk repo information
+          command: cat gcloud_sdk/google-repo.txt >> /etc/yum.repos.d/google-cloud-sdk.repo
+      - run:
+          name: Install Google cloud sdk
+          command: yum -y install google-cloud-sdk
+      - run:
+          name: Download pip
+          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+      - run:
+          name: Install pip
+          command: python get-pip.py
+      - run:
+          name: Upgrade pip
+          command: pip install --upgrade pip==9.0.1
+      - run:
+          name: Install virtualenv
+          command: pip install virtualenv
+      - run:
+          name: Init virtualenv
+          command: virtualenv env
+      - run:
+          name: install cloudify
+          command: pip install cloudify==4.3.2
+      - run:
+          name: install gco plugin from branch
+          command: pip install -e .
+      - run:
+          name: install pyyaml
+          command: pip install -U --no-deps --force-reinstall PyYAML===3.10
+      - run:
+          name: install test requirements
+          command: pip install nose testtools https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.7.1.zip https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/9cde02975946f4202aa2db6d851d90c3b7614e0a.zip
+      - run:
+          name: Init Google cloud sdk
+          command: python gcloud_sdk/init_gcloud.py
+      - run:
+          name: execute test
+          command: nosetests -s manager_tests/test_gcp.py
+
+workflows:
+  version: 2
+  tests:
+    jobs:
+      - unittests
+      - wagon
+          # filters:
+          #   branches:
+          #     only: /([0-9\.]*\-build|master|dev)/
+      - cloudify-manager:
+          context: ecosystem
+          requires:
+            - wagon
+          # filters:
+          #   branches:
+          #     only: /([0-9\.]*\-build|master|dev)/
