@@ -417,6 +417,8 @@ def create(instance_type,
             additional_settings=additional_settings,
             )
 
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = instance.name
+    ctx.instance.runtime_properties['name'] = instance.name
     utils.create(instance)
 
 
