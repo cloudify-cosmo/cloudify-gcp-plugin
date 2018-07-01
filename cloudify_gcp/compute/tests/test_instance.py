@@ -174,8 +174,6 @@ class TestGCPInstance(TestGCP):
                 self.ctxmock.instance.runtime_properties
                 )
 
-
-
     def test_create_with_disk(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties.update({
                 'gcp_disk': '💾',

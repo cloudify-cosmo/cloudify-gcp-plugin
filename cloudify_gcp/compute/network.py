@@ -196,7 +196,6 @@ def create(name, auto_subnets, additional_settings, **kwargs):
     utils.create(network)
 
 
-
 @operation
 @utils.throw_cloudify_exceptions
 def delete(name, **kwargs):
