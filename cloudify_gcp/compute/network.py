@@ -191,8 +191,9 @@ def create(name, auto_subnets, additional_settings, **kwargs):
             additional_settings=additional_settings,
             )
 
-    utils.create(network)
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = network.name
+    ctx.instance.runtime_properties['name'] = network.name
+    utils.create(network)
 
 
 @operation
