@@ -29,7 +29,8 @@ class Snapshot(GoogleCloudPlatform):
                  name,
                  description=None,
                  additional_settings=None):
-        super(Snapshot, self).__init__(config, logger, name, additional_settings)
+        super(Snapshot, self).__init__(config, logger, name,
+                                       additional_settings)
         self.description = description
 
     def to_dict(self):
@@ -184,9 +185,9 @@ def snapshot_create(**kwargs):
     name = ctx.instance.runtime_properties.get('name')
     if name:
         snapshot = Snapshot(gcp_config,
-                    ctx.logger,
-                    name=snapshot_name,
-                    description=snapshot_type)
+                            ctx.logger,
+                            name=snapshot_name,
+                            description=snapshot_type)
         snapshot.create(disk_name=name)
 
 
