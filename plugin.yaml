@@ -1,9 +1,9 @@
 plugins:
   gcp_plugin:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.4.2.zip
+    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.4.3.zip
     package_name: cloudify-gcp-plugin
-    package_version: '1.4.2'
+    package_version: '1.4.3'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -1716,6 +1716,123 @@ node_types:
            max_messages:
              default: { get_property: [SELF, max_messages]}
 
+  cloudify.gcp.nodes.StackDriverGroup:
+    derived_from: cloudify.nodes.Root
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      project_id:
+        description: >
+          Project id or number
+        type: string
+      display_name:
+        description: >
+          Name for this group, used for display purposes
+        type: string
+        default : ''
+      parent_name:
+        description: >
+          The name of the group's parent, if it has one.
+        type: string
+        default : ''
+      filter_name:
+        description: >
+          The filter used to determine which monitored resources
+          belong to this group.
+        type: string
+      is_cluster:
+        description: >
+          If true, the members of this group are considered to be a cluster.
+        type: boolean
+        default : false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.stackdriver_group.delete
+        create:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.stackdriver_group.create
+          inputs:
+           project_id:
+             default: { get_property: [SELF, project_id]}
+           display_name:
+             default: { get_property: [SELF, display_name]}
+           parent_name:
+             default: { get_property: [SELF, parent_name]}
+           filter_name:
+             default: { get_property: [SELF, filter_name]}
+           is_cluster:
+             default: { get_property: [SELF, is_cluster]}
+        update:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.stackdriver_group.update
+          inputs:
+           project_id:
+             default: { get_property: [SELF, project_id]}
+           display_name:
+             default: { get_property: [SELF, display_name]}
+           parent_name:
+             default: { get_property: [SELF, parent_name]}
+           filter_name:
+             default: { get_property: [SELF, filter_name]}
+           is_cluster:
+             default: { get_property: [SELF, is_cluster]}
+
+  cloudify.gcp.nodes.StackDriverTimeSeries:
+    derived_from: cloudify.nodes.Root
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      project_id:
+        description: >
+          Project id or number
+        type: string
+      time_series:
+        description: >
+         The new data to be added to a list of time series. Adds at most one
+         data point to each of several time series. The new data point must be
+         more recent than any other point in its time series. Each TimeSeries
+         value must fully specify a unique time series by supplying all label
+         values for the metric and the monitored resource.
+        default : {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.stackdriver_timeseries.create
+          inputs:
+           project_id:
+             default: { get_property: [SELF, project_id]}
+           time_series:
+             default: { get_property: [SELF, time_series]}
+
+  cloudify.gcp.nodes.StackDriverUpTimeCheckConfig:
+    derived_from: cloudify.nodes.Root
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      project_id:
+        description: >
+          Project id or number
+        type: string
+      uptime_check_config:
+        description: >
+         Configures which resources and services to monitor for availability.
+        default : {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.stackdriver_uptimecheck.create
+          inputs:
+           project_id:
+             default: { get_property: [SELF, project_id]}
+           uptime_check_config:
+             default: { get_property: [SELF, uptime_check_config]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.monitoring.stackdriver_uptimecheck.delete
 
 relationships:
 

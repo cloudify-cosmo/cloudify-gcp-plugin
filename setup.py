@@ -20,13 +20,14 @@ setup(
 
     name='cloudify-gcp-plugin',
 
-    version='1.4.2',
+    version='1.4.3',
     description='Plugin for Google Cloud Platform',
 
     packages=[
         'cloudify_gcp.admin',
         'cloudify_gcp',
         'cloudify_gcp.compute',
+        'cloudify_gcp.monitoring',
         'cloudify_gcp.container_engine',
         'cloudify_gcp.dns',
         ],
