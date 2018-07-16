@@ -1,9 +1,9 @@
 plugins:
   gcp_plugin:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.4.3.zip
+    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.4.4.zip
     package_name: cloudify-gcp-plugin
-    package_version: '1.4.3'
+    package_version: '1.4.4'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -1833,6 +1833,212 @@ node_types:
              default: { get_property: [SELF, uptime_check_config]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.monitoring.stackdriver_uptimecheck.delete
+
+  cloudify.gcp.nodes.LoggingSink:
+    derived_from: cloudify.nodes.Root
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      parent:
+        description: >
+          The resource in which to create the sink, it can be project, organization, billing account or folder
+        type: string
+      log_sink:
+        description: >
+         Configures which resources and services to monitor for availability.
+        default : {}
+      unique_writer_identity:
+        description: >
+          Determines the kind of IAM identity returned as writerIdentity in the new sink
+        type: boolean
+        required: false
+      sink_type:
+        description: >
+          Logging Sink type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.logging.sink.create
+          inputs:
+           parent:
+             default: { get_property: [SELF, parent]}
+           log_sink:
+             default: { get_property: [SELF, log_sink]}
+           sink_type:
+             default: { get_property: [SELF, sink_type]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.logging.sink.delete
+          inputs:
+            sink_type:
+               default: { get_property: [SELF, sink_type]}
+        update:
+          implementation: gcp_plugin.cloudify_gcp.logging.sink.update
+          inputs:
+           parent:
+             default: { get_property: [SELF, parent]}
+           log_sink:
+             default: { get_property: [SELF, log_sink]}
+           sink_type:
+             default: { get_property: [SELF, sink_type]}
+
+  cloudify.gcp.nodes.LoggingExclusion:
+    derived_from: cloudify.nodes.Root
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      parent:
+        description: >
+          The resource in which to create the billing account exclusion, it can be project, organization, billing account or folder
+        type: string
+      log_exclusion:
+        description: >
+         Specifies a set of log entries that are not to be stored in Stackdriver Logging.
+        default : {}
+      update_mask:
+        description: >
+          A nonempty list of fields to change in the existing exclusion.
+        type: boolean
+        required: false
+      exclusion_type:
+        description: >
+          Logging Exclusion type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.logging.exclusion.create
+          inputs:
+           parent:
+             default: { get_property: [SELF, parent]}
+           log_exclusion:
+             default: { get_property: [SELF, log_exclusion]}
+           exclusion_type:
+             default: { get_property: [SELF, exclusion_type]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.logging.exclusion.delete
+          inputs:
+           exclusion_type:
+             default: { get_property: [SELF, exclusion_type]}
+        update:
+          implementation: gcp_plugin.cloudify_gcp.logging.exclusion.update
+          inputs:
+           parent:
+             default: { get_property: [SELF, parent]}
+           log_exclusion:
+             default: { get_property: [SELF, log_exclusion]}
+           exclusion_type:
+             default: { get_property: [SELF, exclusion_type]}
+
+  cloudify.gcp.nodes.Logging.BillingAccounts.sinks:
+    derived_from: cloudify.gcp.nodes.LoggingSink
+    properties:
+      sink_type:
+        description: >
+          Sink type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
+        type: string
+        default: BillingAccount
+
+  cloudify.gcp.nodes.Logging.Folders.sinks:
+    derived_from: cloudify.gcp.nodes.LoggingSink
+    properties:
+      sink_type:
+        description: >
+          Sink type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
+        type: string
+        default: Folder
+
+  cloudify.gcp.nodes.Logging.Organizations.sinks:
+    derived_from: cloudify.gcp.nodes.LoggingSink
+    properties:
+      sink_type:
+        description: >
+          Sink type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
+        type: string
+        default: Organization
+
+  cloudify.gcp.nodes.Logging.Projects.sinks:
+    derived_from: cloudify.gcp.nodes.LoggingSink
+    properties:
+      sink_type:
+        description: >
+          Sink type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
+        type: string
+        default: Project
+
+  cloudify.gcp.nodes.Logging.BillingAccounts.exclusions:
+    derived_from: cloudify.gcp.nodes.LoggingExclusion
+    properties:
+      exclusion_type:
+        description: >
+          Logging Exclusion type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
+        type: string
+        default: BillingAccount
+
+  cloudify.gcp.nodes.Logging.Folders.exclusions:
+    derived_from: cloudify.gcp.nodes.LoggingExclusion
+    properties:
+      exclusion_type:
+        description: >
+          Logging Exclusion type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
+        type: string
+        default: Folder
+
+  cloudify.gcp.nodes.Logging.Organizatios.exclusions:
+    derived_from: cloudify.gcp.nodes.LoggingExclusion
+    properties:
+      exclusion_type:
+        description: >
+          Logging Exclusion type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
+        type: string
+        default: Organization
+
+  cloudify.gcp.nodes.Logging.Projects.exclusions:
+    derived_from: cloudify.gcp.nodes.LoggingExclusion
+    properties:
+      exclusion_type:
+        description: >
+          Logging Exclusion type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
+        type: string
+        default: Project
+
+  cloudify.gcp.nodes.Logging.Projects.metrics:
+    derived_from: cloudify.nodes.Root
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      parent:
+        description: >
+          The resource in which to create the project metric
+        type: string
+      log_metric:
+        description: >
+         Describes a logs-based metric. The value of the metric is the number of log entries that match a logs filter in a given time interval.
+        default : {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.logging.project_metrics.create
+          inputs:
+           parent:
+             default: { get_property: [SELF, parent]}
+           log_metric:
+             default: { get_property: [SELF, log_metric]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.logging.project_metrics.delete
+        update:
+          implementation: gcp_plugin.cloudify_gcp.logging.project_metrics.update
+          inputs:
+           parent:
+             default: { get_property: [SELF, parent]}
+           log_metric:
+             default: { get_property: [SELF, log_metric]}
 
 relationships:
 

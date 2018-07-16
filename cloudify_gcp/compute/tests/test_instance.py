@@ -137,6 +137,8 @@ class TestGCPInstance(TestGCP):
                 {
                     'zone': 'zone',
                     'startup_script': {'type': 'string'},
+                    'name': 'name',
+                    'resource_id': 'name',
                     '_operation': mock_build().instances().insert().execute(),
                  },
                 self.ctxmock.instance.runtime_properties
@@ -167,6 +169,7 @@ class TestGCPInstance(TestGCP):
                     'startup_script': {'type': 'string'},
                     'you pass': 'the test',
                     'zone': 'zone',
+                    'resource_id': 'name',
                     },
                 self.ctxmock.instance.runtime_properties
                 )

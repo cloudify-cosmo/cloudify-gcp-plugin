@@ -23,17 +23,20 @@ STORAGE_SCOPE_RW = 'https://www.googleapis.com/auth/devstorage.read_write'
 STORAGE_SCOPE_FULL = 'https://www.googleapis.com/auth/devstorage.full_control'
 CONTAINER_SCOPE = 'https://www.googleapis.com/auth/cloud-platform'
 PUB_SUB_SCOPE = 'https://www.googleapis.com/auth/pubsub'
+LOGGING_SCOPE = 'https://www.googleapis.com/auth/logging.admin'
 
 COMPUTE_DISCOVERY = 'compute'
 STORAGE_DISCOVERY = 'storage'
 CONTAINER_DISCOVERY = 'container'
 MONITORING_DISCOVERY = 'monitoring'
 PUB_SUB_DISCOVERY = 'pubsub'
+LOGGING_DISCOVERY = 'logging'
 CLOUDRESOURCES_DISCOVERY = 'cloudresourcemanager'
 
 CHUNKSIZE = 2 * 1024 * 1024
 
 API_V1 = 'v1'
+API_V2 = 'v2'
 API_V3 = 'v3'
 API_BETA = 'beta'
 

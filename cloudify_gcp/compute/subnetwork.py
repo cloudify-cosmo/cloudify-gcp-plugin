@@ -142,8 +142,9 @@ def create(name, region, subnet, **kwargs):
             network.runtime_properties['selfLink'],
             )
 
-    utils.create(subnetwork)
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = subnetwork.name
+    ctx.instance.runtime_properties['name'] = subnetwork.name
+    utils.create(subnetwork)
 
 
 @operation
