@@ -27,6 +27,7 @@ setup(
         'cloudify_gcp.admin',
         'cloudify_gcp',
         'cloudify_gcp.compute',
+        'cloudify_gcp.monitoring',
         'cloudify_gcp.container_engine',
         'cloudify_gcp.logging',
         'cloudify_gcp.dns',
