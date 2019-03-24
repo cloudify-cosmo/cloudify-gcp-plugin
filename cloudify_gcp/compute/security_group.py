@@ -52,7 +52,7 @@ def create(name, rules, **kwargs):
 def looks_like_a_cidr(addr):
     """Google Cloud Platform only supports IPv4"""
     match = re.match(
-            '^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/(\d{1,2})$',
+            r'^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/(\d{1,2})$',
             addr,
             )
 
