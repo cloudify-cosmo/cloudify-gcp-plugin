@@ -17,6 +17,14 @@ CFY_GCP_COMPUTE_RESOURCE = {
 
 CFY_NODES_PATTERNS = ['cloudify.gcp.nodes', 'nodecellar.nodes']
 
+DIAMOND_WAGON = 'https://github.com/cloudify-cosmo/' \
+                'cloudify-diamond-plugin/releases/' \
+                'download/1.3.17/cloudify_diamond_plugin-' \
+                '1.3.17-py27-none-linux_x86_64-centos-Core.wgn'
+DIAMOND_YAML = 'https://github.com/cloudify-cosmo/' \
+               'cloudify-diamond-plugin/releases/' \
+               'download/1.3.17/plugin.yaml'
+
 
 class TestGCP(EcosystemTestBase):
 
@@ -42,7 +50,8 @@ class TestGCP(EcosystemTestBase):
 
     @property
     def plugins_to_upload(self):
-        return []
+        """plugin yamls to upload to manager"""
+        return [(DIAMOND_WAGON, DIAMOND_YAML)]
 
     @property
     def inputs(self):
