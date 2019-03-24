@@ -78,6 +78,7 @@ node_templates:
     type: cloudify.gcp.nodes.Instance
     properties:
       external_ip: true
+      use_public_ip: true
       name: 'we-really-require-name-question'
       gcp_config: *gcp_config
       install_agent: false

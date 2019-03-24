@@ -604,6 +604,9 @@ def set_ip(instance, relationship=False):
         if relationship or ctx.node.properties['external_ip']:
             public = item['networkInterfaces'][0]['accessConfigs'][0]['natIP']
             props['public_ip_address'] = public
+            # Check to see if "use_public_ip" is enabled or not
+            if ctx.node.properties.get('use_public_ip'):
+                props['ip'] = public
     except (TypeError, KeyError):
         ctx.operation.retry(
                 'The instance has not yet created network interface', 10)

@@ -65,6 +65,12 @@ node_types:
         description: >
           A dictionary of values to pass to authenticate with the GCP API.
         default: {}
+      use_public_ip:
+        type: boolean
+        description: >
+          Tells the deployment to use the public IP (if available) of the resource
+          for Cloudify Agent connections
+        default: false
       image_id:
         description: >
           The ID of the image in your GCP account.
