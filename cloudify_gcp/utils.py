@@ -138,7 +138,7 @@ def create_resource(func):
                         'resource id can\'t have different value than '
                         'name {}!={}'.format(resource_id, name))
                 if not resource_id and name:
-                        resource_id = name
+                    resource_id = name
 
                 if not resource_id:
                     raise NonRecoverableError('Resource id is missing.')
