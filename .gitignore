@@ -45,3 +45,4 @@ cover
 
 # IDE
 .DS_Store
+*.wgn
