@@ -17,9 +17,11 @@ import os
 from random import random
 
 from integration_tests.tests.test_cases import PluginsTest
-from integration_tests.tests import utils as test_utils
 
 PLUGIN_NAME = 'cloudify-gcp-plugin'
+DEVELOPMENT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(
+        os.path.realpath(__file__)), '../..'))
 
 test_id = '{0}{1}'.format(
     os.getenv('CIRCLE_JOB', 'cfy'),
@@ -38,6 +40,13 @@ class GCPPluginTestCase(PluginsTest):
     @property
     def inputs(self):
         return {
+            'region': os.getenv('gcp_region'),
+            'network_name': '{0}network'.format(test_id),
+            'subnet_name': '{0}subnet'.format(test_id)
+        }
+
+    def create_secrets(self):
+        secrets = {
             'gcp_region': os.getenv('gcp_region'),
             'gcp_zone': os.getenv('gcp_zone'),
             'gcp_private_key': os.getenv('gcp_private_key'),
@@ -46,24 +55,29 @@ class GCPPluginTestCase(PluginsTest):
             'gcp_client_id': os.getenv('gcp_client_id'),
             'gcp_client_email': os.getenv('gcp_client_email'),
             'gcp_client_x509_cert_url': os.getenv('gcp_client_x509_cert_url'),
-            'network_name': '{0}network'.format(test_id),
-            'subnet_name': '{0}subnet'.format(test_id)
+            'agent_key_private': os.getenv('agent_key_private'),
+            'agent_key_public': os.getenv('agent_key_public'),
         }
+        self._create_secrets(secrets)
 
-    def check_main_blueprint(self):
-        blueprint_id = 'gcp_blueprint'
-        self.addCleanup(self.undeploy_application, blueprint_id)
-        dep, ex_id = self.deploy_application(
-            test_utils.get_resource(
-                os.path.join(
-                    self.plugin_root_directory,
-                    'blueprints/vm.yaml')),
-            timeout_seconds=400,
-            blueprint_id=blueprint_id,
-            deployment_id=blueprint_id,
-            inputs=self.inputs)
-        self.undeploy_application(dep.id)
+    def upload_plugins(self):
+        self.upload_mock_plugin(
+            PLUGIN_NAME, self.plugin_root_directory)
+        self.upload_mock_plugin(
+            'cloudify-utilities-plugin',
+            os.path.join(DEVELOPMENT_ROOT, 'cloudify-utilities-plugin'))
+        self.upload_mock_plugin(
+            'cloudify-ansible-plugin',
+            os.path.join(DEVELOPMENT_ROOT, 'cloudify-ansible-plugin'))
 
     def test_blueprints(self):
-        self.upload_mock_plugin(PLUGIN_NAME, self.plugin_root_directory)
-        self.check_main_blueprint()
+        self.upload_plugins()
+        self.create_secrets()
+        self.check_hello_world_blueprint('gcp', self.inputs, 400)
+        self.check_db_lb_app_blueprint(
+            'gcp', 800,
+            {
+                'resource_prefix': 'dblbapp',
+                'resource_suffix': test_id
+            }
+        )
