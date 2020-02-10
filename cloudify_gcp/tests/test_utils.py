@@ -118,7 +118,7 @@ class TestUtilsWithCTX(TestGCP):
         with self.assertRaises(NonRecoverableError) as e:
             utils.assure_resource_id_correct()
 
-        self.assertIn('missing', e.exception.message)
+        self.assertIn('missing', str(e.exception))
 
     def test_assure_resource_id_correct_raises_invalid(self, *args):
         self.ctxmock.node.properties['resource_id'] = '!nv4l!|>'
@@ -126,7 +126,7 @@ class TestUtilsWithCTX(TestGCP):
         with self.assertRaises(NonRecoverableError) as e:
             utils.assure_resource_id_correct()
 
-        self.assertIn('cannot be used', e.exception.message)
+        self.assertIn('cannot be used', str(e.exception))
 
     def test_create_resource_external(self, *args):
         self.ctxmock.node.properties['use_external_resource'] = True

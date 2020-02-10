@@ -56,7 +56,7 @@ class Object(GoogleCloudPlatform):
             try:
                 _, response = request.next_chunk()
             except HttpError as e:
-                raise GCPError(e.message)
+                raise GCPError(str(e))
         return response['selfLink']
 
     def delete(self):

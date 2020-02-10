@@ -150,9 +150,9 @@ class TestTargetProxyHelpers(unittest.TestCase):
         with self.assertRaises(NonRecoverableError) as e:
             target_proxy.target_proxy_of_type('http', ssl_certificate=' ')
 
-        self.assertIn('SSL', e.exception.message)
+        self.assertIn('SSL', str(e.exception))
 
         with self.assertRaises(NonRecoverableError) as e:
             target_proxy.target_proxy_of_type('carrots', ssl_certificate=' ')
 
-        self.assertIn('Unexpected type', e.exception.message)
+        self.assertIn('Unexpected type', str(e.exception))
