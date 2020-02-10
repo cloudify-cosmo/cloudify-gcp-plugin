@@ -64,7 +64,7 @@ class LegacyAbac(ContainerEngineBase):
         return self.update_legacy_abac()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def enable_legacy_abac(enabled, cluster_id, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -78,7 +78,7 @@ def enable_legacy_abac(enabled, cluster_id, additional_settings, **kwargs):
     utils.create(legacy_abac)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying disable legacy abac', delay=15)
 @utils.throw_cloudify_exceptions
 def disable_legacy_abac(**kwargs):

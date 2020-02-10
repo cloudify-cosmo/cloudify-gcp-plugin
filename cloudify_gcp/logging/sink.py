@@ -63,7 +63,7 @@ class LoggingSink(BillingAccountBase):
             updateMask=self.update_mask).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(ctx, parent, log_sink, sink_type, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -74,7 +74,7 @@ def create(ctx, parent, log_sink, sink_type, **kwargs):
         parent, resource['name'])
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting billing sink')
 @utils.throw_cloudify_exceptions
 def delete(sink_type, **kwargs):
@@ -86,7 +86,7 @@ def delete(sink_type, **kwargs):
     utils.delete_if_not_external(billing_sink)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def update(parent, log_sink, sink_type, **kwargs):
     gcp_config = utils.get_gcp_config()

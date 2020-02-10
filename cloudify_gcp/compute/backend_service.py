@@ -109,7 +109,7 @@ class BackendService(GoogleCloudPlatform):
         return self.set_backends(backends)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, health_check, protocol, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
@@ -124,7 +124,7 @@ def create(name, health_check, protocol, additional_settings, **kwargs):
     utils.create(backend_service)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting backend service')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
@@ -137,7 +137,7 @@ def delete(**kwargs):
     utils.delete_if_not_external(backend_service)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_backend(backend_service_name, group_self_url, **kwargs):
     _modify_backends(
@@ -146,7 +146,7 @@ def add_backend(backend_service_name, group_self_url, **kwargs):
             BackendService.add_backend)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def remove_backend(backend_service_name, group_self_url, **kwargs):
     _modify_backends(

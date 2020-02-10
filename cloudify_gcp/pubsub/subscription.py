@@ -128,7 +128,7 @@ class Subscription(PubSubBase):
         return 'projects/{0}/topics/{1}'.format(self.project, self.topic)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying creating subscription')
 @utils.throw_cloudify_exceptions
 def create(topic, name, push_config=None,
@@ -154,7 +154,7 @@ def create(topic, name, push_config=None,
     ctx.instance.runtime_properties['name'] = name
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting subscription')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):

@@ -100,7 +100,7 @@ def creation_validation(**kwargs):
                     'forwarding_rule_connected_to_target_proxy` relationship.')
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, target_proxy, port_range,
            ip_address, additional_settings, **kwargs):
@@ -125,7 +125,7 @@ def create(name, target_proxy, port_range,
     utils.create(forwarding_rule)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting global forwarding rule')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):

@@ -74,7 +74,7 @@ class StackDriverGroup(MonitoringBase):
             name=self.name, body=self.to_dict()).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(project_id, display_name, parent_name, filter_name, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -84,7 +84,7 @@ def create(project_id, display_name, parent_name, filter_name, **kwargs):
     ctx.instance.runtime_properties['name'] = resource['name']
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting stackdriver group')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
@@ -95,7 +95,7 @@ def delete(**kwargs):
     utils.delete_if_not_external(group)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def update(project_id, display_name, parent_name, filter_name, **kwargs):
     gcp_config = utils.get_gcp_config()

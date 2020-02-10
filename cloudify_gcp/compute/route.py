@@ -141,7 +141,7 @@ class Route(GoogleCloudPlatform):
         return body
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(dest_range, name, tags, next_hop, priority, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -162,7 +162,7 @@ def create(dest_range, name, tags, next_hop, priority, **kwargs):
     utils.create(route)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(name=None, **kwargs):
     gcp_config = utils.get_gcp_config()

@@ -65,7 +65,7 @@ class LoggingExclusion(BillingAccountBase):
             updateMask=self.update_mask).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(ctx, parent, log_exclusion, exclusion_type, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -77,7 +77,7 @@ def create(ctx, parent, log_exclusion, exclusion_type, **kwargs):
         parent, resource['name'])
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting logging exclusion')
 @utils.throw_cloudify_exceptions
 def delete(exclusion_type, **kwargs):
@@ -89,7 +89,7 @@ def delete(exclusion_type, **kwargs):
     utils.delete_if_not_external(billing_account_exclusion)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def update(parent, log_exclusion, exclusion_type, **kwargs):
     gcp_config = utils.get_gcp_config()

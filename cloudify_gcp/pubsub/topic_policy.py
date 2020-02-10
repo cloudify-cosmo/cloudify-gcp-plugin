@@ -81,7 +81,7 @@ class TopicPolicy(PubSubBase):
         return 'projects/{0}/topics/{1}'.format(self.project, self.topic)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying setting iam topic policy')
 @utils.throw_cloudify_exceptions
 def set_policy(topic, policy, **kwargs):

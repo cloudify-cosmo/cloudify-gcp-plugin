@@ -49,7 +49,7 @@ class ProjectMetrics(BillingAccountBase):
             body=self.log_metric, metricName=self.name).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(ctx, parent, log_metric, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -60,7 +60,7 @@ def create(ctx, parent, log_metric, **kwargs):
         parent, resource['name'])
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting folder sink')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
@@ -71,7 +71,7 @@ def delete(**kwargs):
     utils.delete_if_not_external(folder_sink)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def update(parent, log_metric, **kwargs):
     gcp_config = utils.get_gcp_config()

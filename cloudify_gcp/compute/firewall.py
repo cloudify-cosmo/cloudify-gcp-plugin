@@ -175,7 +175,7 @@ class FirewallRule(GoogleCloudPlatform):
         return self.body
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -196,7 +196,7 @@ def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
     utils.create(firewall)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting firewall rule')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):

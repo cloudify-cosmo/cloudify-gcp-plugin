@@ -73,7 +73,7 @@ class UrlMap(GoogleCloudPlatform):
             urlMap=self.name).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, default_service, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
@@ -97,7 +97,7 @@ def creation_validation(*args, **kwargs):
                 )
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting URL map')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):

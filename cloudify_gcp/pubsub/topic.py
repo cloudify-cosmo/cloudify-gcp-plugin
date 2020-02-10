@@ -78,7 +78,7 @@ class Topic(PubSubBase):
         return 'projects/{0}/topics/{1}'.format(self.project, self.name)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying creating topic')
 @utils.throw_cloudify_exceptions
 def create(name, **kwargs):
@@ -94,7 +94,7 @@ def create(name, **kwargs):
         {'name': name, 'topic_path': resource.get('name')})
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting topic')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):

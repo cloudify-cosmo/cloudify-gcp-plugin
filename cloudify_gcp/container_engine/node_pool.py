@@ -108,7 +108,7 @@ def get_node(node_pool):
     return created_node
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying adding node pool', delay=15)
 @utils.throw_cloudify_exceptions
 def create(name, cluster_id, additional_settings, **kwargs):
@@ -125,7 +125,7 @@ def create(name, cluster_id, additional_settings, **kwargs):
     ctx.instance.runtime_properties['cluster_id'] = cluster_id
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def start(**kwargs):
     name = ctx.instance.runtime_properties['name']
@@ -145,7 +145,7 @@ def start(**kwargs):
         constants.KUBERNETES_NODE_POOL] = created_node
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying removing node pool', delay=15)
 @utils.throw_cloudify_exceptions
 def stop(**kwargs):
@@ -165,7 +165,7 @@ def stop(**kwargs):
                 'Node pool {0} stopped'.format(name))
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()

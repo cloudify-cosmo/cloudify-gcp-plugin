@@ -122,7 +122,7 @@ class SubNetwork(GoogleCloudPlatform):
         return self.body
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, region, subnet, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -147,7 +147,7 @@ def create(name, region, subnet, **kwargs):
     utils.create(subnetwork)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()

@@ -177,7 +177,7 @@ class NetworkPeering(GoogleCloudPlatform):
             body={"name": self.name}).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, auto_subnets, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -196,7 +196,7 @@ def create(name, auto_subnets, additional_settings, **kwargs):
     utils.create(network)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(name, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -216,7 +216,7 @@ def delete(name, **kwargs):
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_peering(name, network, peerNetwork, autoCreateRoutes, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -239,7 +239,7 @@ def add_peering(name, network, peerNetwork, autoCreateRoutes, **kwargs):
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = peer.name
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def remove_peering(name, network, peerNetwork,  **kwargs):
     gcp_config = utils.get_gcp_config()

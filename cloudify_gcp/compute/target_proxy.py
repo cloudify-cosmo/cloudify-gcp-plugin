@@ -249,7 +249,7 @@ class TargetSslProxy(TargetProxy):
         return self.discovery.targetSslProxies()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, target_proxy_type, url_map, ssl_certificate, service,
            additional_settings, **kwargs):
@@ -269,7 +269,7 @@ def create(name, target_proxy_type, url_map, ssl_certificate, service,
     utils.create(target_proxy)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting target proxy')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):

@@ -86,7 +86,7 @@ class Address(GoogleCloudPlatform):
             **self._common_kwargs()).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, additional_settings, region=None, **kwargs):
     name = utils.get_final_resource_name(name)
@@ -103,7 +103,7 @@ def create(name, additional_settings, region=None, **kwargs):
     utils.create(address)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting static IP')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):

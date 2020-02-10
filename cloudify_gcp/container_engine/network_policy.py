@@ -88,7 +88,7 @@ def update_network_policy_addon(cluster_id, enabled):
     network_policy.update_network_policy_addon(policy_addon_object)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying enable network policy addon', delay=15)
 @utils.throw_cloudify_exceptions
 def enable_network_policy_addon(cluster_id, **kwargs):
@@ -99,7 +99,7 @@ def enable_network_policy_addon(cluster_id, **kwargs):
     utils.set_resource_id_if_use_external(cluster_id)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying disable network policy addon', delay=15)
 @utils.throw_cloudify_exceptions
 def disable_network_policy_addon(**kwargs):
@@ -107,7 +107,7 @@ def disable_network_policy_addon(**kwargs):
     update_network_policy_addon(cluster_id, False)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure(
     'Retrying creating network policy configuration', delay=15)
 @utils.throw_cloudify_exceptions
@@ -124,7 +124,7 @@ def create_network_policy_config(network_policy_config,
     utils.create(network_policy)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure(
     'Retrying deleting network policy configuration', delay=15)
 @utils.throw_cloudify_exceptions

@@ -77,7 +77,7 @@ class Acknowledge(PubSubBase):
                                                        self.subscription)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying acknowledge message')
 @utils.throw_cloudify_exceptions
 def create(subscription, ack_ids, **kwargs):

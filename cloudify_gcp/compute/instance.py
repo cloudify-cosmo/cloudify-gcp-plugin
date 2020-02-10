@@ -349,7 +349,7 @@ class Instance(GoogleCloudPlatform):
         return self.body
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(instance_type,
            image_id,
@@ -422,7 +422,7 @@ def create(instance_type,
     utils.create(instance)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def start(**kwargs):
     gcp_config = utils.get_gcp_config()
@@ -435,7 +435,7 @@ def start(**kwargs):
     set_ip(instance)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(name, zone, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -457,7 +457,7 @@ def delete(name, zone, **kwargs):
         utils.delete_if_not_external(instance)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_instance_tag(instance_name, zone, tag, **kwargs):
     config = utils.get_gcp_config()
@@ -470,7 +470,7 @@ def add_instance_tag(instance_name, zone, tag, **kwargs):
     instance.set_tags([utils.get_gcp_resource_name(t) for t in tag])
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def remove_instance_tag(instance_name, zone, tag, **kwargs):
     config = utils.get_gcp_config()
@@ -484,7 +484,7 @@ def remove_instance_tag(instance_name, zone, tag, **kwargs):
         instance.remove_tags([utils.get_gcp_resource_name(t) for t in tag])
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_external_ip(instance_name, zone, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -527,7 +527,7 @@ def add_external_ip(instance_name, zone, **kwargs):
     set_ip(instance, relationship=True)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_ssh_key(**kwargs):
     key = ctx.target.instance.runtime_properties[constants.PUBLIC_KEY]
@@ -541,7 +541,7 @@ def add_ssh_key(**kwargs):
     ctx.logger.info('Adding key: {0}'.format(key_user_string))
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def remove_external_ip(instance_name, zone, **kwargs):
     if instance_name:
@@ -556,7 +556,7 @@ def remove_external_ip(instance_name, zone, **kwargs):
         instance.delete_access_config()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def attach_disk(instance_name, zone, disk, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -568,7 +568,7 @@ def attach_disk(instance_name, zone, disk, **kwargs):
     instance.attach_disk(disk)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def detach_disk(instance_name, zone, disk_name, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -580,7 +580,7 @@ def detach_disk(instance_name, zone, disk_name, **kwargs):
     instance.detach_disk(disk_name)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def contained_in(**kwargs):
     key = ctx.target.instance.runtime_properties[constants.SSH_KEYS]
@@ -696,7 +696,7 @@ def _get_script(startup_script):
     return startup_script_metadata
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def instance_remove_access_config(instance_name, zone, rule_name, interface,
                                   **kwargs):
