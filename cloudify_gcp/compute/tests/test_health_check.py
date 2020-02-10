@@ -124,4 +124,4 @@ class TestHealthCheckHelpers(unittest.TestCase):
         with self.assertRaises(NonRecoverableError) as e:
             health_check.health_check_of_type('carrots')
 
-        self.assertIn('Unexpected type', e.exception.message)
+        self.assertIn('Unexpected type', str(e.exception))

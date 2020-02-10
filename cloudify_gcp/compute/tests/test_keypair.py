@@ -75,7 +75,7 @@ class TestGCPKeypair(TestGCP):
                     'public',
                     )
 
-        self.assertIn('empty user', e.exception.message)
+        self.assertIn('empty user', str(e.exception))
 
     def test_delete(self, *args):
         self.ctxmock.instance.runtime_properties[

@@ -235,7 +235,7 @@ def add_peering(name, network, peerNetwork, autoCreateRoutes, **kwargs):
         # sometimes we got a try again error from GCP
         # "There is a peering operation in progress on the local or
         # peer network.Try again later."
-        raise RecoverableError(e.message)
+        raise RecoverableError(str(e))
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = peer.name
 
 

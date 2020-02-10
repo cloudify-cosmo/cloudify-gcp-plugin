@@ -263,8 +263,8 @@ def throw_cloudify_exceptions(func):
         except (RecoverableError, NonRecoverableError) as e:
             raise e
         except GCPError as e:
-            ctx.logger.error('Error Message {0}'.format(e.message))
-            raise NonRecoverableError(e.message)
+            ctx.logger.error('Error Message {0}'.format(str(e)))
+            raise NonRecoverableError(str(e))
 
         except Exception as error:
             response = generate_traceback_exception()

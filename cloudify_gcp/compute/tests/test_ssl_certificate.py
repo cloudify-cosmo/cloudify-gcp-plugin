@@ -92,7 +92,7 @@ class TestSslCertificate(TestGCP):
         with self.assertRaises(NonRecoverableError) as e:
             ssl_certificate.get_pem_data('type', 'data')
 
-        self.assertIn('Unknown type', e.exception.message)
+        self.assertIn('Unknown type', str(e.exception))
 
     @patch('cloudify_gcp.compute.ssl_certificate.open')
     def test_get_pem_data_file(self, mock_open, *args):
