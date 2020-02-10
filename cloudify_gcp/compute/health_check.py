@@ -194,7 +194,7 @@ class HttpsHealthCheck(HealthCheck):
         return self.discovery.httpsHealthChecks()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, health_check_type, port, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
@@ -210,7 +210,7 @@ def create(name, health_check_type, port, additional_settings, **kwargs):
     utils.create(health_check)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting health check')
 @utils.throw_cloudify_exceptions
 def delete(health_check_type, **kwargs):

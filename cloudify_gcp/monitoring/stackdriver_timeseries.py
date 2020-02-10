@@ -38,7 +38,7 @@ class StackDriverTimeSeries(MonitoringBase):
             body=self.time_series).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(project_id, time_series, **kwargs):
     gcp_config = utils.get_gcp_config()

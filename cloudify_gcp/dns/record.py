@@ -91,7 +91,7 @@ def traverse_item_heirarchy(root, keys):
     return item
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(type, name, resources, ttl, **kwargs):
     ctx.instance.runtime_properties['created'] = False
@@ -153,7 +153,7 @@ def create(type, name, resources, ttl, **kwargs):
     ctx.instance.runtime_properties['created'] = True
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting DNS Record')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):

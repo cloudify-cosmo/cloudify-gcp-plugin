@@ -87,7 +87,7 @@ class TopicMessage(PubSubBase):
         return 'projects/{0}/topics/{1}'.format(self.project, self.topic)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying publishing topic message')
 @utils.throw_cloudify_exceptions
 def publish(topic, messages, **kwargs):

@@ -118,7 +118,7 @@ class KeyPair(GoogleCloudPlatform):
             raise GCPError(str(e))
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(user,
            private_key_path,
@@ -153,7 +153,7 @@ def create_keypair(keypair):
         keypair.create()
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting keypair')
 @utils.throw_cloudify_exceptions
 def delete(user, private_key_path, **kwargs):

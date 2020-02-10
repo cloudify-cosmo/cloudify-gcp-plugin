@@ -65,7 +65,7 @@ class MonitoringService(ContainerEngineBase):
         return self.update_monitoring_service()
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying set monitoring service', delay=15)
 @utils.throw_cloudify_exceptions
 def set_monitoring_service(monitoring_service, cluster_id,
@@ -82,7 +82,7 @@ def set_monitoring_service(monitoring_service, cluster_id,
     utils.create(service)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying unset monitoring service', delay=15)
 @utils.throw_cloudify_exceptions
 def unset_monitoring_service(**kwargs):

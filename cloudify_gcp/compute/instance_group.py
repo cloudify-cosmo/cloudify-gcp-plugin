@@ -107,7 +107,7 @@ def instance_to_dict(instance_url):
     }
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, named_ports, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
@@ -121,7 +121,7 @@ def create(name, named_ports, additional_settings, **kwargs):
     utils.create(instance_group)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting instance group')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
@@ -134,7 +134,7 @@ def delete(**kwargs):
     utils.delete_if_not_external(instance_group)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_to_instance_group(instance_group_name, instance_url, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -144,7 +144,7 @@ def add_to_instance_group(instance_group_name, instance_url, **kwargs):
     instance_group.add_instance(instance_url)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def remove_from_instance_group(instance_group_name, instance_url, **kwargs):
     gcp_config = utils.get_gcp_config()

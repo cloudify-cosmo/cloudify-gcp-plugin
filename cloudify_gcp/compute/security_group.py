@@ -24,7 +24,7 @@ from .. import constants
 from .firewall import FirewallRule
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying creating security group')
 @utils.throw_cloudify_exceptions
 def create(name, rules, **kwargs):
@@ -145,7 +145,7 @@ def handle_multiple_calls(objects, call, logger):
                 constants.RETRY_DEFAULT_DELAY)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()

@@ -82,7 +82,7 @@ class Project(gcp.GoogleCloudApi):
             projectId=self.project_id).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(**kwargs):
     gcp_config = utils.get_gcp_config()
@@ -98,7 +98,7 @@ def create(**kwargs):
     ctx.instance.runtime_properties['resource_id'] = project.project_id
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()

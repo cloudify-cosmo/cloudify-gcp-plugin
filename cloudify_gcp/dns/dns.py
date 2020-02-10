@@ -118,7 +118,7 @@ class DNSZone(GoogleCloudPlatform):
             managedZone=self.name).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, dns_name, additional_settings=None, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -140,7 +140,7 @@ def create(name, dns_name, additional_settings=None, **kwargs):
     ctx.instance.runtime_properties.update(resource)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting dns zone')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):

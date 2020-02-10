@@ -103,7 +103,7 @@ class Image(GoogleCloudPlatform):
         return self.body
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(image_name, image_path, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -123,7 +123,7 @@ def upload_image(image, image_path):
     image.upload_and_create(local_path)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting image')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):

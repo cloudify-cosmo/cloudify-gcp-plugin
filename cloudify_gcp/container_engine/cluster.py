@@ -89,7 +89,7 @@ class Cluster(ContainerEngineBase):
             zone=self.zone).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
@@ -105,7 +105,7 @@ def create(name, additional_settings, **kwargs):
         cluster.get()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def start(**kwargs):
     gcp_config = utils.get_gcp_config()
@@ -132,7 +132,7 @@ def start(**kwargs):
                     constants.KUBERNETES_ERROR_STATUS, cluster_status))
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
@@ -156,7 +156,7 @@ def delete(**kwargs):
                 raise e
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying stopping cluster', delay=15)
 @utils.throw_cloudify_exceptions
 def stop(**kwargs):

@@ -114,7 +114,7 @@ class RegionBackendService(GoogleCloudPlatform):
         return self.set_backends(backends)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, region, health_check, protocol, additional_settings,
            **kwargs):
@@ -131,7 +131,7 @@ def create(name, region, health_check, protocol, additional_settings,
     utils.create(backend_service)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting backend service')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
@@ -146,7 +146,7 @@ def delete(**kwargs):
     utils.delete_if_not_external(backend_service)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_backend(backend_service_name, group_self_url, **kwargs):
     _modify_backends(
@@ -155,7 +155,7 @@ def add_backend(backend_service_name, group_self_url, **kwargs):
             RegionBackendService.add_backend)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def remove_backend(backend_service_name, group_self_url, **kwargs):
     _modify_backends(

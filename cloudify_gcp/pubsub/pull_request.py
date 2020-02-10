@@ -81,7 +81,7 @@ class PullRequest(PubSubBase):
                                                        self.subscription)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying pulling subscription messages')
 @utils.throw_cloudify_exceptions
 def pull(subscription, return_immediately,

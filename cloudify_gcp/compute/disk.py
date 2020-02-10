@@ -132,7 +132,7 @@ class Disk(GoogleCloudPlatform):
             disk=self.name).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(image, name, size, boot, additional_settings, **kwargs):
     name = utils.get_final_resource_name(name)
@@ -150,7 +150,7 @@ def create(image, name, size, boot, additional_settings, **kwargs):
         disk.disk_to_insert_instance_dict(name)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting disk')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
@@ -171,7 +171,7 @@ def _get_backupname(kwargs):
     return utils.get_gcp_resource_name(kwargs["snapshot_name"])
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying create dish snapshot')
 @utils.throw_cloudify_exceptions
 def snapshot_create(**kwargs):
@@ -191,7 +191,7 @@ def snapshot_create(**kwargs):
         snapshot.create(disk_name=name)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting snapshot')
 @utils.throw_cloudify_exceptions
 def snapshot_delete(**kwargs):
@@ -207,7 +207,7 @@ def snapshot_delete(**kwargs):
     snapshot.delete()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_boot_disk(**kwargs):
     disk_body = ctx.target.instance.runtime_properties[constants.DISK]

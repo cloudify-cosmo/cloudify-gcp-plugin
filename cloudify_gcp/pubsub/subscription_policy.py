@@ -82,7 +82,7 @@ class SubscriptionPolicy(PubSubBase):
                                                        self.subscription)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying setting iam subscription policy')
 @utils.throw_cloudify_exceptions
 def set_policy(subscription, policy, **kwargs):

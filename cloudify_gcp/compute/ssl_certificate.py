@@ -76,7 +76,7 @@ class SslCertificate(GoogleCloudPlatform):
             sslCertificate=self.name).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, private_key, certificate, **kwargs):
     name = utils.get_final_resource_name(name)
@@ -91,7 +91,7 @@ def create(name, private_key, certificate, **kwargs):
     utils.create(ssl_certificate)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting SSL certificate')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
