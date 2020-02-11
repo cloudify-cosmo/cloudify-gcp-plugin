@@ -96,6 +96,19 @@ node_templates:
       boot: true
       gcp_config: *gcp_config
 
+  snapshot:
+    type: cloudify.gcp.nodes.Snapshot
+    properties:
+      gcp_config: *gcp_config
+    interfaces:
+      cloudify.interfaces.snapshot:
+        create:
+          inputs:
+            disk_name: { get_attribute: [boot_disk, name] }
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: boot_disk
+
   subnet:
     type: cloudify.gcp.nodes.SubNetwork
     properties:

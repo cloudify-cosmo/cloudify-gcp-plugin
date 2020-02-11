@@ -267,13 +267,29 @@ node_types:
               default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.disk.delete
+
+  cloudify.gcp.nodes.Snapshot:
+    derived_from: cloudify.nodes.Root
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
+      disk_name:
+        description: >
+          Disk name.
+        type: string
+        required: false
+    interfaces:
       # backups related section
       cloudify.interfaces.snapshot:
         create:
-          implementation: gcp_plugin.cloudify_gcp.compute.disk.snapshot_create
-          inputs: {}
+          implementation: gcp_plugin.cloudify_gcp.compute.snapshot.create
+          inputs:
+            disk_name:
+              default: { get_property: [SELF, disk_name] }
         delete:
-          implementation: gcp_plugin.cloudify_gcp.compute.disk.snapshot_delete
+          implementation: gcp_plugin.cloudify_gcp.compute.snapshot.delete
           inputs: {}
 
   cloudify.gcp.nodes.Network:
