@@ -18,11 +18,13 @@ from random import random
 
 from integration_tests.tests.test_cases import PluginsTest
 
-PLUGIN_NAME = 'cloudify-gcp-plugin'
+PLUGIN_NAME = 'cloudify-azure-plugin'
 DEVELOPMENT_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(
         os.path.realpath(__file__)), '../..'))
-
+TEST_KEY_PATH = '/tmp/foo.rsa'
+TEST_PUB_PATH = '/tmp/foo.rsa.pub'
+GCP_KEY_PATH = '/tmp/gcp_private_key'
 test_id = '{0}{1}'.format(
     os.getenv('CIRCLE_JOB', 'cfy'),
     os.getenv('CIRCLE_BUILD_NUM', str(random())[-4:-1])
@@ -47,16 +49,18 @@ class GCPPluginTestCase(PluginsTest):
 
     def create_secrets(self):
         secrets = {
+            'agent_key_private': os.getenv('agent_key_private',
+                                           open(TEST_KEY_PATH).read()),
+            'agent_key_public': os.getenv('agent_key_public',
+                                          open(TEST_PUB_PATH).read()),
             'gcp_region': os.getenv('gcp_region'),
             'gcp_zone': os.getenv('gcp_zone'),
-            'gcp_private_key': os.getenv('gcp_private_key'),
+            'gcp_private_key': open(GCP_KEY_PATH).read(),
             'gcp_private_key_id': os.getenv('gcp_private_key_id'),
             'gcp_project_id': os.getenv('gcp_project_id'),
             'gcp_client_id': os.getenv('gcp_client_id'),
             'gcp_client_email': os.getenv('gcp_client_email'),
             'gcp_client_x509_cert_url': os.getenv('gcp_client_x509_cert_url'),
-            'agent_key_private': os.getenv('agent_key_private'),
-            'agent_key_public': os.getenv('agent_key_public'),
         }
         self._create_secrets(secrets)
 
