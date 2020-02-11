@@ -14,56 +14,11 @@
 # limitations under the License.
 from cloudify import ctx
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError
 
 from .. import constants
 from .. import utils
 from cloudify_gcp.gcp import GoogleCloudPlatform
 from cloudify_gcp.gcp import check_response
-
-
-class Snapshot(GoogleCloudPlatform):
-    def __init__(self,
-                 config,
-                 logger,
-                 name,
-                 description=None,
-                 additional_settings=None):
-        super(Snapshot, self).__init__(config, logger, name,
-                                       additional_settings)
-        self.description = description
-
-    def to_dict(self):
-        self.body.update({
-            'description': 'Cloudify generated snapshot',
-            'name': self.name
-        })
-        return self.body
-
-    @check_response
-    def get(self):
-        return self.discovery.snapshots().get(
-            project=self.project,
-            snapshot=self.name).execute()
-
-    @utils.async_operation()
-    @check_response
-    def delete(self):
-        return self.discovery.snapshots().delete(
-            project=self.project,
-            snapshot=self.name).execute()
-
-    @utils.async_operation()
-    @check_response
-    def create(self, disk_name):
-        return self.discovery.disks().createSnapshot(
-            project=self.project,
-            zone=self.zone,
-            disk=disk_name,
-            body={
-                "name": self.name,
-                "description": self.description
-            }).execute()
 
 
 class Disk(GoogleCloudPlatform):
@@ -161,50 +116,6 @@ def delete(**kwargs):
                     ctx.logger,
                     name=name)
         utils.delete_if_not_external(disk)
-
-
-def _get_backupname(kwargs):
-    if not kwargs.get("snapshot_name"):
-        raise NonRecoverableError(
-            'Backup name must be provided.'
-        )
-    return utils.get_gcp_resource_name(kwargs["snapshot_name"])
-
-
-@operation(resumable=True)
-@utils.retry_on_failure('Retrying create dish snapshot')
-@utils.throw_cloudify_exceptions
-def snapshot_create(**kwargs):
-    snapshot_type = kwargs.get('snapshot_type')
-    snapshot_name = _get_backupname(kwargs)
-    if not kwargs.get("snapshot_incremental"):
-        ctx.logger.info("Create backup for VM is unsupported.")
-        return
-
-    gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
-    if name:
-        snapshot = Snapshot(gcp_config,
-                            ctx.logger,
-                            name=snapshot_name,
-                            description=snapshot_type)
-        snapshot.create(disk_name=name)
-
-
-@operation(resumable=True)
-@utils.retry_on_failure('Retrying deleting snapshot')
-@utils.throw_cloudify_exceptions
-def snapshot_delete(**kwargs):
-    snapshot_name = _get_backupname(kwargs)
-    if not kwargs.get("snapshot_incremental"):
-        ctx.logger.info("Delete backup for VM is unsupported.")
-        return
-
-    gcp_config = utils.get_gcp_config()
-    snapshot = Snapshot(gcp_config,
-                        ctx.logger,
-                        name=snapshot_name)
-    snapshot.delete()
 
 
 @operation(resumable=True)
