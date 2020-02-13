@@ -18,6 +18,7 @@ from cloudify.exceptions import NonRecoverableError
 from cloudify_gcp.gcp import check_response
 
 from .. import utils
+from .. import constants
 from ..logging import BillingAccountBase
 
 
@@ -68,13 +69,17 @@ class LoggingExclusion(BillingAccountBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(ctx, parent, log_exclusion, exclusion_type, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     billing_account_exclusion = LoggingExclusion(
         gcp_config, ctx.logger, exclusion_type, parent, log_exclusion,
         **kwargs)
     resource = utils.create(billing_account_exclusion)
-    ctx.instance.runtime_properties['name'] = '{}/exclusions/{}'.format(
-        parent, resource['name'])
+    ctx.instance.runtime_properties[
+        constants.NAME] = '{}/exclusions/{}'.format(
+            parent, resource[constants.NAME])
 
 
 @operation(resumable=True)
@@ -84,10 +89,10 @@ def delete(exclusion_type, **kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
-    if props.get('name'):
+    if props.get(constants.NAME):
         billing_account_exclusion = LoggingExclusion(
             gcp_config, ctx.logger, exclusion_type,
-            name=props['name'])
+            name=props[constants.NAME])
 
         utils.delete_if_not_external(billing_account_exclusion)
 
@@ -96,7 +101,7 @@ def delete(exclusion_type, **kwargs):
 @utils.throw_cloudify_exceptions
 def update(parent, log_exclusion, exclusion_type, **kwargs):
     gcp_config = utils.get_gcp_config()
-    current_resource_name = ctx.instance.runtime_properties['name']
+    current_resource_name = ctx.instance.runtime_properties[constants.NAME]
     billing_account_exclusion = LoggingExclusion(
         gcp_config, ctx.logger, exclusion_type, parent, log_exclusion,
         name=current_resource_name, **kwargs)

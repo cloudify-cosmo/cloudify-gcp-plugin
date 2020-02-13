@@ -41,7 +41,7 @@ class SslCertificate(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated SSL certificate',
-            'name': self.name,
+            constants.NAME: self.name,
             'privateKey': self.private_key,
             'certificate': self.certificate
         })
@@ -79,6 +79,9 @@ class SslCertificate(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, private_key, certificate, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     private_key_data = get_pem_data(private_key['type'], private_key['data'])
@@ -96,7 +99,7 @@ def create(name, private_key, certificate, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         ssl_certificate = SslCertificate(config=gcp_config,
                                          logger=ctx.logger,

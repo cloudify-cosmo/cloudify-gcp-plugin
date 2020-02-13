@@ -210,7 +210,7 @@ class Instance(GoogleCloudPlatform):
         self.logger.info('Add external IP to instance {0}'.format(self.name))
 
         body = {'kind': 'compute#accessConfig',
-                'name': self.ACCESS_CONFIG,
+                constants.NAME: self.ACCESS_CONFIG,
                 'type': self.ACCESS_CONFIG_TYPE}
         if ip_address:
             body['natIP'] = ip_address
@@ -299,7 +299,7 @@ class Instance(GoogleCloudPlatform):
             network['subnetwork'] = self.subnetwork
 
         body = {
-            'name': self.name,
+            constants.NAME: self.name,
             'description': 'Cloudify generated instance',
             'canIpForward': self.can_ip_forward,
             'tags': {'items': list(set(self.tags))},
@@ -342,7 +342,7 @@ class Instance(GoogleCloudPlatform):
             # sophisiticated way.
             self.body['networkInterfaces'][0]['accessConfigs'] = [{
                 'type': self.ACCESS_CONFIG_TYPE,
-                'name': self.ACCESS_CONFIG,
+                constants.NAME: self.ACCESS_CONFIG,
                 }]
 
         ctx.logger.debug('Body that being used: {0}'.format(self.body))
@@ -362,11 +362,7 @@ def create(instance_type,
            can_ip_forward=False,
            additional_settings=None,
            **kwargs):
-    if (
-        ctx.instance.runtime_properties.get(constants.RESOURCE_ID)
-        and not ctx.instance.runtime_properties.get('_operation')
-    ):
-        ctx.logger.info('Resource already created.')
+    if utils.resorce_created(ctx, constants.RESOURCE_ID):
         return
 
     props = ctx.instance.runtime_properties
@@ -425,7 +421,7 @@ def create(instance_type,
             )
 
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = instance.name
-    ctx.instance.runtime_properties['name'] = instance.name
+    ctx.instance.runtime_properties[constants.NAME] = instance.name
     utils.create(instance)
 
 
@@ -436,7 +432,7 @@ def start(**kwargs):
     props = ctx.instance.runtime_properties
     instance = Instance(gcp_config,
                         ctx.logger,
-                        name=props['name'],
+                        name=props[constants.NAME],
                         zone=basename(props['zone']),
                         )
     set_ip(instance)
@@ -451,7 +447,7 @@ def delete(name, zone, **kwargs):
     if not zone:
         zone = props.get('zone')
     if not name:
-        name = props.get('name')
+        name = props.get(constants.NAME)
 
     if name:
         instance = Instance(gcp_config,
@@ -602,7 +598,7 @@ def set_ip(instance, relationship=False):
         props = ctx.instance.runtime_properties
 
     instances = instance.list()
-    item = utils.get_item_from_gcp_response('name',
+    item = utils.get_item_from_gcp_response(constants.NAME,
                                             instance.name,
                                             instances)
 

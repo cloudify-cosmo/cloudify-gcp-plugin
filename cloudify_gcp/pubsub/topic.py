@@ -82,6 +82,9 @@ class Topic(PubSubBase):
 @utils.retry_on_failure('Retrying creating topic')
 @utils.throw_cloudify_exceptions
 def create(name, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     if not name:
         name = ctx.node.id
@@ -91,7 +94,7 @@ def create(name, **kwargs):
 
     resource = utils.create(topic)
     ctx.instance.runtime_properties.update(
-        {'name': name, 'topic_path': resource.get('name')})
+        {constants.NAME: name, 'topic_path': resource.get(constants.NAME)})
 
 
 @operation(resumable=True)
@@ -99,7 +102,7 @@ def create(name, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         topic = Topic(gcp_config, ctx.logger, name)
 

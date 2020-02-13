@@ -94,7 +94,7 @@ class Image(GoogleCloudPlatform):
 
     def to_dict(self):
         self.body.update({
-            'name': self.name,
+            constants.NAME: self.name,
             'rawDisk': {
                 'source': self.url,
                 'containerType': 'TAR'
@@ -106,6 +106,9 @@ class Image(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(image_name, image_path, additional_settings, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(image_name)
     image = Image(gcp_config, ctx.logger, name, additional_settings)
@@ -114,7 +117,7 @@ def create(image_name, image_path, additional_settings, **kwargs):
     else:
         response = image.update_name(ctx.node.properties['family'])
         ctx.instance.runtime_properties['selfLink'] = response['selfLink']
-    ctx.instance.runtime_properties['name'] = image.name
+    ctx.instance.runtime_properties[constants.NAME] = image.name
 
 
 @utils.create_resource
@@ -128,8 +131,8 @@ def upload_image(image, image_path):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         image = Image(gcp_config, ctx.logger, name)
         utils.delete_if_not_external(image)
-        ctx.instance.runtime_properties.pop('name')
+        ctx.instance.runtime_properties.pop(constants.NAME)

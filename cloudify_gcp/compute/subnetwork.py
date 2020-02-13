@@ -114,7 +114,7 @@ class SubNetwork(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated subnetwork',
-            'name': self.name,
+            constants.NAME: self.name,
             'network': self.network,
             'ipCidrRange': self.subnet,
         }
@@ -125,12 +125,9 @@ class SubNetwork(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, region, subnet, **kwargs):
-    if (
-        ctx.instance.runtime_properties.get(constants.RESOURCE_ID)
-        and not ctx.instance.runtime_properties.get('_operation')
-    ):
-        ctx.logger.info('Resource already created.')
+    if utils.resorce_created(ctx, constants.RESOURCE_ID):
         return
+
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(name)
     network = utils.get_relationships(
@@ -149,7 +146,7 @@ def create(name, region, subnet, **kwargs):
             )
 
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = subnetwork.name
-    ctx.instance.runtime_properties['name'] = subnetwork.name
+    ctx.instance.runtime_properties[constants.NAME] = subnetwork.name
     utils.create(subnetwork)
 
 
@@ -157,7 +154,7 @@ def create(name, region, subnet, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name', None)
+    name = ctx.instance.runtime_properties.get(constants.NAME, None)
     if name:
         subnetwork = SubNetwork(
                 gcp_config,

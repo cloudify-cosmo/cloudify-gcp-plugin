@@ -18,6 +18,7 @@ from cloudify_gcp.gcp import check_response
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
+from .. import constants
 from ..logging import BillingAccountBase
 
 
@@ -66,12 +67,15 @@ class LoggingSink(BillingAccountBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(ctx, parent, log_sink, sink_type, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     billing_sink = LoggingSink(
         gcp_config, ctx.logger, sink_type, parent, log_sink, **kwargs)
     resource = utils.create(billing_sink)
-    ctx.instance.runtime_properties['name'] = '{}/sinks/{}'.format(
-        parent, resource['name'])
+    ctx.instance.runtime_properties[constants.NAME] = '{}/sinks/{}'.format(
+        parent, resource[constants.NAME])
 
 
 @operation(resumable=True)
@@ -79,18 +83,21 @@ def create(ctx, parent, log_sink, sink_type, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(sink_type, **kwargs):
     gcp_config = utils.get_gcp_config()
-    billing_sink = LoggingSink(
-        gcp_config, ctx.logger, sink_type,
-        name=ctx.instance.runtime_properties['name'])
+    props = ctx.instance.runtime_properties
 
-    utils.delete_if_not_external(billing_sink)
+    if props.get(constants.NAME):
+        billing_sink = LoggingSink(
+            gcp_config, ctx.logger, sink_type,
+            name=ctx.instance.runtime_properties[constants.NAME])
+
+        utils.delete_if_not_external(billing_sink)
 
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def update(parent, log_sink, sink_type, **kwargs):
     gcp_config = utils.get_gcp_config()
-    current_resource_name = ctx.instance.runtime_properties['name']
+    current_resource_name = ctx.instance.runtime_properties[constants.NAME]
     billing_sink = LoggingSink(
         gcp_config, ctx.logger, sink_type, parent, log_sink,
         name=current_resource_name, **kwargs)

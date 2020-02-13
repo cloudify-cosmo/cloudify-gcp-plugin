@@ -69,7 +69,8 @@ class Project(gcp.GoogleCloudApi):
     @gcp.check_response
     def create(self):
         project_body = {
-            'name': utils.get_gcp_resource_name(ctx.node.properties['name']),
+            constants.NAME: utils.get_gcp_resource_name(
+                ctx.node.properties[constants.NAME]),
             'projectId': self.project_id
         }
         self.logger.info('Project info: {}'.format(repr(project_body)))
@@ -85,13 +86,16 @@ class Project(gcp.GoogleCloudApi):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(**kwargs):
+    if utils.resorce_created(ctx, constants.RESOURCE_ID):
+        return
+
     gcp_config = utils.get_gcp_config()
 
     project = Project(
         gcp_config,
         ctx.logger,
         ctx.node.properties['id'],
-        ctx.node.properties['name']
+        ctx.node.properties[constants.NAME]
     )
     utils.create(project)
 

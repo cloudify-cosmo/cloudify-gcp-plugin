@@ -18,6 +18,7 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
+from .. import constants
 from cloudify_gcp.gcp import (
         check_response,
         GoogleCloudPlatform,
@@ -40,7 +41,7 @@ class UrlMap(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated URL Map',
-            'name': self.name,
+            constants.NAME: self.name,
             'defaultService': self.default_service
         })
         return self.body
@@ -76,6 +77,9 @@ class UrlMap(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, default_service, additional_settings, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     url_map = UrlMap(gcp_config,
@@ -102,7 +106,7 @@ def creation_validation(*args, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
 
     if name:
         url_map = UrlMap(gcp_config,
