@@ -152,13 +152,14 @@ def delete(**kwargs):
     network = utils.get_network(ctx)
     props = ctx.instance.runtime_properties
 
-    firewalls = [
-            FirewallRule(
-                gcp_config,
-                ctx.logger,
-                name=rule['name'],
-                network=network,
-                )
-            for rule in props['rules']]
+    if props.get('rules'):
+        firewalls = [
+                FirewallRule(
+                    gcp_config,
+                    ctx.logger,
+                    name=rule['name'],
+                    network=network,
+                    )
+                for rule in props['rules']]
 
-    return handle_multiple_calls(firewalls, 'delete', ctx.logger)
+        return handle_multiple_calls(firewalls, 'delete', ctx.logger)

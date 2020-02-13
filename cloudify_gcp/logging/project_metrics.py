@@ -65,10 +65,13 @@ def create(ctx, parent, log_metric, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    folder_sink = ProjectMetrics(
-        gcp_config, ctx.logger, name=ctx.instance.runtime_properties['name'])
+    props = ctx.instance.runtime_properties
 
-    utils.delete_if_not_external(folder_sink)
+    if props.get('name'):
+        folder_sink = ProjectMetrics(
+            gcp_config, ctx.logger, name=props['name'])
+
+        utils.delete_if_not_external(folder_sink)
 
 
 @operation(resumable=True)

@@ -128,10 +128,11 @@ def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name')
 
-    instance_group = InstanceGroup(gcp_config,
-                                   ctx.logger,
-                                   name=name)
-    utils.delete_if_not_external(instance_group)
+    if name:
+        instance_group = InstanceGroup(gcp_config,
+                                       ctx.logger,
+                                       name=name)
+        utils.delete_if_not_external(instance_group)
 
 
 @operation(resumable=True)

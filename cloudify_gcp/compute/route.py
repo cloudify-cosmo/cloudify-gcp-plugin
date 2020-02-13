@@ -174,11 +174,12 @@ def delete(name=None, **kwargs):
     else:
         name = utils.get_final_resource_name(name)
 
-    route = Route(
-            gcp_config,
-            ctx.logger,
-            name,
-            network,
-            )
+    if name:
+        route = Route(
+                gcp_config,
+                ctx.logger,
+                name,
+                network,
+                )
 
-    utils.delete_if_not_external(route)
+        utils.delete_if_not_external(route)

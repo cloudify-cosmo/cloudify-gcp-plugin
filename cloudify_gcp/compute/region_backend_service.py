@@ -138,12 +138,13 @@ def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name')
 
-    backend_service = RegionBackendService(
-        gcp_config,
-        ctx.logger,
-        name=name,
-        region=ctx.instance.runtime_properties['region'])
-    utils.delete_if_not_external(backend_service)
+    if name:
+        backend_service = RegionBackendService(
+            gcp_config,
+            ctx.logger,
+            name=name,
+            region=ctx.instance.runtime_properties['region'])
+        utils.delete_if_not_external(backend_service)
 
 
 @operation(resumable=True)
