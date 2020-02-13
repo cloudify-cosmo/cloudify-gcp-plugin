@@ -33,17 +33,17 @@ jobs:
             source env/bin/activate
             pip install tox
       - run:
-          name: Runt flake8 test
+          name: Run flake8 test
           command: |
             source env/bin/activate
             tox -e flake8
       - run:
-          name: Runt py27 test
+          name: Run py27 test
           command: |
             source env/bin/activate
             tox -e py27
       - run:
-          name: Runt blueprints validate
+          name: Run blueprints validate
           command: |
             source env/bin/activate
             tox -e validate
