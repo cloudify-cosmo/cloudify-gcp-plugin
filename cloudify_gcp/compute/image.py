@@ -109,7 +109,7 @@ def create(image_name, image_path, additional_settings, **kwargs):
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(image_name)
     image = Image(gcp_config, ctx.logger, name, additional_settings)
-    if not utils.should_use_external_resource():
+    if not utils.should_use_external_resource(ctx):
         upload_image(image, image_path)
     else:
         response = image.update_name(ctx.node.properties['family'])
@@ -129,6 +129,7 @@ def upload_image(image, image_path):
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name')
-    image = Image(gcp_config, ctx.logger, name)
-    utils.delete_if_not_external(image)
-    ctx.instance.runtime_properties.pop('name')
+    if name:
+        image = Image(gcp_config, ctx.logger, name)
+        utils.delete_if_not_external(image)
+        ctx.instance.runtime_properties.pop('name')

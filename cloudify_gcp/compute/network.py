@@ -180,6 +180,13 @@ class NetworkPeering(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, auto_subnets, additional_settings, **kwargs):
+    if (
+        ctx.instance.runtime_properties.get(constants.RESOURCE_ID)
+        and not ctx.instance.runtime_properties.get('_operation')
+    ):
+        ctx.logger.info('Resource already created.')
+        return
+
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(name)
 
@@ -207,13 +214,16 @@ def delete(name, **kwargs):
     else:
         name = utils.get_final_resource_name(name)
 
-    network = Network(
+    if name:
+        network = Network(
             gcp_config,
             ctx.logger,
             name)
 
-    utils.delete_if_not_external(network)
-    ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
+        utils.delete_if_not_external(network)
+        # cleanup only if resource is really removed
+        if utils.is_object_deleted(network):
+            ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
 
 
 @operation(resumable=True)
@@ -260,12 +270,13 @@ def remove_peering(name, network, peerNetwork,  **kwargs):
     else:
         peerNetwork = utils.get_final_resource_name(peerNetwork)
 
-    peer = NetworkPeering(
-            config=gcp_config,
-            logger=ctx.logger,
-            name=name,
-            network=network,
-            peerNetwork=peerNetwork)
+    if name:
+        peer = NetworkPeering(
+                config=gcp_config,
+                logger=ctx.logger,
+                name=name,
+                network=network,
+                peerNetwork=peerNetwork)
 
-    utils.delete_if_not_external(peer)
-    ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
+        utils.delete_if_not_external(peer)
+        ctx.instance.runtime_properties[constants.RESOURCE_ID] = None

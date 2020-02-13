@@ -54,7 +54,7 @@ class FirewallRule(GoogleCloudPlatform):
             additional_settings=additional_settings,
             )
 
-        if utils.should_use_external_resource():
+        if utils.should_use_external_resource(ctx):
             self.name = utils.assure_resource_id_correct()
         elif name:
             self.name = utils.get_gcp_resource_name(name)
@@ -209,5 +209,7 @@ def delete(**kwargs):
                                 name=firewall_name,
                                 network=network)
         utils.delete_if_not_external(firewall)
-        ctx.instance.runtime_properties.pop(constants.RESOURCE_ID)
-        ctx.instance.runtime_properties.pop('name')
+        # cleanup only if resource is really removed
+        if utils.is_object_deleted(firewall):
+            ctx.instance.runtime_properties.pop(constants.RESOURCE_ID)
+            ctx.instance.runtime_properties.pop('name')

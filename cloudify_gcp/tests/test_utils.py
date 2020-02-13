@@ -78,14 +78,11 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(utils.camel_farm(i), o)
 
     def test_should_use_external_resource(self):
-        with patch(
-                'cloudify_gcp.utils.ctx',
-                PropertyMock(
-                    return_value=MockCloudifyContext(
-                        properties={
-                            'use_external_resource': True,
-                        }))):
-            self.assertTrue(utils.should_use_external_resource())
+        fake_ctx = PropertyMock(return_value=MockCloudifyContext(properties={
+            'use_external_resource': True,
+        }))
+        with patch('cloudify_gcp.utils.ctx', fake_ctx):
+            self.assertTrue(utils.should_use_external_resource(fake_ctx))
 
     def test_is_object_deleted(self):
         obj = Mock()
