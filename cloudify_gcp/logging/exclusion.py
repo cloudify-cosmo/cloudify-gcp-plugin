@@ -82,11 +82,14 @@ def create(ctx, parent, log_exclusion, exclusion_type, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(exclusion_type, **kwargs):
     gcp_config = utils.get_gcp_config()
-    billing_account_exclusion = LoggingExclusion(
-        gcp_config, ctx.logger, exclusion_type,
-        name=ctx.instance.runtime_properties['name'])
+    props = ctx.instance.runtime_properties
 
-    utils.delete_if_not_external(billing_account_exclusion)
+    if props.get('name'):
+        billing_account_exclusion = LoggingExclusion(
+            gcp_config, ctx.logger, exclusion_type,
+            name=props['name'])
+
+        utils.delete_if_not_external(billing_account_exclusion)
 
 
 @operation(resumable=True)

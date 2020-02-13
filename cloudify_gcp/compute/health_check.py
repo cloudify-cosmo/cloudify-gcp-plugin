@@ -216,12 +216,13 @@ def create(name, health_check_type, port, additional_settings, **kwargs):
 def delete(health_check_type, **kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name')
-    health_check = health_check_of_type(health_check_type,
-                                        config=gcp_config,
-                                        logger=ctx.logger,
-                                        name=name)
+    if name:
+        health_check = health_check_of_type(health_check_type,
+                                            config=gcp_config,
+                                            logger=ctx.logger,
+                                            name=name)
 
-    utils.delete_if_not_external(health_check)
+        utils.delete_if_not_external(health_check)
 
 
 def health_check_of_type(health_check_type, **kwargs):

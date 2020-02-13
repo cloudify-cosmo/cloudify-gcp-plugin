@@ -95,19 +95,21 @@ def create(**kwargs):
     )
     utils.create(project)
 
-    ctx.instance.runtime_properties['resource_id'] = project.project_id
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = project.project_id
 
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
+    props = ctx.instance.runtime_properties
 
-    project = Project(
-        gcp_config,
-        ctx.logger,
-        ctx.instance.runtime_properties['resource_id']
-    )
+    if props.get(constants.RESOURCE_ID):
+        project = Project(
+            gcp_config,
+            ctx.logger,
+            props[constants.RESOURCE_ID]
+        )
 
-    utils.delete_if_not_external(project)
-    ctx.instance.runtime_properties['resource_id'] = None
+        utils.delete_if_not_external(project)
+        ctx.instance.runtime_properties[constants.RESOURCE_ID] = None

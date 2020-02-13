@@ -89,10 +89,12 @@ def create(project_id, display_name, parent_name, filter_name, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    group = StackDriverGroup(gcp_config, ctx.logger,
-                             name=ctx.instance.runtime_properties['name'])
+    props = ctx.instance.runtime_properties
 
-    utils.delete_if_not_external(group)
+    if props.get('name'):
+        group = StackDriverGroup(gcp_config, ctx.logger, name=props['name'])
+
+        utils.delete_if_not_external(group)
 
 
 @operation(resumable=True)

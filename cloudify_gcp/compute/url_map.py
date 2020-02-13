@@ -104,8 +104,9 @@ def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name')
 
-    url_map = UrlMap(gcp_config,
-                     ctx.logger,
-                     name=name)
+    if name:
+        url_map = UrlMap(gcp_config,
+                         ctx.logger,
+                         name=name)
 
-    utils.delete_if_not_external(url_map)
+        utils.delete_if_not_external(url_map)
