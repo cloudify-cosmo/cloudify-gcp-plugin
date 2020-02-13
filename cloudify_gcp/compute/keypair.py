@@ -135,7 +135,7 @@ def create(user,
     ctx.instance.runtime_properties[constants.PRIVATE_KEY] = \
         keypair.private_key
     ctx.instance.runtime_properties[constants.PUBLIC_KEY] = keypair.public_key
-    if not utils.should_use_external_resource():
+    if not utils.should_use_external_resource(ctx):
         if not user:
             raise NonRecoverableError(
                     'empty user string not allowed for newly created key')
@@ -143,7 +143,7 @@ def create(user,
 
 
 def create_keypair(keypair):
-    if utils.should_use_external_resource():
+    if utils.should_use_external_resource(ctx):
         keypair.private_key = ctx.get_resource(keypair.private_key_path)
         keypair.public_key = ctx.get_resource(
                 os.path.expanduser(keypair.public_key_path))

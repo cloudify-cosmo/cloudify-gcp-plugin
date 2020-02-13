@@ -125,6 +125,12 @@ class SubNetwork(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, region, subnet, **kwargs):
+    if (
+        ctx.instance.runtime_properties.get(constants.RESOURCE_ID)
+        and not ctx.instance.runtime_properties.get('_operation')
+    ):
+        ctx.logger.info('Resource already created.')
+        return
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(name)
     network = utils.get_relationships(
@@ -152,15 +158,18 @@ def create(name, region, subnet, **kwargs):
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     name = ctx.instance.runtime_properties.get('name', None)
-    subnetwork = SubNetwork(
-            gcp_config,
-            ctx.logger,
-            name=name,
-            region=ctx.instance.runtime_properties['region']
-            )
+    if name:
+        subnetwork = SubNetwork(
+                gcp_config,
+                ctx.logger,
+                name=name,
+                region=ctx.instance.runtime_properties['region']
+                )
 
-    utils.delete_if_not_external(subnetwork)
-    ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
+        utils.delete_if_not_external(subnetwork)
+        # cleanup only if resource is really removed
+        if utils.is_object_deleted(subnetwork):
+            ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
 
 
 def creation_validation(**kwargs):

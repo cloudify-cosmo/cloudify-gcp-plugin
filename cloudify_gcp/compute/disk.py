@@ -90,6 +90,13 @@ class Disk(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(image, name, size, boot, additional_settings, **kwargs):
+    if (
+        ctx.instance.runtime_properties.get(constants.RESOURCE_ID)
+        and not ctx.instance.runtime_properties.get('_operation')
+    ):
+        ctx.logger.info('Resource already created.')
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     disk = Disk(gcp_config,
@@ -102,6 +109,8 @@ def create(image, name, size, boot, additional_settings, **kwargs):
     utils.create(disk)
     ctx.instance.runtime_properties.update(disk.get())
     ctx.instance.runtime_properties[constants.DISK] = \
+        disk.disk_to_insert_instance_dict(name)
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = \
         disk.disk_to_insert_instance_dict(name)
 
 
@@ -116,6 +125,10 @@ def delete(**kwargs):
                     ctx.logger,
                     name=name)
         utils.delete_if_not_external(disk)
+        # cleanup only if resource is really removed
+        if utils.is_object_deleted(disk):
+            ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
+            ctx.instance.runtime_properties['name'] = None
 
 
 @operation(resumable=True)

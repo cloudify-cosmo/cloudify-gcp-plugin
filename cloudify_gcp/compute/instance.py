@@ -362,6 +362,13 @@ def create(instance_type,
            can_ip_forward=False,
            additional_settings=None,
            **kwargs):
+    if (
+        ctx.instance.runtime_properties.get(constants.RESOURCE_ID)
+        and not ctx.instance.runtime_properties.get('_operation')
+    ):
+        ctx.logger.info('Resource already created.')
+        return
+
     props = ctx.instance.runtime_properties
     gcp_config = utils.get_gcp_config()
 
@@ -442,9 +449,9 @@ def delete(name, zone, **kwargs):
     props = ctx.instance.runtime_properties
 
     if not zone:
-        zone = props['zone']
+        zone = props.get('zone')
     if not name:
-        name = props['name']
+        name = props.get('name')
 
     if name:
         instance = Instance(gcp_config,
@@ -503,7 +510,7 @@ def add_external_ip(instance_name, zone, **kwargs):
             zone=zone,
             )
 
-    if ip_node.properties[constants.USE_EXTERNAL_RESOURCE]:
+    if utils.should_use_external_resource(ctx.target):
         ip_address = (
                 ip_node.properties.get('ip_address') or
                 ctx.target.instance.runtime_properties.get(constants.IP)
