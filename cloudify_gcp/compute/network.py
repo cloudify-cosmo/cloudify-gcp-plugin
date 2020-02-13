@@ -37,7 +37,7 @@ class Network(GoogleCloudPlatform):
 
         :param config: gcp auth file
         :param logger: logger object
-        :param network: network dictionary having at least 'name' key
+        :param network: network dictionary having at least constants.NAME key
 
         """
         super(Network, self).__init__(
@@ -106,7 +106,7 @@ class Network(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated network',
-            'name': self.name,
+            constants.NAME: self.name,
             'autoCreateSubnetworks': self.auto_subnets,
         })
         return self.body
@@ -180,11 +180,7 @@ class NetworkPeering(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, auto_subnets, additional_settings, **kwargs):
-    if (
-        ctx.instance.runtime_properties.get(constants.RESOURCE_ID)
-        and not ctx.instance.runtime_properties.get('_operation')
-    ):
-        ctx.logger.info('Resource already created.')
+    if utils.resorce_created(ctx, constants.RESOURCE_ID):
         return
 
     gcp_config = utils.get_gcp_config()
@@ -199,7 +195,7 @@ def create(name, auto_subnets, additional_settings, **kwargs):
             )
 
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = network.name
-    ctx.instance.runtime_properties['name'] = network.name
+    ctx.instance.runtime_properties[constants.NAME] = network.name
     utils.create(network)
 
 
@@ -209,8 +205,8 @@ def delete(name, **kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
-    if props.get('name'):
-        name = props['name']
+    if props.get(constants.NAME):
+        name = props[constants.NAME]
     else:
         name = utils.get_final_resource_name(name)
 
@@ -255,8 +251,8 @@ def remove_peering(name, network, peerNetwork,  **kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
-    if props.get('name'):
-        name = props['name']
+    if props.get(constants.NAME):
+        name = props[constants.NAME]
     else:
         name = utils.get_final_resource_name(name)
 

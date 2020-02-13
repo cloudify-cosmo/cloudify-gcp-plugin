@@ -17,6 +17,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 
 from .. import utils
+from .. import constants
 from ..gcp import check_response
 from ..gcp import GoogleCloudPlatform
 
@@ -38,7 +39,7 @@ class Route(GoogleCloudPlatform):
 
         :param config: gcp auth file
         :param logger: logger object
-        :param route: route dictionary having at least 'name' key
+        :param route: route dictionary having at least constants.NAME key
 
         """
         super(Route, self).__init__(
@@ -131,7 +132,7 @@ class Route(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated route',
-            'name': self.name,
+            constants.NAME: self.name,
             'network': self.network,
             'tags': self.tags,
             'destRange': self.dest_range,
@@ -144,6 +145,9 @@ class Route(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(dest_range, name, tags, next_hop, priority, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(name)
     network = utils.get_network(ctx)
@@ -169,8 +173,8 @@ def delete(name=None, **kwargs):
     props = ctx.instance.runtime_properties
 
     network = utils.get_network(ctx)
-    if props.get('name', None):
-        name = props['name']
+    if props.get(constants.NAME):
+        name = props[constants.NAME]
     else:
         name = utils.get_final_resource_name(name)
 

@@ -38,7 +38,7 @@ class Disk(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated disk',
-            'name': self.name
+            constants.NAME: self.name
         })
         if self.image:
             self.body['sourceImage'] = self.image
@@ -90,11 +90,7 @@ class Disk(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(image, name, size, boot, additional_settings, **kwargs):
-    if (
-        ctx.instance.runtime_properties.get(constants.RESOURCE_ID)
-        and not ctx.instance.runtime_properties.get('_operation')
-    ):
-        ctx.logger.info('Resource already created.')
+    if utils.resorce_created(ctx, constants.RESOURCE_ID):
         return
 
     name = utils.get_final_resource_name(name)
@@ -119,7 +115,7 @@ def create(image, name, size, boot, additional_settings, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         disk = Disk(gcp_config,
                     ctx.logger,
@@ -128,7 +124,7 @@ def delete(**kwargs):
         # cleanup only if resource is really removed
         if utils.is_object_deleted(disk):
             ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
-            ctx.instance.runtime_properties['name'] = None
+            ctx.instance.runtime_properties[constants.NAME] = None
 
 
 @operation(resumable=True)

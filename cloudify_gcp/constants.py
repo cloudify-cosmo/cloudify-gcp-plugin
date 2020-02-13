@@ -74,6 +74,7 @@ AUTH = 'auth'
 PROJECT = 'project'
 ZONE = 'zone'
 NETWORK = 'network'
+NAME = 'name'
 
 GCP_OP_DONE = 'DONE'
 

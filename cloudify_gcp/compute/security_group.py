@@ -28,6 +28,9 @@ from .firewall import FirewallRule
 @utils.retry_on_failure('Retrying creating security group')
 @utils.throw_cloudify_exceptions
 def create(name, rules, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     network = utils.get_network(ctx)
     name = 'ctx-sg-{}'.format(utils.get_final_resource_name(name))
@@ -45,7 +48,7 @@ def create(name, rules, **kwargs):
                 )
         for rule in rules]
 
-    ctx.instance.runtime_properties['name'] = name
+    ctx.instance.runtime_properties[constants.NAME] = name
     return handle_multiple_calls(firewalls, 'create', ctx.logger)
 
 
@@ -157,7 +160,7 @@ def delete(**kwargs):
                 FirewallRule(
                     gcp_config,
                     ctx.logger,
-                    name=rule['name'],
+                    name=rule[constants.NAME],
                     network=network,
                     )
                 for rule in props['rules']]

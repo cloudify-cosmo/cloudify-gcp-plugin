@@ -83,7 +83,7 @@ class DNSZone(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated DNS Zone',
-            'name': self.name,
+            constants.NAME: self.name,
             'dnsName': self.dns_name,
         }
         self.body.update(body)
@@ -121,6 +121,9 @@ class DNSZone(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, dns_name, additional_settings=None, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     if not name:
         name = ctx.node.id
@@ -145,7 +148,7 @@ def create(name, dns_name, additional_settings=None, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         dns_zone = DNSZone(
                 gcp_config,
@@ -157,4 +160,4 @@ def delete(**kwargs):
             ctx.operation.retry('Zone is not yet deleted. Retrying:',
                                 constants.RETRY_DEFAULT_DELAY)
 
-        ctx.instance.runtime_properties.pop('name', None)
+        ctx.instance.runtime_properties.pop(constants.NAME, None)

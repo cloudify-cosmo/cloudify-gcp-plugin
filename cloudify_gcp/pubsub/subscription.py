@@ -133,6 +133,8 @@ class Subscription(PubSubBase):
 @utils.throw_cloudify_exceptions
 def create(topic, name, push_config=None,
            ack_deadline_seconds=0, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
 
     gcp_config = utils.get_gcp_config()
     if not name:
@@ -144,14 +146,14 @@ def create(topic, name, push_config=None,
 
     resource = utils.create(subscription)
     ctx.instance.runtime_properties.update(
-        {'name_path': resource.get('name'),
+        {'name_path': resource.get(constants.NAME),
          'topic_path': resource.get('topic'),
          'push_config': resource.get('pushConfig'),
          'ack_deadline_seconds': resource.get('ackDeadlineSeconds')
          }
     )
     ctx.instance.runtime_properties['topic'] = topic
-    ctx.instance.runtime_properties['name'] = name
+    ctx.instance.runtime_properties[constants.NAME] = name
 
 
 @operation(resumable=True)
@@ -159,7 +161,7 @@ def create(topic, name, push_config=None,
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     topic = ctx.instance.runtime_properties.get('topic')
     if name:
         subscription = Subscription(gcp_config, ctx.logger,

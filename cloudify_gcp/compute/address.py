@@ -20,6 +20,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 
 from .. import utils
+from .. import constants
 from cloudify_gcp.gcp import GoogleCloudPlatform
 from cloudify_gcp.gcp import check_response
 
@@ -52,7 +53,7 @@ class Address(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated Address',
-            'name': self.name
+            constants.NAME: self.name
         })
         return self.body
 
@@ -89,6 +90,9 @@ class Address(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, additional_settings, region=None, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
 
@@ -110,7 +114,7 @@ def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
-    if props.get('name'):
+    if props.get(constants.NAME):
         region = props.get('region')
         if region:
             region = basename(region)
@@ -118,7 +122,7 @@ def delete(**kwargs):
         address = Address(
                 gcp_config,
                 ctx.logger,
-                name=props.get('name'),
+                name=props.get(constants.NAME),
                 region=region,
                 )
 

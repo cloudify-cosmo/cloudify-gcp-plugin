@@ -17,6 +17,7 @@ from cloudify.decorators import operation
 from cloudify_gcp.gcp import check_response
 
 from .. import utils
+from .. import constants
 from ..logging import BillingAccountBase
 
 
@@ -52,12 +53,15 @@ class ProjectMetrics(BillingAccountBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(ctx, parent, log_metric, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     folder_sink = ProjectMetrics(
         gcp_config, ctx.logger, parent, log_metric, **kwargs)
     resource = utils.create(folder_sink)
-    ctx.instance.runtime_properties['name'] = "{}/metrics/{}".format(
-        parent, resource['name'])
+    ctx.instance.runtime_properties[constants.NAME] = "{}/metrics/{}".format(
+        parent, resource[constants.NAME])
 
 
 @operation(resumable=True)
@@ -67,9 +71,9 @@ def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
-    if props.get('name'):
+    if props.get(constants.NAME):
         folder_sink = ProjectMetrics(
-            gcp_config, ctx.logger, name=props['name'])
+            gcp_config, ctx.logger, name=props[constants.NAME])
 
         utils.delete_if_not_external(folder_sink)
 
@@ -78,7 +82,7 @@ def delete(**kwargs):
 @utils.throw_cloudify_exceptions
 def update(parent, log_metric, **kwargs):
     gcp_config = utils.get_gcp_config()
-    current_resource_name = ctx.instance.runtime_properties['name']
+    current_resource_name = ctx.instance.runtime_properties[constants.NAME]
     folder_sink = ProjectMetrics(
         gcp_config, ctx.logger, parent, log_metric,
         name=current_resource_name, **kwargs)

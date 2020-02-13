@@ -19,6 +19,7 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
+from .. import constants
 from ..gcp import (
         check_response,
         GoogleCloudPlatform,
@@ -59,7 +60,7 @@ class ForwardingRule(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated Global Forwarding Rule',
-            'name': self.name,
+            constants.NAME: self.name,
             'loadBalancingScheme': self.scheme.upper(),
         })
 
@@ -142,6 +143,9 @@ def creation_validation(**kwargs):
 def create(name, region, scheme, ports, network, subnet, backend_service,
            target_proxy, port_range, ip_address, additional_settings,
            **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
 
@@ -174,7 +178,7 @@ def create(name, region, scheme, ports, network, subnet, backend_service,
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         forwarding_rule = ForwardingRule(
             gcp_config,

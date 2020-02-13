@@ -18,6 +18,7 @@ from cloudify.decorators import operation
 
 from cloudify_gcp.gcp import check_response
 from .. import utils
+from .. import constants
 from ..monitoring import MonitoringBase
 
 
@@ -77,11 +78,14 @@ class StackDriverGroup(MonitoringBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(project_id, display_name, parent_name, filter_name, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     group = StackDriverGroup(gcp_config, ctx.logger, project_id,
                              display_name, parent_name, filter_name, **kwargs)
     resource = utils.create(group)
-    ctx.instance.runtime_properties['name'] = resource['name']
+    ctx.instance.runtime_properties[constants.NAME] = resource[constants.NAME]
 
 
 @operation(resumable=True)
@@ -91,8 +95,9 @@ def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
-    if props.get('name'):
-        group = StackDriverGroup(gcp_config, ctx.logger, name=props['name'])
+    if props.get(constants.NAME):
+        group = StackDriverGroup(gcp_config, ctx.logger,
+                                 name=props[constants.NAME])
 
         utils.delete_if_not_external(group)
 
@@ -101,7 +106,7 @@ def delete(**kwargs):
 @utils.throw_cloudify_exceptions
 def update(project_id, display_name, parent_name, filter_name, **kwargs):
     gcp_config = utils.get_gcp_config()
-    current_resource_name = ctx.instance.runtime_properties['name']
+    current_resource_name = ctx.instance.runtime_properties[constants.NAME]
     group = StackDriverGroup(gcp_config, ctx.logger, project_id,
                              display_name, parent_name, filter_name,
                              name=current_resource_name, **kwargs)

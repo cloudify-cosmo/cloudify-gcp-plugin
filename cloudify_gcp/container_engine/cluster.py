@@ -61,7 +61,7 @@ class Cluster(ContainerEngineBase):
         # The ``name`` field and ``initialNodeCount`` are required fields
         # that must be exists when call create request cluster API
         cluster_request['cluster'].update(
-            {'name': self.name, 'initialNodeCount': 1})
+            {constants.NAME: self.name, 'initialNodeCount': 1})
 
         # Check to see if other request params ``additional_settings`` passed
         # when call create cluster request API to include them
@@ -92,6 +92,9 @@ class Cluster(ContainerEngineBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, additional_settings, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     cluster = Cluster(gcp_config,
@@ -109,7 +112,7 @@ def create(name, additional_settings, **kwargs):
 @utils.throw_cloudify_exceptions
 def start(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         cluster = Cluster(gcp_config, ctx.logger, name=name, )
         cluster_status = cluster.get()['status'] if cluster.get() else None
@@ -136,7 +139,7 @@ def start(**kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         cluster = Cluster(gcp_config, ctx.logger, name=name, )
         try:
@@ -161,7 +164,7 @@ def delete(**kwargs):
 @utils.throw_cloudify_exceptions
 def stop(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         cluster = Cluster(gcp_config,
                           ctx.logger,

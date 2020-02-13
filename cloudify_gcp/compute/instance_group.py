@@ -16,6 +16,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 
 from .. import utils
+from .. import constants
 from cloudify_gcp.gcp import GoogleCloudPlatform
 from cloudify_gcp.gcp import check_response
 
@@ -38,7 +39,7 @@ class InstanceGroup(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated instance group',
-            'name': self.name,
+            constants.NAME: self.name,
             'network': 'global/networks/{0}'.format(self.network),
             'namedPorts': self.named_ports
         })
@@ -110,6 +111,9 @@ def instance_to_dict(instance_url):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, named_ports, additional_settings, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     instance_group = InstanceGroup(gcp_config,
@@ -126,7 +130,7 @@ def create(name, named_ports, additional_settings, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
 
     if name:
         instance_group = InstanceGroup(gcp_config,

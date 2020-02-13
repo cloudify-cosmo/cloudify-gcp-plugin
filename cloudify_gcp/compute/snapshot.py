@@ -17,6 +17,7 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
+from .. import constants
 from cloudify_gcp.gcp import GoogleCloudPlatform
 from cloudify_gcp.gcp import check_response
 
@@ -35,7 +36,7 @@ class Snapshot(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated snapshot',
-            'name': self.name
+            constants.NAME: self.name
         })
         return self.body
 

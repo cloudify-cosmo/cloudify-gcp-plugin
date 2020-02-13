@@ -18,6 +18,7 @@ from cloudify.decorators import operation
 
 from cloudify_gcp.gcp import check_response
 from .. import utils
+from .. import constants
 from ..monitoring import MonitoringBase
 
 
@@ -53,12 +54,15 @@ class StackDriverUpTimeCheckConfig(MonitoringBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(project_id, uptime_check_config, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     group = StackDriverUpTimeCheckConfig(
         gcp_config, ctx.logger,
         project_id=project_id, uptime_check_config=uptime_check_config)
     resource = utils.create(group)
-    ctx.instance.runtime_properties['name'] = resource['name']
+    ctx.instance.runtime_properties[constants.NAME] = resource[constants.NAME]
 
 
 @operation(resumable=True)
@@ -68,9 +72,9 @@ def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
-    if props.get('name'):
+    if props.get(constants.NAME):
         group = StackDriverUpTimeCheckConfig(
-            gcp_config, ctx.logger, name=props['name'])
+            gcp_config, ctx.logger, name=props[constants.NAME])
 
         utils.delete_if_not_external(group)
 
@@ -81,5 +85,5 @@ def update(project_id, uptime_check_config, **kwargs):
     gcp_config = utils.get_gcp_config()
     uptime_check = StackDriverUpTimeCheckConfig(
         gcp_config, ctx.logger, project_id, uptime_check_config,
-        name=ctx.instance.runtime_properties['name'])
+        name=ctx.instance.runtime_properties[constants.NAME])
     uptime_check.update()

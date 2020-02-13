@@ -40,7 +40,7 @@ class FirewallRule(GoogleCloudPlatform):
         :param config:
         :param logger:
         :param firewall: firewall dictionary with a following structure:
-        firewall = {'name': 'firewallname',
+        firewall = {constants.NAME: 'firewallname',
                     'allowed: [{ 'IPProtocol': 'tcp', 'ports': ['80']}],
                     'sourceRanges':['0.0.0.0/0'],
                     'sourceTags':['tag'], (optional)
@@ -147,7 +147,7 @@ class FirewallRule(GoogleCloudPlatform):
 
     def to_dict(self):
         self.body.update({
-            'name': self.name,
+            constants.NAME: self.name,
             'description': 'Cloudify generated {}'.format(
                 'SG part' if self.security_group else 'FirewallRule'),
             'network': self.network,
@@ -178,6 +178,9 @@ class FirewallRule(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
+    if utils.resorce_created(ctx, constants.RESOURCE_ID):
+        return
+
     gcp_config = utils.get_gcp_config()
     network = utils.get_network(ctx)
     name = utils.get_final_resource_name(name)
@@ -192,7 +195,7 @@ def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
                             additional_settings=additional_settings,
                             )
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = firewall.name
-    ctx.instance.runtime_properties['name'] = firewall.name
+    ctx.instance.runtime_properties[constants.NAME] = firewall.name
     utils.create(firewall)
 
 
@@ -212,4 +215,4 @@ def delete(**kwargs):
         # cleanup only if resource is really removed
         if utils.is_object_deleted(firewall):
             ctx.instance.runtime_properties.pop(constants.RESOURCE_ID)
-            ctx.instance.runtime_properties.pop('name')
+            ctx.instance.runtime_properties.pop(constants.NAME)

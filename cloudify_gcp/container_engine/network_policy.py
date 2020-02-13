@@ -130,7 +130,7 @@ def create_network_policy_config(network_policy_config,
 @utils.throw_cloudify_exceptions
 def delete_network_policy_config(**kwargs):
     gcp_config = utils.get_gcp_config()
-    cluster_id = ctx.instance.runtime_properties['cluster_id']
+    cluster_id = ctx.instance.runtime_properties.get('cluster_id')
     network_policy_config = {'enabled': False,
                              'provider': 'PROVIDER_UNSPECIFIED'
                              }

@@ -115,7 +115,7 @@ class TargetHttpProxy(TargetProxy):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated TargetHttpProxy',
-            'name': self.name,
+            constants.NAME: self.name,
             'urlMap': self.url_map
         })
         return self.body
@@ -154,7 +154,7 @@ class TargetTcpProxy(TargetProxy):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated TargetTcpProxy',
-            'name': self.name,
+            constants.NAME: self.name,
             'service': self.service
         })
         return self.body
@@ -194,7 +194,7 @@ class TargetHttpsProxy(TargetProxy):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated TargetHttpsProxy',
-            'name': self.name,
+            constants.NAME: self.name,
             'urlMap': self.url_map,
             'sslCertificates': [
                 self.ssl_certificate
@@ -237,7 +237,7 @@ class TargetSslProxy(TargetProxy):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated TargetSslProxy',
-            'name': self.name,
+            constants.NAME: self.name,
             'service': self.service,
             'sslCertificates': [
                 self.ssl_certificate
@@ -253,6 +253,9 @@ class TargetSslProxy(TargetProxy):
 @utils.throw_cloudify_exceptions
 def create(name, target_proxy_type, url_map, ssl_certificate, service,
            additional_settings, **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     target_proxy = target_proxy_of_type(
@@ -274,7 +277,7 @@ def create(name, target_proxy_type, url_map, ssl_certificate, service,
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     kind = ctx.instance.runtime_properties.get('kind')
     if kind == 'compute#targetHttpProxy':
         target_proxy_type = 'http'

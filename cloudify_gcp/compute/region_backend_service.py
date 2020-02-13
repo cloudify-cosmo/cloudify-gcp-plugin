@@ -49,7 +49,7 @@ class RegionBackendService(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated backend service',
-            'name': self.name,
+            constants.NAME: self.name,
             'healthChecks': [
                 self.health_check
             ],
@@ -118,6 +118,9 @@ class RegionBackendService(GoogleCloudPlatform):
 @utils.throw_cloudify_exceptions
 def create(name, region, health_check, protocol, additional_settings,
            **kwargs):
+    if utils.resorce_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     backend_service = RegionBackendService(gcp_config,
@@ -136,7 +139,7 @@ def create(name, region, health_check, protocol, additional_settings,
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
 
     if name:
         backend_service = RegionBackendService(
