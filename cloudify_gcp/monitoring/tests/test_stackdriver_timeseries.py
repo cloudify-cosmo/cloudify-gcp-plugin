@@ -24,6 +24,7 @@ from .. import stackdriver_timeseries
 from ...tests import TestGCP
 
 
+@patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
 @patch('cloudify_gcp.gcp.build')
 class TestGCPStackDriverTimeSeries(TestGCP):
 
