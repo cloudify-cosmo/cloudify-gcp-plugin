@@ -121,10 +121,6 @@ def delete(**kwargs):
                     ctx.logger,
                     name=name)
         utils.delete_if_not_external(disk)
-        # cleanup only if resource is really removed
-        if utils.is_object_deleted(disk):
-            ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
-            ctx.instance.runtime_properties[constants.NAME] = None
 
 
 @operation(resumable=True)

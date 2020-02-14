@@ -80,8 +80,8 @@ def _get_backupname(kwargs):
 def create(disk_name, **kwargs):
     snapshot_type = kwargs.get('snapshot_type')
     snapshot_name = _get_backupname(kwargs)
-    if not kwargs.get("snapshot_incremental"):
-        ctx.logger.info("Create backup for VM is unsupported.")
+    if kwargs.get("snapshot_incremental"):
+        ctx.logger.info("Create incremental snapshot for VM is unsupported.")
         return
 
     gcp_config = utils.get_gcp_config()
@@ -99,8 +99,8 @@ def create(disk_name, **kwargs):
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     snapshot_name = _get_backupname(kwargs)
-    if not kwargs.get("snapshot_incremental"):
-        ctx.logger.info("Delete backup for VM is unsupported.")
+    if kwargs.get("snapshot_incremental"):
+        ctx.logger.info("Create incremental snapshot for VM is unsupported.")
         return
 
     gcp_config = utils.get_gcp_config()
