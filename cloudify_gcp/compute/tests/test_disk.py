@@ -48,6 +48,13 @@ class TestGCPDisk(TestGCP):
                 zone='a very fake zone'
                 )
 
+        # run one more time for check rerun
+        disk.create(
+                'image', 'name', 'size',
+                boot=False,
+                additional_settings={},
+                )
+
     def test_delete(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties['name'] = 'delete_name'
 
