@@ -178,7 +178,7 @@ class FirewallRule(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
-    if utils.resorce_created(ctx, constants.RESOURCE_ID):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
         return
 
     gcp_config = utils.get_gcp_config()

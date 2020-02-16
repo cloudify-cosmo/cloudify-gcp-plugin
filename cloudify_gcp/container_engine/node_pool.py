@@ -112,7 +112,7 @@ def get_node(node_pool):
 @utils.retry_on_failure('Retrying adding node pool', delay=15)
 @utils.throw_cloudify_exceptions
 def create(name, cluster_id, additional_settings, **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     name = utils.get_final_resource_name(name)

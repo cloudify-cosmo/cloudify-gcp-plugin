@@ -54,7 +54,7 @@ class StackDriverUpTimeCheckConfig(MonitoringBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(project_id, uptime_check_config, **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     gcp_config = utils.get_gcp_config()

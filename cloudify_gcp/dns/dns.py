@@ -121,7 +121,7 @@ class DNSZone(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, dns_name, additional_settings=None, **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     gcp_config = utils.get_gcp_config()

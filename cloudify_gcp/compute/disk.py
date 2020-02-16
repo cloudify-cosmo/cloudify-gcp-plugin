@@ -90,7 +90,7 @@ class Disk(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(image, name, size, boot, additional_settings, **kwargs):
-    if utils.resorce_created(ctx, constants.RESOURCE_ID):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
         return
 
     name = utils.get_final_resource_name(name)

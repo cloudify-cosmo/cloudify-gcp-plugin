@@ -118,7 +118,7 @@ class RegionBackendService(GoogleCloudPlatform):
 @utils.throw_cloudify_exceptions
 def create(name, region, health_check, protocol, additional_settings,
            **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     name = utils.get_final_resource_name(name)

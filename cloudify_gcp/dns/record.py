@@ -95,7 +95,7 @@ def traverse_item_heirarchy(root, keys):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(type, name, resources, ttl, **kwargs):
-    if utils.resorce_created(ctx, 'created'):
+    if utils.resource_created(ctx, 'created'):
         return
 
     ctx.instance.runtime_properties['created'] = False

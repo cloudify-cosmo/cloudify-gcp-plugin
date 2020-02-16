@@ -78,7 +78,7 @@ class StackDriverGroup(MonitoringBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(project_id, display_name, parent_name, filter_name, **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     gcp_config = utils.get_gcp_config()

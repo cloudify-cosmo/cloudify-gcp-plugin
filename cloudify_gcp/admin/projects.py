@@ -86,7 +86,7 @@ class Project(gcp.GoogleCloudApi):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(**kwargs):
-    if utils.resorce_created(ctx, constants.RESOURCE_ID):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
         return
 
     gcp_config = utils.get_gcp_config()
