@@ -143,7 +143,7 @@ def creation_validation(**kwargs):
 def create(name, region, scheme, ports, network, subnet, backend_service,
            target_proxy, port_range, ip_address, additional_settings,
            **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     name = utils.get_final_resource_name(name)

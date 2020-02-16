@@ -79,7 +79,7 @@ class SslCertificate(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, private_key, certificate, **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     name = utils.get_final_resource_name(name)

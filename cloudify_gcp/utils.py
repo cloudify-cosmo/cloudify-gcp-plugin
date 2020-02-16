@@ -185,7 +185,7 @@ def delete_if_not_external(resource):
         runtime_properties_cleanup(ctx)
 
 
-def resorce_created(ctx, resource_field):
+def resource_created(ctx, resource_field):
     # resource_id is provided and all operations are finished
     if (
         ctx.instance.runtime_properties.get(resource_field)

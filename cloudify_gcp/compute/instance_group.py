@@ -111,7 +111,7 @@ def instance_to_dict(instance_url):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, named_ports, additional_settings, **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     name = utils.get_final_resource_name(name)

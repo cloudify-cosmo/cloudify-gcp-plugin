@@ -106,7 +106,7 @@ class Image(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(image_name, image_path, additional_settings, **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     gcp_config = utils.get_gcp_config()

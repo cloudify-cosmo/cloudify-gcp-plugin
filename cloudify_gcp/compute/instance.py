@@ -362,7 +362,7 @@ def create(instance_type,
            can_ip_forward=False,
            additional_settings=None,
            **kwargs):
-    if utils.resorce_created(ctx, constants.RESOURCE_ID):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
         return
 
     props = ctx.instance.runtime_properties

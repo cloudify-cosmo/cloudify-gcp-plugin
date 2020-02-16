@@ -28,7 +28,7 @@ from .firewall import FirewallRule
 @utils.retry_on_failure('Retrying creating security group')
 @utils.throw_cloudify_exceptions
 def create(name, rules, **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     gcp_config = utils.get_gcp_config()

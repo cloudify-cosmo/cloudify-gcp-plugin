@@ -180,7 +180,7 @@ class NetworkPeering(GoogleCloudPlatform):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, auto_subnets, additional_settings, **kwargs):
-    if utils.resorce_created(ctx, constants.RESOURCE_ID):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
         return
 
     gcp_config = utils.get_gcp_config()

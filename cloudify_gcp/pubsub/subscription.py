@@ -133,7 +133,7 @@ class Subscription(PubSubBase):
 @utils.throw_cloudify_exceptions
 def create(topic, name, push_config=None,
            ack_deadline_seconds=0, **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     gcp_config = utils.get_gcp_config()

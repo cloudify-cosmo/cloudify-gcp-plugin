@@ -67,7 +67,7 @@ class LegacyAbac(ContainerEngineBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def enable_legacy_abac(enabled, cluster_id, additional_settings, **kwargs):
-    if utils.resorce_created(ctx, 'cluster_id'):
+    if utils.resource_created(ctx, 'cluster_id'):
         return
 
     gcp_config = utils.get_gcp_config()

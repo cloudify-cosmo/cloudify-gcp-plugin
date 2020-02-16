@@ -53,7 +53,7 @@ class ProjectMetrics(BillingAccountBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(ctx, parent, log_metric, **kwargs):
-    if utils.resorce_created(ctx, constants.NAME):
+    if utils.resource_created(ctx, constants.NAME):
         return
 
     gcp_config = utils.get_gcp_config()
