@@ -229,7 +229,7 @@ class TestUtilsWithCTX(TestGCP):
         self.ctxmock.node.properties['gcp_config'] = {
                 'zone': '3',
                 'project': 'plan 9',
-                'auth': 'let me in!',
+                'auth': {},
                 }
 
         conf = utils.get_gcp_config()

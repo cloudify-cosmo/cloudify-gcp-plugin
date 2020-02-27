@@ -301,8 +301,8 @@ def get_gcp_config():
                     constants.GCP_DEFAULT_CONFIG_PATH,
                     e,
                     ))
-    if not gcp_config.get('auth'):
-        raise NonRecoverableError("No auth provided")
+    if 'auth' not in gcp_config:
+        raise NonRecoverableError("No auth provided in gcp_config.")
 
     if gcp_config['auth'].get('private_key'):
         gcp_config['auth']['private_key'] = gcp_config['auth'][

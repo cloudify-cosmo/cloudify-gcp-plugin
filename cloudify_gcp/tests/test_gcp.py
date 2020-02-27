@@ -102,8 +102,7 @@ class TestGCPWithPatches(unittest.TestCase):
                 }
         mock_discovery().zones().list_next.return_value = None
         config = {
-                'auth': {
-                    },
+                'auth': {},
                 'project': 'proj',
                 'zone': 'zn',
                 }
