@@ -330,8 +330,12 @@ def get_gcp_config():
                     constants.GCP_DEFAULT_CONFIG_PATH,
                     e,
                     ))
-    if not gcp_config.get('auth'):
-        raise NonRecoverableError("No auth provided")
+    if 'auth' not in gcp_config:
+        raise NonRecoverableError("No auth provided in gcp_config.")
+
+    if gcp_config['auth'].get('private_key'):
+        gcp_config['auth']['private_key'] = gcp_config['auth'][
+            'private_key'].replace('\\n', '\n')
 
     if 'refresh_token' in gcp_config['auth']:
         # admin config
@@ -349,10 +353,8 @@ def get_gcp_config():
         except Exception as e:
             raise NonRecoverableError("invalid gcp_config provided: {}"
                                       .format(e))
-
         # If no network is specified, assume the GCP default network, 'default'
         gcp_config.setdefault('network', 'default')
-
         return update_zone(gcp_config)
     return gcp_config
 
