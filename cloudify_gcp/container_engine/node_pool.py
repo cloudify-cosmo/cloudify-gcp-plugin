@@ -1,11 +1,11 @@
 # #######
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -62,7 +62,7 @@ class NodePool(ContainerEngineBase):
         # The ``name`` field and ``initialNodeCount`` are required fields
         # that must be exists when call create request node pool API
         node_pool_request['nodePool'].update(
-            {'name': self.name})
+            {constants.NAME: self.name})
 
         # Check to see if other request params ``additional_settings`` passed
         # when call create node pool request API to include them
@@ -108,10 +108,13 @@ def get_node(node_pool):
     return created_node
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying adding node pool', delay=15)
 @utils.throw_cloudify_exceptions
 def create(name, cluster_id, additional_settings, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     node_pool = NodePool(gcp_config,
@@ -121,14 +124,14 @@ def create(name, cluster_id, additional_settings, **kwargs):
                          additional_settings=additional_settings)
 
     utils.create(node_pool)
-    ctx.instance.runtime_properties['name'] = name
+    ctx.instance.runtime_properties[constants.NAME] = name
     ctx.instance.runtime_properties['cluster_id'] = cluster_id
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def start(**kwargs):
-    name = ctx.instance.runtime_properties['name']
+    name = ctx.instance.runtime_properties[constants.NAME]
     cluster_id = ctx.instance.runtime_properties['cluster_id']
     gcp_config = utils.get_gcp_config()
     node_pool = NodePool(gcp_config, ctx.logger, name=name,
@@ -145,12 +148,12 @@ def start(**kwargs):
         constants.KUBERNETES_NODE_POOL] = created_node
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying removing node pool', delay=15)
 @utils.throw_cloudify_exceptions
 def stop(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     cluster_id = ctx.instance.runtime_properties.get('cluster_id')
     if name:
 
@@ -165,11 +168,11 @@ def stop(**kwargs):
                 'Node pool {0} stopped'.format(name))
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     cluster_id = ctx.node.properties.get('cluster_id')
     if name:
 

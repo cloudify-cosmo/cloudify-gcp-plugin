@@ -1,11 +1,11 @@
 # #######
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -64,9 +64,12 @@ class LegacyAbac(ContainerEngineBase):
         return self.update_legacy_abac()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def enable_legacy_abac(enabled, cluster_id, additional_settings, **kwargs):
+    if utils.resource_created(ctx, 'cluster_id'):
+        return
+
     gcp_config = utils.get_gcp_config()
     legacy_abac = LegacyAbac(gcp_config,
                              ctx.logger,
@@ -78,7 +81,7 @@ def enable_legacy_abac(enabled, cluster_id, additional_settings, **kwargs):
     utils.create(legacy_abac)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying disable legacy abac', delay=15)
 @utils.throw_cloudify_exceptions
 def disable_legacy_abac(**kwargs):

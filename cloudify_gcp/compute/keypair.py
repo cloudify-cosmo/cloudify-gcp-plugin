@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ class KeyPair(GoogleCloudPlatform):
             raise GCPError(str(e))
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(user,
            private_key_path,
@@ -135,7 +135,7 @@ def create(user,
     ctx.instance.runtime_properties[constants.PRIVATE_KEY] = \
         keypair.private_key
     ctx.instance.runtime_properties[constants.PUBLIC_KEY] = keypair.public_key
-    if not utils.should_use_external_resource():
+    if not utils.should_use_external_resource(ctx):
         if not user:
             raise NonRecoverableError(
                     'empty user string not allowed for newly created key')
@@ -143,7 +143,7 @@ def create(user,
 
 
 def create_keypair(keypair):
-    if utils.should_use_external_resource():
+    if utils.should_use_external_resource(ctx):
         keypair.private_key = ctx.get_resource(keypair.private_key_path)
         keypair.public_key = ctx.get_resource(
                 os.path.expanduser(keypair.public_key_path))
@@ -153,7 +153,7 @@ def create_keypair(keypair):
         keypair.create()
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting keypair')
 @utils.throw_cloudify_exceptions
 def delete(user, private_key_path, **kwargs):

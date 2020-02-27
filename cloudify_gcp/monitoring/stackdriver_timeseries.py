@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2018 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2018-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ class StackDriverTimeSeries(MonitoringBase):
             body=self.time_series).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(project_id, time_series, **kwargs):
     gcp_config = utils.get_gcp_config()

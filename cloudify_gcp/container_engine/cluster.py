@@ -1,11 +1,11 @@
 # #######
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,7 +61,7 @@ class Cluster(ContainerEngineBase):
         # The ``name`` field and ``initialNodeCount`` are required fields
         # that must be exists when call create request cluster API
         cluster_request['cluster'].update(
-            {'name': self.name, 'initialNodeCount': 1})
+            {constants.NAME: self.name, 'initialNodeCount': 1})
 
         # Check to see if other request params ``additional_settings`` passed
         # when call create cluster request API to include them
@@ -89,9 +89,12 @@ class Cluster(ContainerEngineBase):
             zone=self.zone).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, additional_settings, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     cluster = Cluster(gcp_config,
@@ -105,11 +108,11 @@ def create(name, additional_settings, **kwargs):
         cluster.get()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def start(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         cluster = Cluster(gcp_config, ctx.logger, name=name, )
         cluster_status = cluster.get()['status'] if cluster.get() else None
@@ -132,11 +135,11 @@ def start(**kwargs):
                     constants.KUBERNETES_ERROR_STATUS, cluster_status))
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         cluster = Cluster(gcp_config, ctx.logger, name=name, )
         try:
@@ -156,12 +159,12 @@ def delete(**kwargs):
                 raise e
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying stopping cluster', delay=15)
 @utils.throw_cloudify_exceptions
 def stop(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         cluster = Cluster(gcp_config,
                           ctx.logger,

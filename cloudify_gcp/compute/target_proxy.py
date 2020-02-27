@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ class TargetHttpProxy(TargetProxy):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated TargetHttpProxy',
-            'name': self.name,
+            constants.NAME: self.name,
             'urlMap': self.url_map
         })
         return self.body
@@ -154,7 +154,7 @@ class TargetTcpProxy(TargetProxy):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated TargetTcpProxy',
-            'name': self.name,
+            constants.NAME: self.name,
             'service': self.service
         })
         return self.body
@@ -194,7 +194,7 @@ class TargetHttpsProxy(TargetProxy):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated TargetHttpsProxy',
-            'name': self.name,
+            constants.NAME: self.name,
             'urlMap': self.url_map,
             'sslCertificates': [
                 self.ssl_certificate
@@ -237,7 +237,7 @@ class TargetSslProxy(TargetProxy):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated TargetSslProxy',
-            'name': self.name,
+            constants.NAME: self.name,
             'service': self.service,
             'sslCertificates': [
                 self.ssl_certificate
@@ -249,10 +249,13 @@ class TargetSslProxy(TargetProxy):
         return self.discovery.targetSslProxies()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, target_proxy_type, url_map, ssl_certificate, service,
            additional_settings, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     target_proxy = target_proxy_of_type(
@@ -269,12 +272,12 @@ def create(name, target_proxy_type, url_map, ssl_certificate, service,
     utils.create(target_proxy)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting target proxy')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     kind = ctx.instance.runtime_properties.get('kind')
     if kind == 'compute#targetHttpProxy':
         target_proxy_type = 'http'

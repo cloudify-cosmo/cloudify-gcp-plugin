@@ -1,9 +1,9 @@
 plugins:
   gcp_plugin:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.4.6.zip
+    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.5.1.zip
     package_name: cloudify-gcp-plugin
-    package_version: '1.4.6'
+    package_version: '1.5.1'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -267,6 +267,30 @@ node_types:
               default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.disk.delete
+
+  cloudify.gcp.nodes.Snapshot:
+    derived_from: cloudify.nodes.Root
+    properties:
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
+        default: {}
+      disk_name:
+        description: >
+          Disk name.
+        type: string
+        required: false
+    interfaces:
+      # backups related section
+      cloudify.interfaces.snapshot:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.compute.snapshot.create
+          inputs:
+            disk_name:
+              default: { get_property: [SELF, disk_name] }
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.compute.snapshot.delete
+          inputs: {}
 
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.Network

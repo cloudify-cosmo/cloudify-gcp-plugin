@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2016 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2016-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ class TestGCPSubNetwork(TestGCP):
             subnetwork.creation_validation()
         self.assertIn(
                 'cloudify.gcp.relationships.contained_in_network',
-                e.exception.message)
+                str(e.exception))
 
     def test_create_auto_validate(self, mock_build, *args):
         rel = Mock()
@@ -91,7 +91,7 @@ class TestGCPSubNetwork(TestGCP):
             subnetwork.creation_validation()
         self.assertIn(
                 'auto_subnets',
-                e.exception.message)
+                str(e.exception))
 
     def test_delete(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties.update({

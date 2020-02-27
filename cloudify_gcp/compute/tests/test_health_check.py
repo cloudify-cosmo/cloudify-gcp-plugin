@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ########
-# Copyright (c) 2016 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2016-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -124,4 +124,4 @@ class TestHealthCheckHelpers(unittest.TestCase):
         with self.assertRaises(NonRecoverableError) as e:
             health_check.health_check_of_type('carrots')
 
-        self.assertIn('Unexpected type', e.exception.message)
+        self.assertIn('Unexpected type', str(e.exception))

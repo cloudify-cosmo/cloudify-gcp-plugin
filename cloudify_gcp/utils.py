@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -102,12 +102,12 @@ def get_gcp_resource_name(name):
     return final_name
 
 
-def should_use_external_resource():
+def should_use_external_resource(ctx):
     return ctx.node.properties.get(constants.USE_EXTERNAL_RESOURCE, False)
 
 
 def set_resource_id_if_use_external(resource_id):
-    if should_use_external_resource() \
+    if should_use_external_resource(ctx) \
             and constants.RESOURCE_ID not in ctx.instance.runtime_properties:
         ctx.instance.runtime_properties[constants.RESOURCE_ID] = resource_id
 
@@ -129,7 +129,7 @@ def get_final_resource_name(name):
 
 def create_resource(func):
     def _decorator(resource, *args, **kwargs):
-        if should_use_external_resource():
+        if should_use_external_resource(ctx):
             if not ctx.instance.runtime_properties.get(constants.RESOURCE_ID):
                 resource_id = ctx.node.properties.get(constants.RESOURCE_ID)
                 name = ctx.node.properties.get('name')
@@ -170,11 +170,30 @@ def create(resource):
     return resource.create()
 
 
+def runtime_properties_cleanup(ctx):
+    # cleanup runtime properties
+    # need to convert generaton to list, python 3
+    keys = [key for key in ctx.instance.runtime_properties.keys()]
+    for key in keys:
+        del ctx.instance.runtime_properties[key]
+
+
 def delete_if_not_external(resource):
-    if not should_use_external_resource():
+    if not should_use_external_resource(ctx):
         return resource.delete()
     else:
-        ctx.instance.runtime_properties.pop(constants.RESOURCE_ID, None)
+        runtime_properties_cleanup(ctx)
+
+
+def resource_created(ctx, resource_field):
+    # resource_id is provided and all operations are finished
+    if (
+        ctx.instance.runtime_properties.get(resource_field)
+        and not ctx.instance.runtime_properties.get('_operation')
+    ):
+        ctx.logger.info('Resource already created.')
+        return True
+    return False
 
 
 def sync_operation(func):
@@ -259,12 +278,22 @@ def retry_on_failure(msg, delay=constants.RETRY_DEFAULT_DELAY):
 def throw_cloudify_exceptions(func):
     def _decorator(*args, **kwargs):
         try:
-            return func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            current_action = ctx.operation.name
+            # in delete action
+            if current_action == constants.DELETE_NODE_ACTION:
+                # no retry actions
+                if not ctx.instance.runtime_properties.get('_operation'):
+                    ctx.logger.info('Cleanup resource.')
+                    # cleanup runtime
+                    runtime_properties_cleanup(ctx)
+            # return result
+            return result
         except (RecoverableError, NonRecoverableError) as e:
             raise e
         except GCPError as e:
-            ctx.logger.error('Error Message {0}'.format(e.message))
-            raise NonRecoverableError(e.message)
+            ctx.logger.error('Error Message {0}'.format(str(e)))
+            raise NonRecoverableError(str(e))
 
         except Exception as error:
             response = generate_traceback_exception()

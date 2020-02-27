@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class Network(GoogleCloudPlatform):
 
         :param config: gcp auth file
         :param logger: logger object
-        :param network: network dictionary having at least 'name' key
+        :param network: network dictionary having at least constants.NAME key
 
         """
         super(Network, self).__init__(
@@ -106,7 +106,7 @@ class Network(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated network',
-            'name': self.name,
+            constants.NAME: self.name,
             'autoCreateSubnetworks': self.auto_subnets,
         })
         return self.body
@@ -177,9 +177,12 @@ class NetworkPeering(GoogleCloudPlatform):
             body={"name": self.name}).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, auto_subnets, additional_settings, **kwargs):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
+        return
+
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(name)
 
@@ -192,31 +195,34 @@ def create(name, auto_subnets, additional_settings, **kwargs):
             )
 
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = network.name
-    ctx.instance.runtime_properties['name'] = network.name
+    ctx.instance.runtime_properties[constants.NAME] = network.name
     utils.create(network)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(name, **kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
-    if props.get('name'):
-        name = props['name']
+    if props.get(constants.NAME):
+        name = props[constants.NAME]
     else:
         name = utils.get_final_resource_name(name)
 
-    network = Network(
+    if name:
+        network = Network(
             gcp_config,
             ctx.logger,
             name)
 
-    utils.delete_if_not_external(network)
-    ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
+        utils.delete_if_not_external(network)
+        # cleanup only if resource is really removed
+        if utils.is_object_deleted(network):
+            ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_peering(name, network, peerNetwork, autoCreateRoutes, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -235,18 +241,18 @@ def add_peering(name, network, peerNetwork, autoCreateRoutes, **kwargs):
         # sometimes we got a try again error from GCP
         # "There is a peering operation in progress on the local or
         # peer network.Try again later."
-        raise RecoverableError(e.message)
+        raise RecoverableError(str(e))
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = peer.name
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def remove_peering(name, network, peerNetwork,  **kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
-    if props.get('name'):
-        name = props['name']
+    if props.get(constants.NAME):
+        name = props[constants.NAME]
     else:
         name = utils.get_final_resource_name(name)
 
@@ -260,12 +266,13 @@ def remove_peering(name, network, peerNetwork,  **kwargs):
     else:
         peerNetwork = utils.get_final_resource_name(peerNetwork)
 
-    peer = NetworkPeering(
-            config=gcp_config,
-            logger=ctx.logger,
-            name=name,
-            network=network,
-            peerNetwork=peerNetwork)
+    if name:
+        peer = NetworkPeering(
+                config=gcp_config,
+                logger=ctx.logger,
+                name=name,
+                network=network,
+                peerNetwork=peerNetwork)
 
-    utils.delete_if_not_external(peer)
-    ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
+        utils.delete_if_not_external(peer)
+        ctx.instance.runtime_properties[constants.RESOURCE_ID] = None

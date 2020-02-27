@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class SslCertificate(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated SSL certificate',
-            'name': self.name,
+            constants.NAME: self.name,
             'privateKey': self.private_key,
             'certificate': self.certificate
         })
@@ -76,9 +76,12 @@ class SslCertificate(GoogleCloudPlatform):
             sslCertificate=self.name).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, private_key, certificate, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     private_key_data = get_pem_data(private_key['type'], private_key['data'])
@@ -91,12 +94,12 @@ def create(name, private_key, certificate, **kwargs):
     utils.create(ssl_certificate)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting SSL certificate')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         ssl_certificate = SslCertificate(config=gcp_config,
                                          logger=ctx.logger,

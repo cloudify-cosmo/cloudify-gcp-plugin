@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 
 from .. import utils
+from .. import constants
 from cloudify_gcp.gcp import GoogleCloudPlatform
 from cloudify_gcp.gcp import check_response
 
@@ -38,7 +39,7 @@ class InstanceGroup(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated instance group',
-            'name': self.name,
+            constants.NAME: self.name,
             'network': 'global/networks/{0}'.format(self.network),
             'namedPorts': self.named_ports
         })
@@ -107,9 +108,12 @@ def instance_to_dict(instance_url):
     }
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, named_ports, additional_settings, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     instance_group = InstanceGroup(gcp_config,
@@ -121,20 +125,21 @@ def create(name, named_ports, additional_settings, **kwargs):
     utils.create(instance_group)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting instance group')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
 
-    instance_group = InstanceGroup(gcp_config,
-                                   ctx.logger,
-                                   name=name)
-    utils.delete_if_not_external(instance_group)
+    if name:
+        instance_group = InstanceGroup(gcp_config,
+                                       ctx.logger,
+                                       name=name)
+        utils.delete_if_not_external(instance_group)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_to_instance_group(instance_group_name, instance_url, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -144,7 +149,7 @@ def add_to_instance_group(instance_group_name, instance_url, **kwargs):
     instance_group.add_instance(instance_url)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def remove_from_instance_group(instance_group_name, instance_url, **kwargs):
     gcp_config = utils.get_gcp_config()

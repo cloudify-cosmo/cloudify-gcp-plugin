@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class FirewallRule(GoogleCloudPlatform):
         :param config:
         :param logger:
         :param firewall: firewall dictionary with a following structure:
-        firewall = {'name': 'firewallname',
+        firewall = {constants.NAME: 'firewallname',
                     'allowed: [{ 'IPProtocol': 'tcp', 'ports': ['80']}],
                     'sourceRanges':['0.0.0.0/0'],
                     'sourceTags':['tag'], (optional)
@@ -54,7 +54,7 @@ class FirewallRule(GoogleCloudPlatform):
             additional_settings=additional_settings,
             )
 
-        if utils.should_use_external_resource():
+        if utils.should_use_external_resource(ctx):
             self.name = utils.assure_resource_id_correct()
         elif name:
             self.name = utils.get_gcp_resource_name(name)
@@ -147,7 +147,7 @@ class FirewallRule(GoogleCloudPlatform):
 
     def to_dict(self):
         self.body.update({
-            'name': self.name,
+            constants.NAME: self.name,
             'description': 'Cloudify generated {}'.format(
                 'SG part' if self.security_group else 'FirewallRule'),
             'network': self.network,
@@ -175,9 +175,12 @@ class FirewallRule(GoogleCloudPlatform):
         return self.body
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
+        return
+
     gcp_config = utils.get_gcp_config()
     network = utils.get_network(ctx)
     name = utils.get_final_resource_name(name)
@@ -192,11 +195,11 @@ def create(name, allowed, sources, target_tags, additional_settings, **kwargs):
                             additional_settings=additional_settings,
                             )
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = firewall.name
-    ctx.instance.runtime_properties['name'] = firewall.name
+    ctx.instance.runtime_properties[constants.NAME] = firewall.name
     utils.create(firewall)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting firewall rule')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
@@ -209,5 +212,7 @@ def delete(**kwargs):
                                 name=firewall_name,
                                 network=network)
         utils.delete_if_not_external(firewall)
-        ctx.instance.runtime_properties.pop(constants.RESOURCE_ID)
-        ctx.instance.runtime_properties.pop('name')
+        # cleanup only if resource is really removed
+        if utils.is_object_deleted(firewall):
+            ctx.instance.runtime_properties.pop(constants.RESOURCE_ID)
+            ctx.instance.runtime_properties.pop(constants.NAME)

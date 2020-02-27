@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ class Instance(GoogleCloudPlatform):
         self.logger.info('Add external IP to instance {0}'.format(self.name))
 
         body = {'kind': 'compute#accessConfig',
-                'name': self.ACCESS_CONFIG,
+                constants.NAME: self.ACCESS_CONFIG,
                 'type': self.ACCESS_CONFIG_TYPE}
         if ip_address:
             body['natIP'] = ip_address
@@ -299,7 +299,7 @@ class Instance(GoogleCloudPlatform):
             network['subnetwork'] = self.subnetwork
 
         body = {
-            'name': self.name,
+            constants.NAME: self.name,
             'description': 'Cloudify generated instance',
             'canIpForward': self.can_ip_forward,
             'tags': {'items': list(set(self.tags))},
@@ -342,14 +342,14 @@ class Instance(GoogleCloudPlatform):
             # sophisiticated way.
             self.body['networkInterfaces'][0]['accessConfigs'] = [{
                 'type': self.ACCESS_CONFIG_TYPE,
-                'name': self.ACCESS_CONFIG,
+                constants.NAME: self.ACCESS_CONFIG,
                 }]
 
         ctx.logger.debug('Body that being used: {0}'.format(self.body))
         return self.body
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(instance_type,
            image_id,
@@ -362,6 +362,9 @@ def create(instance_type,
            can_ip_forward=False,
            additional_settings=None,
            **kwargs):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
+        return
+
     props = ctx.instance.runtime_properties
     gcp_config = utils.get_gcp_config()
 
@@ -418,33 +421,33 @@ def create(instance_type,
             )
 
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = instance.name
-    ctx.instance.runtime_properties['name'] = instance.name
+    ctx.instance.runtime_properties[constants.NAME] = instance.name
     utils.create(instance)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def start(**kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
     instance = Instance(gcp_config,
                         ctx.logger,
-                        name=props['name'],
+                        name=props[constants.NAME],
                         zone=basename(props['zone']),
                         )
     set_ip(instance)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(name, zone, **kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
     if not zone:
-        zone = props['zone']
+        zone = props.get('zone')
     if not name:
-        name = props['name']
+        name = props.get(constants.NAME)
 
     if name:
         instance = Instance(gcp_config,
@@ -457,7 +460,7 @@ def delete(name, zone, **kwargs):
         utils.delete_if_not_external(instance)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_instance_tag(instance_name, zone, tag, **kwargs):
     config = utils.get_gcp_config()
@@ -470,7 +473,7 @@ def add_instance_tag(instance_name, zone, tag, **kwargs):
     instance.set_tags([utils.get_gcp_resource_name(t) for t in tag])
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def remove_instance_tag(instance_name, zone, tag, **kwargs):
     config = utils.get_gcp_config()
@@ -484,7 +487,7 @@ def remove_instance_tag(instance_name, zone, tag, **kwargs):
         instance.remove_tags([utils.get_gcp_resource_name(t) for t in tag])
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_external_ip(instance_name, zone, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -503,7 +506,7 @@ def add_external_ip(instance_name, zone, **kwargs):
             zone=zone,
             )
 
-    if ip_node.properties[constants.USE_EXTERNAL_RESOURCE]:
+    if utils.should_use_external_resource(ctx.target):
         ip_address = (
                 ip_node.properties.get('ip_address') or
                 ctx.target.instance.runtime_properties.get(constants.IP)
@@ -527,7 +530,7 @@ def add_external_ip(instance_name, zone, **kwargs):
     set_ip(instance, relationship=True)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_ssh_key(**kwargs):
     key = ctx.target.instance.runtime_properties[constants.PUBLIC_KEY]
@@ -541,7 +544,7 @@ def add_ssh_key(**kwargs):
     ctx.logger.info('Adding key: {0}'.format(key_user_string))
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def remove_external_ip(instance_name, zone, **kwargs):
     if instance_name:
@@ -556,7 +559,7 @@ def remove_external_ip(instance_name, zone, **kwargs):
         instance.delete_access_config()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def attach_disk(instance_name, zone, disk, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -568,7 +571,7 @@ def attach_disk(instance_name, zone, disk, **kwargs):
     instance.attach_disk(disk)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def detach_disk(instance_name, zone, disk_name, **kwargs):
     gcp_config = utils.get_gcp_config()
@@ -580,7 +583,7 @@ def detach_disk(instance_name, zone, disk_name, **kwargs):
     instance.detach_disk(disk_name)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def contained_in(**kwargs):
     key = ctx.target.instance.runtime_properties[constants.SSH_KEYS]
@@ -595,7 +598,7 @@ def set_ip(instance, relationship=False):
         props = ctx.instance.runtime_properties
 
     instances = instance.list()
-    item = utils.get_item_from_gcp_response('name',
+    item = utils.get_item_from_gcp_response(constants.NAME,
                                             instance.name,
                                             instances)
 
@@ -696,7 +699,7 @@ def _get_script(startup_script):
     return startup_script_metadata
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def instance_remove_access_config(instance_name, zone, rule_name, interface,
                                   **kwargs):

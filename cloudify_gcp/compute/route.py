@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 
 from .. import utils
+from .. import constants
 from ..gcp import check_response
 from ..gcp import GoogleCloudPlatform
 
@@ -38,7 +39,7 @@ class Route(GoogleCloudPlatform):
 
         :param config: gcp auth file
         :param logger: logger object
-        :param route: route dictionary having at least 'name' key
+        :param route: route dictionary having at least constants.NAME key
 
         """
         super(Route, self).__init__(
@@ -131,7 +132,7 @@ class Route(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated route',
-            'name': self.name,
+            constants.NAME: self.name,
             'network': self.network,
             'tags': self.tags,
             'destRange': self.dest_range,
@@ -141,9 +142,12 @@ class Route(GoogleCloudPlatform):
         return body
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(dest_range, name, tags, next_hop, priority, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(name)
     network = utils.get_network(ctx)
@@ -162,23 +166,24 @@ def create(dest_range, name, tags, next_hop, priority, **kwargs):
     utils.create(route)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(name=None, **kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
     network = utils.get_network(ctx)
-    if props.get('name', None):
-        name = props['name']
+    if props.get(constants.NAME):
+        name = props[constants.NAME]
     else:
         name = utils.get_final_resource_name(name)
 
-    route = Route(
-            gcp_config,
-            ctx.logger,
-            name,
-            network,
-            )
+    if name:
+        route = Route(
+                gcp_config,
+                ctx.logger,
+                name,
+                network,
+                )
 
-    utils.delete_if_not_external(route)
+        utils.delete_if_not_external(route)

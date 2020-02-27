@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
+from .. import constants
 from .dns import DNSZone
 
 
@@ -91,9 +92,12 @@ def traverse_item_heirarchy(root, keys):
     return item
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(type, name, resources, ttl, **kwargs):
+    if utils.resource_created(ctx, 'created'):
+        return
+
     ctx.instance.runtime_properties['created'] = False
 
     gcp_config = utils.get_gcp_config()
@@ -107,13 +111,13 @@ def create(type, name, resources, ttl, **kwargs):
     dns_zone = DNSZone(
             gcp_config,
             ctx.logger,
-            zone.runtime_properties['name'],
+            zone.runtime_properties[constants.NAME],
             dns_name=zone.runtime_properties['dnsName'],
             )
 
     if not name:
         name = ctx.node.id
-    ctx.instance.runtime_properties['name'] = name
+    ctx.instance.runtime_properties[constants.NAME] = name
 
     mappings = {
         'dns_record_connected_to_instance':
@@ -153,7 +157,7 @@ def create(type, name, resources, ttl, **kwargs):
     ctx.instance.runtime_properties['created'] = True
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting DNS Record')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
@@ -168,13 +172,13 @@ def delete(**kwargs):
         dns_zone = DNSZone(
                 gcp_config,
                 ctx.logger,
-                zone.runtime_properties['name'],
+                zone.runtime_properties[constants.NAME],
                 dns_name=zone.runtime_properties['dnsName'],
                 )
 
         rrsets = get_current_records(
                 dns_zone,
-                name=ctx.instance.runtime_properties['name'],
+                name=ctx.instance.runtime_properties[constants.NAME],
                 type=ctx.node.properties['type'],
                 )
 

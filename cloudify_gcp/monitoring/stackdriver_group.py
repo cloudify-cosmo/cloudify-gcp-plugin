@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2018 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2018-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ from cloudify.decorators import operation
 
 from cloudify_gcp.gcp import check_response
 from .. import utils
+from .. import constants
 from ..monitoring import MonitoringBase
 
 
@@ -74,32 +75,38 @@ class StackDriverGroup(MonitoringBase):
             name=self.name, body=self.to_dict()).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(project_id, display_name, parent_name, filter_name, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     group = StackDriverGroup(gcp_config, ctx.logger, project_id,
                              display_name, parent_name, filter_name, **kwargs)
     resource = utils.create(group)
-    ctx.instance.runtime_properties['name'] = resource['name']
+    ctx.instance.runtime_properties[constants.NAME] = resource[constants.NAME]
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting stackdriver group')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    group = StackDriverGroup(gcp_config, ctx.logger,
-                             name=ctx.instance.runtime_properties['name'])
+    props = ctx.instance.runtime_properties
 
-    utils.delete_if_not_external(group)
+    if props.get(constants.NAME):
+        group = StackDriverGroup(gcp_config, ctx.logger,
+                                 name=props[constants.NAME])
+
+        utils.delete_if_not_external(group)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def update(project_id, display_name, parent_name, filter_name, **kwargs):
     gcp_config = utils.get_gcp_config()
-    current_resource_name = ctx.instance.runtime_properties['name']
+    current_resource_name = ctx.instance.runtime_properties[constants.NAME]
     group = StackDriverGroup(gcp_config, ctx.logger, project_id,
                              display_name, parent_name, filter_name,
                              name=current_resource_name, **kwargs)

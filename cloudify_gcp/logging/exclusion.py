@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2018 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2018-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ from cloudify.exceptions import NonRecoverableError
 from cloudify_gcp.gcp import check_response
 
 from .. import utils
+from .. import constants
 from ..logging import BillingAccountBase
 
 
@@ -65,35 +66,42 @@ class LoggingExclusion(BillingAccountBase):
             updateMask=self.update_mask).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(ctx, parent, log_exclusion, exclusion_type, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     billing_account_exclusion = LoggingExclusion(
         gcp_config, ctx.logger, exclusion_type, parent, log_exclusion,
         **kwargs)
     resource = utils.create(billing_account_exclusion)
-    ctx.instance.runtime_properties['name'] = '{}/exclusions/{}'.format(
-        parent, resource['name'])
+    ctx.instance.runtime_properties[
+        constants.NAME] = '{}/exclusions/{}'.format(
+            parent, resource[constants.NAME])
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting logging exclusion')
 @utils.throw_cloudify_exceptions
 def delete(exclusion_type, **kwargs):
     gcp_config = utils.get_gcp_config()
-    billing_account_exclusion = LoggingExclusion(
-        gcp_config, ctx.logger, exclusion_type,
-        name=ctx.instance.runtime_properties['name'])
+    props = ctx.instance.runtime_properties
 
-    utils.delete_if_not_external(billing_account_exclusion)
+    if props.get(constants.NAME):
+        billing_account_exclusion = LoggingExclusion(
+            gcp_config, ctx.logger, exclusion_type,
+            name=props[constants.NAME])
+
+        utils.delete_if_not_external(billing_account_exclusion)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def update(parent, log_exclusion, exclusion_type, **kwargs):
     gcp_config = utils.get_gcp_config()
-    current_resource_name = ctx.instance.runtime_properties['name']
+    current_resource_name = ctx.instance.runtime_properties[constants.NAME]
     billing_account_exclusion = LoggingExclusion(
         gcp_config, ctx.logger, exclusion_type, parent, log_exclusion,
         name=current_resource_name, **kwargs)

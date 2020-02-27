@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,14 +78,11 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(utils.camel_farm(i), o)
 
     def test_should_use_external_resource(self):
-        with patch(
-                'cloudify_gcp.utils.ctx',
-                PropertyMock(
-                    return_value=MockCloudifyContext(
-                        properties={
-                            'use_external_resource': True,
-                        }))):
-            self.assertTrue(utils.should_use_external_resource())
+        fake_ctx = PropertyMock(return_value=MockCloudifyContext(properties={
+            'use_external_resource': True,
+        }))
+        with patch('cloudify_gcp.utils.ctx', fake_ctx):
+            self.assertTrue(utils.should_use_external_resource(fake_ctx))
 
     def test_is_object_deleted(self):
         obj = Mock()
@@ -118,7 +115,7 @@ class TestUtilsWithCTX(TestGCP):
         with self.assertRaises(NonRecoverableError) as e:
             utils.assure_resource_id_correct()
 
-        self.assertIn('missing', e.exception.message)
+        self.assertIn('missing', str(e.exception))
 
     def test_assure_resource_id_correct_raises_invalid(self, *args):
         self.ctxmock.node.properties['resource_id'] = '!nv4l!|>'
@@ -126,7 +123,7 @@ class TestUtilsWithCTX(TestGCP):
         with self.assertRaises(NonRecoverableError) as e:
             utils.assure_resource_id_correct()
 
-        self.assertIn('cannot be used', e.exception.message)
+        self.assertIn('cannot be used', str(e.exception))
 
     def test_create_resource_external(self, *args):
         self.ctxmock.node.properties['use_external_resource'] = True

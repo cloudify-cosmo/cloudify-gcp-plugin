@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ AUTH = 'auth'
 PROJECT = 'project'
 ZONE = 'zone'
 NETWORK = 'network'
+NAME = 'name'
 
 GCP_OP_DONE = 'DONE'
 
@@ -81,3 +82,8 @@ MANAGER_PLUGIN_FILES = os.path.join('/etc', 'cloudify', 'gcp_plugin')
 GCP_DEFAULT_CONFIG_PATH = os.path.join(MANAGER_PLUGIN_FILES, 'gcp_config')
 
 RETRY_DEFAULT_DELAY = 30
+
+# Cloudify create node action
+CREATE_NODE_ACTION = "cloudify.interfaces.lifecycle.create"
+# Cloudify delete node action
+DELETE_NODE_ACTION = "cloudify.interfaces.lifecycle.delete"

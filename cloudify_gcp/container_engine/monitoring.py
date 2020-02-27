@@ -1,11 +1,11 @@
 # #######
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -65,7 +65,7 @@ class MonitoringService(ContainerEngineBase):
         return self.update_monitoring_service()
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying set monitoring service', delay=15)
 @utils.throw_cloudify_exceptions
 def set_monitoring_service(monitoring_service, cluster_id,
@@ -82,7 +82,7 @@ def set_monitoring_service(monitoring_service, cluster_id,
     utils.create(service)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying unset monitoring service', delay=15)
 @utils.throw_cloudify_exceptions
 def unset_monitoring_service(**kwargs):

@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class DNSZone(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated DNS Zone',
-            'name': self.name,
+            constants.NAME: self.name,
             'dnsName': self.dns_name,
         }
         self.body.update(body)
@@ -118,9 +118,12 @@ class DNSZone(GoogleCloudPlatform):
             managedZone=self.name).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, dns_name, additional_settings=None, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     if not name:
         name = ctx.node.id
@@ -140,12 +143,12 @@ def create(name, dns_name, additional_settings=None, **kwargs):
     ctx.instance.runtime_properties.update(resource)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting dns zone')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         dns_zone = DNSZone(
                 gcp_config,
@@ -157,4 +160,4 @@ def delete(**kwargs):
             ctx.operation.retry('Zone is not yet deleted. Retrying:',
                                 constants.RETRY_DEFAULT_DELAY)
 
-        ctx.instance.runtime_properties.pop('name', None)
+        ctx.instance.runtime_properties.pop(constants.NAME, None)

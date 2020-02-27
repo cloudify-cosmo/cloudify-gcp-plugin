@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2018 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2018-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ class SubscriptionPolicy(PubSubBase):
                                                        self.subscription)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying setting iam subscription policy')
 @utils.throw_cloudify_exceptions
 def set_policy(subscription, policy, **kwargs):

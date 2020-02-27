@@ -1,8 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
+  - http://cloudify.co/spec/cloudify/4.5/types.yaml
   - plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.16.1/plugin.yaml
 
 inputs:
 
@@ -94,6 +95,19 @@ node_templates:
       image: { get_input: image_id }
       boot: true
       gcp_config: *gcp_config
+
+  snapshot:
+    type: cloudify.gcp.nodes.Snapshot
+    properties:
+      gcp_config: *gcp_config
+    interfaces:
+      cloudify.interfaces.snapshot:
+        create:
+          inputs:
+            disk_name: { get_attribute: [boot_disk, name] }
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: boot_disk
 
   subnet:
     type: cloudify.gcp.nodes.SubNetwork

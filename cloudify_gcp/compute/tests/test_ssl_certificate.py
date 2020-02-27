@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2016 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2016-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ class TestSslCertificate(TestGCP):
         with self.assertRaises(NonRecoverableError) as e:
             ssl_certificate.get_pem_data('type', 'data')
 
-        self.assertIn('Unknown type', e.exception.message)
+        self.assertIn('Unknown type', str(e.exception))
 
     @patch('cloudify_gcp.compute.ssl_certificate.open')
     def test_get_pem_data_file(self, mock_open, *args):

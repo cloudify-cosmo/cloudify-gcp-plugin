@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2018 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2018-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,10 +78,13 @@ class Topic(PubSubBase):
         return 'projects/{0}/topics/{1}'.format(self.project, self.name)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying creating topic')
 @utils.throw_cloudify_exceptions
 def create(name, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     if not name:
         name = ctx.node.id
@@ -91,15 +94,15 @@ def create(name, **kwargs):
 
     resource = utils.create(topic)
     ctx.instance.runtime_properties.update(
-        {'name': name, 'topic_path': resource.get('name')})
+        {constants.NAME: name, 'topic_path': resource.get(constants.NAME)})
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting topic')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         topic = Topic(gcp_config, ctx.logger, name)
 

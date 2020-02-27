@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,10 +24,13 @@ from .. import constants
 from .firewall import FirewallRule
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying creating security group')
 @utils.throw_cloudify_exceptions
 def create(name, rules, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     network = utils.get_network(ctx)
     name = 'ctx-sg-{}'.format(utils.get_final_resource_name(name))
@@ -45,7 +48,7 @@ def create(name, rules, **kwargs):
                 )
         for rule in rules]
 
-    ctx.instance.runtime_properties['name'] = name
+    ctx.instance.runtime_properties[constants.NAME] = name
     return handle_multiple_calls(firewalls, 'create', ctx.logger)
 
 
@@ -145,20 +148,21 @@ def handle_multiple_calls(objects, call, logger):
                 constants.RETRY_DEFAULT_DELAY)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
     network = utils.get_network(ctx)
     props = ctx.instance.runtime_properties
 
-    firewalls = [
-            FirewallRule(
-                gcp_config,
-                ctx.logger,
-                name=rule['name'],
-                network=network,
-                )
-            for rule in props['rules']]
+    if props.get('rules'):
+        firewalls = [
+                FirewallRule(
+                    gcp_config,
+                    ctx.logger,
+                    name=rule[constants.NAME],
+                    network=network,
+                    )
+                for rule in props['rules']]
 
-    return handle_multiple_calls(firewalls, 'delete', ctx.logger)
+        return handle_multiple_calls(firewalls, 'delete', ctx.logger)

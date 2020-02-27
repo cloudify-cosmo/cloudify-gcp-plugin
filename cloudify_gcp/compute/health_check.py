@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class HealthCheck(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated {0}'.format(self.name_keyword),
-            'name': self.name
+            constants.NAME: self.name
         }
         gcp_settings = {utils.camel_farm(key): value
                         for key, value in self.additional_settings.iteritems()}
@@ -128,7 +128,7 @@ class TcpHealthCheck(HealthCheck):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated {0}'.format(self.name_keyword),
-            'name': self.name,
+            constants.NAME: self.name,
             'type': 'TCP',
             'tcpHealthCheck': {'port': self.port}
         }
@@ -162,7 +162,7 @@ class SslHealthCheck(HealthCheck):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated {0}'.format(self.name_keyword),
-            'name': self.name,
+            constants.NAME: self.name,
             'type': 'SSL',
             'sslHealthCheck': {'port': self.port}
         }
@@ -194,9 +194,12 @@ class HttpsHealthCheck(HealthCheck):
         return self.discovery.httpsHealthChecks()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, health_check_type, port, additional_settings, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     health_check = health_check_of_type(
@@ -210,18 +213,19 @@ def create(name, health_check_type, port, additional_settings, **kwargs):
     utils.create(health_check)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting health check')
 @utils.throw_cloudify_exceptions
 def delete(health_check_type, **kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
-    health_check = health_check_of_type(health_check_type,
-                                        config=gcp_config,
-                                        logger=ctx.logger,
-                                        name=name)
+    name = ctx.instance.runtime_properties.get(constants.NAME)
+    if name:
+        health_check = health_check_of_type(health_check_type,
+                                            config=gcp_config,
+                                            logger=ctx.logger,
+                                            name=name)
 
-    utils.delete_if_not_external(health_check)
+        utils.delete_if_not_external(health_check)
 
 
 def health_check_of_type(health_check_type, **kwargs):

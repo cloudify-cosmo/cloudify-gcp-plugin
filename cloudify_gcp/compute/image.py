@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ class Image(GoogleCloudPlatform):
 
     def to_dict(self):
         self.body.update({
-            'name': self.name,
+            constants.NAME: self.name,
             'rawDisk': {
                 'source': self.url,
                 'containerType': 'TAR'
@@ -103,18 +103,21 @@ class Image(GoogleCloudPlatform):
         return self.body
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(image_name, image_path, additional_settings, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(image_name)
     image = Image(gcp_config, ctx.logger, name, additional_settings)
-    if not utils.should_use_external_resource():
+    if not utils.should_use_external_resource(ctx):
         upload_image(image, image_path)
     else:
         response = image.update_name(ctx.node.properties['family'])
         ctx.instance.runtime_properties['selfLink'] = response['selfLink']
-    ctx.instance.runtime_properties['name'] = image.name
+    ctx.instance.runtime_properties[constants.NAME] = image.name
 
 
 @utils.create_resource
@@ -123,12 +126,13 @@ def upload_image(image, image_path):
     image.upload_and_create(local_path)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting image')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
-    image = Image(gcp_config, ctx.logger, name)
-    utils.delete_if_not_external(image)
-    ctx.instance.runtime_properties.pop('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
+    if name:
+        image = Image(gcp_config, ctx.logger, name)
+        utils.delete_if_not_external(image)
+        ctx.instance.runtime_properties.pop(constants.NAME)

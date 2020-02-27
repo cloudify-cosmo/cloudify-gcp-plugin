@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 from .. import utils
+from .. import constants
 from ..gcp import (
         check_response,
         GoogleCloudPlatform,
@@ -45,7 +46,7 @@ class GlobalForwardingRule(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated Global Forwarding Rule',
-            'name': self.name,
+            constants.NAME: self.name,
             'target': self.target_proxy,
             'portRange': self.port_range,
             'IPAddress': self.ip_address
@@ -100,10 +101,13 @@ def creation_validation(**kwargs):
                     'forwarding_rule_connected_to_target_proxy` relationship.')
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, target_proxy, port_range,
            ip_address, additional_settings, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
 
@@ -125,12 +129,12 @@ def create(name, target_proxy, port_range,
     utils.create(forwarding_rule)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting global forwarding rule')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         forwarding_rule = GlobalForwardingRule(gcp_config,
                                                ctx.logger,

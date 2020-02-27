@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ class Disk(GoogleCloudPlatform):
     def to_dict(self):
         self.body.update({
             'description': 'Cloudify generated disk',
-            'name': self.name
+            constants.NAME: self.name
         })
         if self.image:
             self.body['sourceImage'] = self.image
@@ -87,9 +87,12 @@ class Disk(GoogleCloudPlatform):
             disk=self.name).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(image, name, size, boot, additional_settings, **kwargs):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
+        return
+
     name = utils.get_final_resource_name(name)
     gcp_config = utils.get_gcp_config()
     disk = Disk(gcp_config,
@@ -103,14 +106,16 @@ def create(image, name, size, boot, additional_settings, **kwargs):
     ctx.instance.runtime_properties.update(disk.get())
     ctx.instance.runtime_properties[constants.DISK] = \
         disk.disk_to_insert_instance_dict(name)
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = \
+        disk.disk_to_insert_instance_dict(name)
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting disk')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name')
+    name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         disk = Disk(gcp_config,
                     ctx.logger,
@@ -118,7 +123,7 @@ def delete(**kwargs):
         utils.delete_if_not_external(disk)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def add_boot_disk(**kwargs):
     disk_body = ctx.target.instance.runtime_properties[constants.DISK]

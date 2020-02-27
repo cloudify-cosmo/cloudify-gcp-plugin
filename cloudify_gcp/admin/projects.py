@@ -1,11 +1,11 @@
 # #######
-# Copyright (c) 2018 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2018-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -69,7 +69,8 @@ class Project(gcp.GoogleCloudApi):
     @gcp.check_response
     def create(self):
         project_body = {
-            'name': utils.get_gcp_resource_name(ctx.node.properties['name']),
+            constants.NAME: utils.get_gcp_resource_name(
+                ctx.node.properties[constants.NAME]),
             'projectId': self.project_id
         }
         self.logger.info('Project info: {}'.format(repr(project_body)))
@@ -82,32 +83,37 @@ class Project(gcp.GoogleCloudApi):
             projectId=self.project_id).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(**kwargs):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
+        return
+
     gcp_config = utils.get_gcp_config()
 
     project = Project(
         gcp_config,
         ctx.logger,
         ctx.node.properties['id'],
-        ctx.node.properties['name']
+        ctx.node.properties[constants.NAME]
     )
     utils.create(project)
 
-    ctx.instance.runtime_properties['resource_id'] = project.project_id
+    ctx.instance.runtime_properties[constants.RESOURCE_ID] = project.project_id
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
+    props = ctx.instance.runtime_properties
 
-    project = Project(
-        gcp_config,
-        ctx.logger,
-        ctx.instance.runtime_properties['resource_id']
-    )
+    if props.get(constants.RESOURCE_ID):
+        project = Project(
+            gcp_config,
+            ctx.logger,
+            props[constants.RESOURCE_ID]
+        )
 
-    utils.delete_if_not_external(project)
-    ctx.instance.runtime_properties['resource_id'] = None
+        utils.delete_if_not_external(project)
+        ctx.instance.runtime_properties[constants.RESOURCE_ID] = None

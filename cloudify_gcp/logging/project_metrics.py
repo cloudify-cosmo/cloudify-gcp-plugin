@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2018 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2018-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ from cloudify.decorators import operation
 from cloudify_gcp.gcp import check_response
 
 from .. import utils
+from .. import constants
 from ..logging import BillingAccountBase
 
 
@@ -49,33 +50,39 @@ class ProjectMetrics(BillingAccountBase):
             body=self.log_metric, metricName=self.name).execute()
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(ctx, parent, log_metric, **kwargs):
+    if utils.resource_created(ctx, constants.NAME):
+        return
+
     gcp_config = utils.get_gcp_config()
     folder_sink = ProjectMetrics(
         gcp_config, ctx.logger, parent, log_metric, **kwargs)
     resource = utils.create(folder_sink)
-    ctx.instance.runtime_properties['name'] = "{}/metrics/{}".format(
-        parent, resource['name'])
+    ctx.instance.runtime_properties[constants.NAME] = "{}/metrics/{}".format(
+        parent, resource[constants.NAME])
 
 
-@operation
+@operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting folder sink')
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    folder_sink = ProjectMetrics(
-        gcp_config, ctx.logger, name=ctx.instance.runtime_properties['name'])
+    props = ctx.instance.runtime_properties
 
-    utils.delete_if_not_external(folder_sink)
+    if props.get(constants.NAME):
+        folder_sink = ProjectMetrics(
+            gcp_config, ctx.logger, name=props[constants.NAME])
+
+        utils.delete_if_not_external(folder_sink)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def update(parent, log_metric, **kwargs):
     gcp_config = utils.get_gcp_config()
-    current_resource_name = ctx.instance.runtime_properties['name']
+    current_resource_name = ctx.instance.runtime_properties[constants.NAME]
     folder_sink = ProjectMetrics(
         gcp_config, ctx.logger, parent, log_metric,
         name=current_resource_name, **kwargs)

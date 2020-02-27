@@ -1,5 +1,5 @@
 # #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ class SubNetwork(GoogleCloudPlatform):
     def to_dict(self):
         body = {
             'description': 'Cloudify generated subnetwork',
-            'name': self.name,
+            constants.NAME: self.name,
             'network': self.network,
             'ipCidrRange': self.subnet,
         }
@@ -122,9 +122,12 @@ class SubNetwork(GoogleCloudPlatform):
         return self.body
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(name, region, subnet, **kwargs):
+    if utils.resource_created(ctx, constants.RESOURCE_ID):
+        return
+
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(name)
     network = utils.get_relationships(
@@ -143,24 +146,27 @@ def create(name, region, subnet, **kwargs):
             )
 
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = subnetwork.name
-    ctx.instance.runtime_properties['name'] = subnetwork.name
+    ctx.instance.runtime_properties[constants.NAME] = subnetwork.name
     utils.create(subnetwork)
 
 
-@operation
+@operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**kwargs):
     gcp_config = utils.get_gcp_config()
-    name = ctx.instance.runtime_properties.get('name', None)
-    subnetwork = SubNetwork(
-            gcp_config,
-            ctx.logger,
-            name=name,
-            region=ctx.instance.runtime_properties['region']
-            )
+    name = ctx.instance.runtime_properties.get(constants.NAME, None)
+    if name:
+        subnetwork = SubNetwork(
+                gcp_config,
+                ctx.logger,
+                name=name,
+                region=ctx.instance.runtime_properties['region']
+                )
 
-    utils.delete_if_not_external(subnetwork)
-    ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
+        utils.delete_if_not_external(subnetwork)
+        # cleanup only if resource is really removed
+        if utils.is_object_deleted(subnetwork):
+            ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
 
 
 def creation_validation(**kwargs):
