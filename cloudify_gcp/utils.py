@@ -330,10 +330,6 @@ def get_gcp_config():
     return gcp_config
 
 
-def handle_newlines_in_key_file(key_content):
-    return key_content.encode('utf-8').replace('\n', '\\n')
-
-
 def update_zone(gcp_config):
     def _get_zone_from_runtime_properties():
         try:
