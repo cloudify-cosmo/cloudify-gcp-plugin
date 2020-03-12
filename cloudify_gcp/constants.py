@@ -87,3 +87,23 @@ RETRY_DEFAULT_DELAY = 30
 CREATE_NODE_ACTION = "cloudify.interfaces.lifecycle.create"
 # Cloudify delete node action
 DELETE_NODE_ACTION = "cloudify.interfaces.lifecycle.delete"
+
+GCP_CREDENTIALS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "type": {"type": "string"},
+        "project_id": {"type": "string"},
+        "private_key_id": {"type": "string"},
+        "private_key": {"type": "string"},
+        "client_email": {"type": "string"},
+        "client_id": {"type": "string"},
+        "auth_uri": {"type": "string"},
+        "token_uri": {"type": "string"},
+        "auth_provider_x509_cert_url": {"type": "string"},
+        "client_x509_cert_url": {"type": "string"},
+
+    },
+    "required": ["type", "project_id", "private_key_id", "private_key", "client_email", "client_id", "auth_uri",
+                 "token_uri", "auth_provider_x509_cert_url", "client_x509_cert_url"],
+    "additionalProperties": False
+}
