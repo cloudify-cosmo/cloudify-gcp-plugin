@@ -338,10 +338,9 @@ def get_gcp_config():
     # if auth is a string so its a service account json
     if isinstance(gcp_config['auth'], basestring):
         try:
-            gcp_credentials_dict = get_gcp_config_dict(gcp_config['auth'])
-            gcp_config['auth'] = gcp_credentials_dict
+            gcp_config['auth'] = get_gcp_config_dict(gcp_config['auth'])
             # add on the fly the 'project' input
-            gcp_config['project'] = gcp_credentials_dict['project_id']
+            gcp_config['project'] = gcp_config['auth']['project_id']
         except Exception as e:
             raise NonRecoverableError("invalid gcp_config provided: {}"
                                       .format(e))
