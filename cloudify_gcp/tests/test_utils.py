@@ -245,11 +245,13 @@ class TestUtilsWithCTX(TestGCP):
                     "client_id": "3",
                     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                     "token_uri": "https://oauth2.googleapis.com/token",
-                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                    "client_x509_cert_url": "https://www.googleapis.com/..."}'''
+                    "auth_provider_x509_cert_url":
+                    "https://www.googleapis.com/oauth2/v1/certs",
+                    "client_x509_cert_url": "https://www.googleapis.com/.."}'''
         }
 
-        auth_expected = json.loads(self.ctxmock.node.properties['gcp_config']['auth'])
+        auth_expected = json.loads(
+            self.ctxmock.node.properties['gcp_config']['auth'])
         gcp_config_expected = {'zone': 3,
                                'project': '1',
                                'auth': auth_expected
@@ -270,9 +272,11 @@ class TestUtilsWithCTX(TestGCP):
                             "private_key": "abcd",
                             "client_email": "svc@some_email",
                             "client_id": "3",
-                            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                            "token_uri": "https://oauth2.googleapis.com/token",
-                            "client_x509_cert_url": "https://www.googleapis.com/..."}'''
+                            "auth_uri":
+                            "https://accounts.google.com/o/oauth2/auth",
+                            "token_uri":"https://oauth2.googleapis.com/token",
+                            "client_x509_cert_url":
+                            "https://www.googleapis.com/..."}'''
         }
 
         with self.assertRaises(NonRecoverableError):
@@ -281,10 +285,10 @@ class TestUtilsWithCTX(TestGCP):
     def test_get_net_and_subnet(self, *args):
         self.assertEqual(
             ('projects/not really a project/'
-                 'global/networks/not a real network',
-                 None),
-                utils.get_net_and_subnet(self.ctxmock.instance.relationships)
-                )
+             'global/networks/not a real network',
+             None),
+            utils.get_net_and_subnet(self.ctxmock.instance.relationships)
+        )
 
     @patch('cloudify_gcp.utils.get_net_and_subnet')
     def test_get_network(self, mock_nands, *args):

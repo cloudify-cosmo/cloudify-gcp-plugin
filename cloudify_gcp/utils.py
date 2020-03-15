@@ -38,11 +38,11 @@ from .gcp import (
     check_response,
     is_missing_resource_error,
     is_resource_used_error,
-    )
+)
 
 import json
-import jsonschema
 from jsonschema import validate
+
 
 def generate_traceback_exception():
     _, exc_value, exc_traceback = sys.exc_info()
@@ -332,7 +332,7 @@ def get_gcp_config():
                     constants.GCP_CONFIG,
                     constants.GCP_DEFAULT_CONFIG_PATH,
                     e,
-                    ))
+                ))
     if 'auth' not in gcp_config:
         raise NonRecoverableError("No auth provided in gcp_config.")
     # if auth is a string so its a service account json
@@ -591,28 +591,6 @@ def get_network(ctx):
 
 def get_resource_type(ctx):
     return ctx.instance.runtime_properties.get('kind')
-
-
-# def validate_json_structure(json_string):
-#     try:
-#         return json.loads(json_string)
-#     except ValueError as err:
-#         raise Exception("json string structure does not represent valid json: {msg}".format(msg=err.message))
-#
-#
-# def validate_gcp_json_schema(jsonData):
-#     try:
-#         validate(instance=jsonData, schema=constants.GCP_CREDENTIALS_SCHEMA)
-#
-#     except jsonschema.exceptions.ValidationError as err:
-#         print err.message
-#         raise Exception("gcp json string fields is not valid: {msg}".format(msg=err.message))
-#
-#
-# def get_gcp_config_dict(gcp_config_string):
-#     gcp_json = validate_json_structure(gcp_config_string)
-#     validate_gcp_json_schema(gcp_json)
-#     return gcp_json
 
 
 def get_gcp_config_dict(gcp_config_string):
