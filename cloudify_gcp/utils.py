@@ -38,7 +38,10 @@ from .gcp import (
     check_response,
     is_missing_resource_error,
     is_resource_used_error,
-    )
+)
+
+import json
+from jsonschema import validate
 
 
 def generate_traceback_exception():
@@ -329,9 +332,18 @@ def get_gcp_config():
                     constants.GCP_CONFIG,
                     constants.GCP_DEFAULT_CONFIG_PATH,
                     e,
-                    ))
+                ))
     if 'auth' not in gcp_config:
         raise NonRecoverableError("No auth provided in gcp_config.")
+    # if auth is a string so its a service account json
+    if isinstance(gcp_config['auth'], basestring):
+        try:
+            gcp_config['auth'] = get_gcp_config_dict(gcp_config['auth'])
+            # add on the fly the 'project' input
+            gcp_config['project'] = gcp_config['auth']['project_id']
+        except Exception as e:
+            raise NonRecoverableError("invalid gcp_config provided: {}"
+                                      .format(e))
 
     if gcp_config['auth'].get('private_key'):
         gcp_config['auth']['private_key'] = gcp_config['auth'][
@@ -578,3 +590,9 @@ def get_network(ctx):
 
 def get_resource_type(ctx):
     return ctx.instance.runtime_properties.get('kind')
+
+
+def get_gcp_config_dict(gcp_config_string):
+    gcp_json = json.loads(gcp_config_string)
+    validate(instance=gcp_json, schema=constants.GCP_CREDENTIALS_SCHEMA)
+    return gcp_json

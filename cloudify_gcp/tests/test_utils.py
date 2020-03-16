@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import unittest
+import json
 from functools import partial
 
 from mock import Mock, patch, PropertyMock, MagicMock
@@ -233,13 +234,61 @@ class TestUtilsWithCTX(TestGCP):
 
         self.assertEqual('default', conf['network'])
 
+    def test_get_gcp_config_json_input(self, *args):
+        self.ctxmock.node.properties['gcp_config'] = {
+            'zone': '3',
+            'auth': '''{"type": "sa",
+                    "project_id": "1",
+                    "private_key_id": "2",
+                    "private_key": "abcd",
+                    "client_email": "svc@some_email",
+                    "client_id": "3",
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "auth_provider_x509_cert_url":
+                    "https://www.googleapis.com/oauth2/v1/certs",
+                    "client_x509_cert_url": "https://www.googleapis.com/.."}'''
+        }
+
+        auth_expected = json.loads(
+            self.ctxmock.node.properties['gcp_config']['auth'])
+        gcp_config_expected = {'zone': 3,
+                               'project': '1',
+                               'auth': auth_expected
+                               }
+
+        conf = utils.get_gcp_config()
+        self.assertDictEqual(conf['auth'], gcp_config_expected['auth'])
+        self.assertEqual(conf['project'], gcp_config_expected['project'])
+        # pop 3 credential in the 'auth' json string
+
+    def test_get_gcp_config_json_input_field_missing(self, *args):
+        # auth_provider_x509_cert_url is missing
+        self.ctxmock.node.properties['gcp_config'] = {
+            'zone': '3',
+            'auth': '''{"type": "sa",
+                            "project_id": "1",
+                            "private_key_id": "2",
+                            "private_key": "abcd",
+                            "client_email": "svc@some_email",
+                            "client_id": "3",
+                            "auth_uri":
+                            "https://accounts.google.com/o/oauth2/auth",
+                            "token_uri":"https://oauth2.googleapis.com/token",
+                            "client_x509_cert_url":
+                            "https://www.googleapis.com/..."}'''
+        }
+
+        with self.assertRaises(NonRecoverableError):
+            utils.get_gcp_config()
+
     def test_get_net_and_subnet(self, *args):
         self.assertEqual(
-                ('projects/not really a project/'
-                 'global/networks/not a real network',
-                 None),
-                utils.get_net_and_subnet(self.ctxmock.instance.relationships)
-                )
+            ('projects/not really a project/'
+             'global/networks/not a real network',
+             None),
+            utils.get_net_and_subnet(self.ctxmock.instance.relationships)
+        )
 
     @patch('cloudify_gcp.utils.get_net_and_subnet')
     def test_get_network(self, mock_nands, *args):

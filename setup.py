@@ -20,7 +20,7 @@ setup(
 
     name='cloudify-gcp-plugin',
 
-    version='1.5.1',
+    version='1.6.0',
     description='Plugin for Google Cloud Platform',
 
     packages=[
@@ -31,7 +31,7 @@ setup(
         'cloudify_gcp.container_engine',
         'cloudify_gcp.logging',
         'cloudify_gcp.dns',
-        ],
+    ],
 
     license='LICENSE',
     zip_safe=False,
@@ -41,5 +41,6 @@ setup(
         "cloudify-common>=4.4.0",
         "pyyaml",
         "pycrypto",
+        "jsonschema==3.0.0"
     ],
 )
