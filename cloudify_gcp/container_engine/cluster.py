@@ -119,6 +119,9 @@ def start(**kwargs):
         if cluster_status == constants.KUBERNETES_RUNNING_STATUS:
             ctx.logger.debug('Kubernetes cluster running.')
 
+        elif cluster_status == constants.KUBERNETES_RECONCILING_STATUS:
+            ctx.logger.debug('Kubernetes cluster reconciling.')
+
         elif cluster_status == constants.KUBERNETES_PROVISIONING_STATUS:
             ctx.operation.retry(
                 'Kubernetes cluster is still provisioning.', 15)

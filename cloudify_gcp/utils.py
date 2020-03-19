@@ -286,7 +286,10 @@ def throw_cloudify_exceptions(func):
             # in delete action
             if current_action == constants.DELETE_NODE_ACTION:
                 # no retry actions
-                if not ctx.instance.runtime_properties.get('_operation'):
+                if (
+                    not ctx.instance.runtime_properties.get('_operation') and
+                    not ctx.operation._operation_retry
+                ):
                     ctx.logger.info('Cleanup resource.')
                     # cleanup runtime
                     runtime_properties_cleanup(ctx)
