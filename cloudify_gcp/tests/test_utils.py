@@ -20,7 +20,9 @@ from functools import partial
 
 from mock import Mock, patch, PropertyMock, MagicMock
 
+from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
+from cloudify.manager import DirtyTrackingDict
 from cloudify.exceptions import NonRecoverableError
 
 from cloudify_gcp import utils
@@ -84,6 +86,63 @@ class TestUtils(unittest.TestCase):
         }))
         with patch('cloudify_gcp.utils.ctx', fake_ctx):
             self.assertTrue(utils.should_use_external_resource(fake_ctx))
+
+    def test_throw_cloudify_exceptions(self):
+
+        # create without error
+        fake_ctx = MockCloudifyContext(
+            'node_name',
+            properties={},
+        )
+        fake_ctx._operation = Mock()
+        fake_ctx.operation._operation_retry = None
+        current_ctx.set(fake_ctx)
+        fake_ctx.instance._runtime_properties = DirtyTrackingDict({"c": "d"})
+
+        @utils.throw_cloudify_exceptions
+        def test(*argc, **kwargs):
+            return argc, kwargs
+
+        fake_ctx._operation.name = "cloudify.interfaces.lifecycle.create"
+        self.assertEqual(test(ctx=fake_ctx),  ((), {'ctx': fake_ctx}))
+        self.assertEqual(fake_ctx.instance._runtime_properties, {"c": "d"})
+
+        # delete without error
+        fake_ctx.instance._runtime_properties = DirtyTrackingDict({"a": "b"})
+        fake_ctx._operation.name = "cloudify.interfaces.lifecycle.delete"
+        self.assertEqual(test(ctx=fake_ctx),  ((), {'ctx': fake_ctx}))
+        self.assertFalse(fake_ctx.instance._runtime_properties)
+
+        # delete postponed by gcp
+        fake_ctx.instance._runtime_properties = DirtyTrackingDict(
+            {"_operation": "b"})
+        fake_ctx._operation.name = "cloudify.interfaces.lifecycle.delete"
+        self.assertEqual(test(ctx=fake_ctx),  ((), {'ctx': fake_ctx}))
+        self.assertEqual(fake_ctx.instance._runtime_properties,
+                         {"_operation": "b"})
+
+        # postponed by cloudify
+        @utils.throw_cloudify_exceptions
+        def test(ctx, *argc, **kwargs):
+            ctx.operation._operation_retry = 'Should be retried'
+            return argc, kwargs
+
+        fake_ctx.instance._runtime_properties = DirtyTrackingDict({"a": "b"})
+        fake_ctx._operation.name = "cloudify.interfaces.lifecycle.delete"
+        self.assertEqual(test(ctx=fake_ctx), ((), {}))
+        self.assertEqual(fake_ctx.instance._runtime_properties, {"a": "b"})
+
+        # postponed by exeption
+        @utils.throw_cloudify_exceptions
+        def test(ctx, *argc, **kwargs):
+            raise Exception('Should be retried')
+
+        fake_ctx.instance._runtime_properties = DirtyTrackingDict({"a": "b"})
+        fake_ctx._operation.name = "cloudify.interfaces.lifecycle.delete"
+        with self.assertRaises(NonRecoverableError):
+            test(ctx=fake_ctx)
+
+        self.assertEqual(fake_ctx.instance._runtime_properties, {"a": "b"})
 
     def test_is_object_deleted(self):
         obj = Mock()

@@ -281,34 +281,42 @@ def retry_on_failure(msg, delay=constants.RETRY_DEFAULT_DELAY):
 def throw_cloudify_exceptions(func):
     def _decorator(*args, **kwargs):
         try:
+            func_ctx = kwargs.get('ctx', ctx)
             result = func(*args, **kwargs)
-            current_action = ctx.operation.name
+            current_action = func_ctx.operation.name
+
             # in delete action
-            if current_action == constants.DELETE_NODE_ACTION:
-                # no retry actions
-                if (
-                    not ctx.instance.runtime_properties.get('_operation') and
-                    not ctx.operation._operation_retry
-                ):
-                    ctx.logger.info('Cleanup resource.')
-                    # cleanup runtime
-                    runtime_properties_cleanup(ctx)
+            if current_action != constants.DELETE_NODE_ACTION:
+                return result
+
+            # not finished gcp operation
+            if func_ctx.instance.runtime_properties.get('_operation'):
+                return result
+
+            # called cloudify retry operation
+            if func_ctx.operation._operation_retry:
+                return result
+
+            # cleanup runtime
+            func_ctx.logger.info('Cleanup resource.')
+            runtime_properties_cleanup(func_ctx)
+
             # return result
             return result
         except (RecoverableError, NonRecoverableError) as e:
             raise e
         except GCPError as e:
-            ctx.logger.error('Error Message {0}'.format(str(e)))
+            func_ctx.logger.error('Error Message {0}'.format(str(e)))
             raise NonRecoverableError(str(e))
 
         except Exception as error:
             response = generate_traceback_exception()
 
-            ctx.logger.error(
+            func_ctx.logger.error(
                 'Error traceback {0} with message {1}'.format(
                     response['traceback'], response['message']))
 
-            ctx.logger.error('Error Message {0}'.format(error.message))
+            func_ctx.logger.error('Error Message {0}'.format(error.message))
             raise NonRecoverableError(error.message)
 
     return wraps(func)(_decorator)
