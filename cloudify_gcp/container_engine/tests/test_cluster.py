@@ -19,8 +19,11 @@ from __future__ import unicode_literals
 
 # Third-party imports
 from mock import patch
+import mock
 
 # Local imports
+from cloudify.exceptions import NonRecoverableError
+
 from cloudify_gcp.container_engine import cluster
 from ...tests import TestGCP
 
@@ -44,13 +47,58 @@ class TestGCPCluster(TestGCP):
 
     def test_start(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties['name'] = 'valid_name'
+
+        clusters = mock_build().projects().zones().clusters().get().execute()
+
+        # started
+        clusters.__getitem__ = mock.Mock(
+            return_value=cluster.constants.KUBERNETES_RUNNING_STATUS)
         cluster.start()
-        mock_build.assert_called_once()
+
+        # reconciling
+        clusters.__getitem__ = mock.Mock(
+            return_value=cluster.constants.KUBERNETES_RECONCILING_STATUS)
+        cluster.start()
+
+        # provisioning
+        self.ctxmock.operation.retry = mock.Mock()
+        clusters.__getitem__ = mock.Mock(
+            return_value=cluster.constants.KUBERNETES_PROVISIONING_STATUS)
+        cluster.start()
+        self.ctxmock.operation.retry.assert_called_with(
+            'Kubernetes cluster is still provisioning.', 15)
+
+        # provisioning
+        self.ctxmock.operation.retry = mock.Mock()
+        clusters.__getitem__ = mock.Mock(
+            return_value=cluster.constants.KUBERNETES_ERROR_STATUS)
+        with self.assertRaises(NonRecoverableError):
+            cluster.start()
+
+        # unknow
+        self.ctxmock.operation.retry = mock.Mock()
+        clusters.__getitem__ = mock.Mock(return_value='unknow')
+        cluster.start()
 
     def test_delete(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties['name'] = 'valid_name'
+
+        clusters = mock_build().projects().zones().clusters().get().execute()
+
+        # stopping
+        self.ctxmock.operation.retry = mock.Mock()
+        clusters.__getitem__ = mock.Mock(
+            return_value=cluster.constants.KUBERNETES_STOPPING_STATUS)
         cluster.delete()
-        mock_build.assert_called_once()
+        self.ctxmock.operation.retry.assert_called_with(
+            'Kubernetes cluster is still de-provisioning', 15)
+
+        # error
+        self.ctxmock.operation.retry = mock.Mock()
+        clusters.__getitem__ = mock.Mock(
+            return_value=cluster.constants.KUBERNETES_ERROR_STATUS)
+        with self.assertRaises(NonRecoverableError):
+            cluster.delete()
 
     def test_stop(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties['name'] = 'valid_name'
