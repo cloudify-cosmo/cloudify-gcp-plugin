@@ -22,6 +22,8 @@ from subprocess import check_output
 from os.path import basename, expanduser
 from abc import ABCMeta, abstractmethod
 
+from six.moves import http_client
+
 import yaml
 from proxy_tools import Proxy
 from googleapiclient.errors import HttpError
@@ -197,6 +199,73 @@ def resource_created(ctx, resource_field):
         ctx.logger.info('Resource already created.')
         return True
     return False
+
+
+def resource_started(ctx, resource):
+    try:
+        resource_status = resource.get().get('status')
+    except HttpError as e:
+        if e.resp.status == http_client.NOT_FOUND:
+            resource_status = None
+        else:
+            raise e
+
+    if not resource_status:
+        ctx.operation.retry(
+            'Kubernetes resource is still provisioning', 15)
+
+    elif resource_status == constants.KUBERNETES_RUNNING_STATUS:
+        ctx.logger.debug('Kubernetes resource running.')
+
+    elif resource_status == constants.KUBERNETES_READY_STATUS:
+        ctx.logger.debug('Kubernetes resource ready.')
+
+    elif resource_status == constants.KUBERNETES_RECONCILING_STATUS:
+        ctx.logger.debug('Kubernetes resource reconciling.')
+
+    elif resource_status == constants.KUBERNETES_PROVISIONING_STATUS:
+        ctx.operation.retry(
+            'Kubernetes resource is still provisioning.', 15)
+
+    elif resource_status == constants.KUBERNETES_ERROR_STATUS:
+        raise NonRecoverableError('Kubernetes resource in error state.')
+
+    else:
+        ctx.logger.warn(
+            'cluster resource is neither {0}, {1}, {2}.'
+            ' Unknown Status: {3}'.format(
+                constants.KUBERNETES_RUNNING_STATUS,
+                constants.KUBERNETES_PROVISIONING_STATUS,
+                constants.KUBERNETES_ERROR_STATUS, resource_status))
+
+
+def resource_deleted(ctx, resource):
+    try:
+        resource_status = resource.get().get('status')
+    except HttpError as e:
+        if e.resp.status == http_client.NOT_FOUND:
+            resource_status = None
+        else:
+            raise e
+
+    if not resource_status:
+        ctx.logger.debug('Kubernetes resource deleted.')
+
+    elif resource_status == constants.KUBERNETES_STOPPING_STATUS:
+        ctx.operation.retry(
+            'Kubernetes resource is still de-provisioning')
+
+    elif resource_status == constants.KUBERNETES_RUNNING_STATUS:
+        ctx.operation.retry(
+            'Kubernetes resource is still running')
+
+    elif resource_status == constants.KUBERNETES_READY_STATUS:
+        ctx.operation.retry(
+            'Kubernetes resource is still ready')
+
+    elif resource_status == constants.KUBERNETES_ERROR_STATUS:
+        raise NonRecoverableError(
+            'Kubernetes resource failed to delete.')
 
 
 def sync_operation(func):

@@ -575,13 +575,14 @@ class TestGCPInstance(TestGCP):
                 })
         mock_build().globalOperations().get().execute.return_value = _op
 
+        self.ctxmock.operation.name = "cloudify.interfaces.lifecycle.delete"
+        self.ctxmock.operation._operation_retry = None
+
         instance.delete('delete-name', 'zone')
 
         self.assertFalse(mock_build().instances().delete.called)
 
-        self.assertEqual(
-                {'another': 'yo', 'zone': 'hey'},
-                self.ctxmock.instance.runtime_properties)
+        self.assertFalse(self.ctxmock.instance.runtime_properties)
 
     @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
                 'networkInterfaces': [{'accessConfigs': [{'natIP': '🕷'}]}]})

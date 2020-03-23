@@ -50,7 +50,6 @@ class TestGCPNodePool(TestGCP):
         self.ctxmock.instance.runtime_properties['cluster_id'] = 'cluster-test'
 
         node_pools = mock_build().projects().zones().clusters().nodePools()
-
         # started
         node_pools.get().execute().get = mock.Mock(
             return_value=node_pool.constants.KUBERNETES_RUNNING_STATUS)
@@ -67,7 +66,7 @@ class TestGCPNodePool(TestGCP):
             return_value=node_pool.constants.KUBERNETES_PROVISIONING_STATUS)
         node_pool.start()
         self.ctxmock.operation.retry.assert_called_with(
-            'Kubernetes node pool is still provisioning.', 15)
+            'Kubernetes resource is still provisioning.', 15)
 
         # provisioning
         self.ctxmock.operation.retry = mock.Mock()
@@ -93,7 +92,7 @@ class TestGCPNodePool(TestGCP):
             return_value=node_pool.constants.KUBERNETES_RUNNING_STATUS)
         node_pool.delete()
         self.ctxmock.operation.retry.assert_called_with(
-            'Kubernetes node pool is still running')
+            'Kubernetes resource is still running')
 
         # stopping
         self.ctxmock.operation.retry = mock.Mock()
@@ -101,7 +100,7 @@ class TestGCPNodePool(TestGCP):
             return_value=node_pool.constants.KUBERNETES_STOPPING_STATUS)
         node_pool.delete()
         self.ctxmock.operation.retry.assert_called_with(
-            'Kubernetes node pool is still de-provisioning')
+            'Kubernetes resource is still de-provisioning')
 
         # error
         self.ctxmock.operation.retry = mock.Mock()

@@ -15,13 +15,10 @@
 
 # Standard library imports
 from __future__ import unicode_literals
-from six.moves import http_client
 
 # Third-party imports
 from cloudify import ctx
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError
-from googleapiclient.errors import HttpError
 
 # Local imports
 from cloudify_gcp import constants
@@ -115,27 +112,7 @@ def start(**kwargs):
     name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         cluster = Cluster(gcp_config, ctx.logger, name=name, )
-        cluster_status = cluster.get()['status'] if cluster.get() else None
-        if cluster_status == constants.KUBERNETES_RUNNING_STATUS:
-            ctx.logger.debug('Kubernetes cluster running.')
-
-        elif cluster_status == constants.KUBERNETES_RECONCILING_STATUS:
-            ctx.logger.debug('Kubernetes cluster reconciling.')
-
-        elif cluster_status == constants.KUBERNETES_PROVISIONING_STATUS:
-            ctx.operation.retry(
-                'Kubernetes cluster is still provisioning.', 15)
-
-        elif cluster_status == constants.KUBERNETES_ERROR_STATUS:
-            raise NonRecoverableError('Kubernetes cluster in error state.')
-
-        else:
-            ctx.logger.warn(
-                'cluster status is neither {0}, {1}, {2}.'
-                ' Unknown Status: {3}'.format(
-                    constants.KUBERNETES_RUNNING_STATUS,
-                    constants.KUBERNETES_PROVISIONING_STATUS,
-                    constants.KUBERNETES_ERROR_STATUS, cluster_status))
+        utils.resource_started(ctx, cluster)
 
 
 @operation(resumable=True)
@@ -145,21 +122,8 @@ def delete(**kwargs):
     name = ctx.instance.runtime_properties.get(constants.NAME)
     if name:
         cluster = Cluster(gcp_config, ctx.logger, name=name, )
-        try:
-            cluster_status = cluster.get()['status'] if cluster.get() else None
-            if cluster_status == constants.KUBERNETES_STOPPING_STATUS:
-                ctx.operation.retry(
-                    'Kubernetes cluster is still de-provisioning', 15)
 
-            elif cluster_status == constants.KUBERNETES_ERROR_STATUS:
-                raise NonRecoverableError(
-                    'Kubernetes cluster failed to delete.')
-
-        except HttpError as e:
-            if e.resp.status == http_client.NOT_FOUND:
-                ctx.logger.debug('Kubernetes cluster deleted.')
-            else:
-                raise e
+        utils.resource_deleted(ctx, cluster)
 
 
 @operation(resumable=True)

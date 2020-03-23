@@ -20,7 +20,6 @@ from six.moves import http_client
 # Third-party imports
 from cloudify import ctx
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError
 from googleapiclient.errors import HttpError
 
 # Local imports
@@ -138,38 +137,11 @@ def start(**kwargs):
     node_pool = NodePool(gcp_config, ctx.logger, name=name,
                          cluster_id=cluster_id, additional_settings={})
 
-    created_node = get_node(node_pool)
-    if not created_node:
-        ctx.operation.retry(
-            'Kubernetes node pool {0} '
-            'is still provisioning'.format(name), 15)
-
-    node_status = created_node.get('status')
-
-    if node_status == constants.KUBERNETES_RUNNING_STATUS:
-        ctx.logger.debug('Kubernetes node pool running.')
-
-    elif node_status == constants.KUBERNETES_RECONCILING_STATUS:
-        ctx.logger.debug('Kubernetes node pool reconciling.')
-
-    elif node_status == constants.KUBERNETES_PROVISIONING_STATUS:
-        ctx.operation.retry(
-            'Kubernetes node pool is still provisioning.', 15)
-
-    elif node_status == constants.KUBERNETES_ERROR_STATUS:
-        raise NonRecoverableError('Kubernetes node pool in error state.')
-
-    else:
-        ctx.logger.warn(
-            'Kubernetes node pool status is neither {0}, {1}, {2}.'
-            ' Unknown Status: {3}'.format(
-                constants.KUBERNETES_RUNNING_STATUS,
-                constants.KUBERNETES_PROVISIONING_STATUS,
-                constants.KUBERNETES_ERROR_STATUS, node_status))
+    utils.resource_started(ctx, node_pool)
 
     ctx.logger.debug('Node pool {0} started successfully'.format(name))
     ctx.instance.runtime_properties[
-        constants.KUBERNETES_NODE_POOL] = created_node
+        constants.KUBERNETES_NODE_POOL] = get_node(node_pool)
 
 
 @operation(resumable=True)
@@ -203,17 +175,4 @@ def delete(**kwargs):
         node_pool = NodePool(gcp_config, ctx.logger,
                              name=name, cluster_id=cluster_id,)
 
-        remote_mode = get_node(node_pool)
-        if remote_mode:
-            node_status = remote_mode.get('status')
-            if node_status == constants.KUBERNETES_STOPPING_STATUS:
-                ctx.operation.retry(
-                    'Kubernetes node pool is still de-provisioning')
-
-            elif node_status == constants.KUBERNETES_RUNNING_STATUS:
-                ctx.operation.retry(
-                    'Kubernetes node pool is still running')
-
-            elif node_status == constants.KUBERNETES_ERROR_STATUS:
-                raise NonRecoverableError(
-                    'Kubernetes node pool failed to delete.')
+        utils.resource_deleted(ctx, node_pool)

@@ -51,33 +51,33 @@ class TestGCPCluster(TestGCP):
         clusters = mock_build().projects().zones().clusters().get().execute()
 
         # started
-        clusters.__getitem__ = mock.Mock(
+        clusters.get = mock.Mock(
             return_value=cluster.constants.KUBERNETES_RUNNING_STATUS)
         cluster.start()
 
         # reconciling
-        clusters.__getitem__ = mock.Mock(
+        clusters.get = mock.Mock(
             return_value=cluster.constants.KUBERNETES_RECONCILING_STATUS)
         cluster.start()
 
         # provisioning
         self.ctxmock.operation.retry = mock.Mock()
-        clusters.__getitem__ = mock.Mock(
+        clusters.get = mock.Mock(
             return_value=cluster.constants.KUBERNETES_PROVISIONING_STATUS)
         cluster.start()
         self.ctxmock.operation.retry.assert_called_with(
-            'Kubernetes cluster is still provisioning.', 15)
+            'Kubernetes resource is still provisioning.', 15)
 
         # provisioning
         self.ctxmock.operation.retry = mock.Mock()
-        clusters.__getitem__ = mock.Mock(
+        clusters.get = mock.Mock(
             return_value=cluster.constants.KUBERNETES_ERROR_STATUS)
         with self.assertRaises(NonRecoverableError):
             cluster.start()
 
         # unknow
         self.ctxmock.operation.retry = mock.Mock()
-        clusters.__getitem__ = mock.Mock(return_value='unknow')
+        clusters.get = mock.Mock(return_value='unknow')
         cluster.start()
 
     def test_delete(self, mock_build, *args):
@@ -87,15 +87,15 @@ class TestGCPCluster(TestGCP):
 
         # stopping
         self.ctxmock.operation.retry = mock.Mock()
-        clusters.__getitem__ = mock.Mock(
+        clusters.get = mock.Mock(
             return_value=cluster.constants.KUBERNETES_STOPPING_STATUS)
         cluster.delete()
         self.ctxmock.operation.retry.assert_called_with(
-            'Kubernetes cluster is still de-provisioning', 15)
+            'Kubernetes resource is still de-provisioning')
 
         # error
         self.ctxmock.operation.retry = mock.Mock()
-        clusters.__getitem__ = mock.Mock(
+        clusters.get = mock.Mock(
             return_value=cluster.constants.KUBERNETES_ERROR_STATUS)
         with self.assertRaises(NonRecoverableError):
             cluster.delete()
