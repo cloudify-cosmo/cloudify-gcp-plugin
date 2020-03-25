@@ -1,3 +1,5 @@
+1.6.2:
+  - Handle unstable network.
 1.6.1:
   - Improve validatation of account credentials
 1.6.0:
