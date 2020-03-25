@@ -137,15 +137,11 @@ def start(**kwargs):
     node_pool = NodePool(gcp_config, ctx.logger, name=name,
                          cluster_id=cluster_id, additional_settings={})
 
-    created_node = get_node(node_pool)
-    if not created_node:
-        ctx.operation.retry(
-            'Kubernetes node pool {0} '
-            'is still provisioning'.format(name), 15)
+    utils.resource_started(ctx, node_pool)
 
     ctx.logger.debug('Node pool {0} started successfully'.format(name))
     ctx.instance.runtime_properties[
-        constants.KUBERNETES_NODE_POOL] = created_node
+        constants.KUBERNETES_NODE_POOL] = get_node(node_pool)
 
 
 @operation(resumable=True)
@@ -179,7 +175,4 @@ def delete(**kwargs):
         node_pool = NodePool(gcp_config, ctx.logger,
                              name=name, cluster_id=cluster_id,)
 
-        remote_mode = get_node(node_pool)
-        if not remote_mode:
-            ctx.operation.retry(
-                'Node pool {0} deleted successfully'.format(name))
+        utils.resource_deleted(ctx, node_pool)

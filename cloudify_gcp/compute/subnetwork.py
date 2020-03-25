@@ -126,6 +126,7 @@ class SubNetwork(GoogleCloudPlatform):
 @utils.throw_cloudify_exceptions
 def create(name, region, subnet, **kwargs):
     if utils.resource_created(ctx, constants.RESOURCE_ID):
+        # subnetwork does not have status field, use on RESOURCE_ID
         return
 
     gcp_config = utils.get_gcp_config()

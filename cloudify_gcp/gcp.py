@@ -19,8 +19,11 @@ from os.path import basename
 import httplib2
 from Crypto.Random import atfork
 from googleapiclient.discovery import build
+from httplib2 import ServerNotFoundError
 from googleapiclient.errors import HttpError
 from oauth2client.service_account import ServiceAccountCredentials
+
+from cloudify.exceptions import OperationRetry
 
 from . import constants
 
@@ -31,7 +34,13 @@ def check_response(func):
     :return:
     """
     def _decorator(self, *args, **kwargs):
-        response = func(self, *args, **kwargs)
+        try:
+            response = func(self, *args, **kwargs)
+        except ServerNotFoundError as e:
+            raise OperationRetry(
+                    'Warning: {0}. '
+                    'If problem persists, error may be fatal.'.format(
+                        e.message))
         if 'error' in response:
             self.logger.error('Response with error {0}'
                               .format(response['error']))

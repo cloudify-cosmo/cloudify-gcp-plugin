@@ -19,8 +19,11 @@ from __future__ import unicode_literals
 
 # Third-party imports
 from mock import patch
+import mock
 
 # Local imports
+from cloudify.exceptions import NonRecoverableError
+
 from cloudify_gcp.container_engine import node_pool
 from ...tests import TestGCP
 
@@ -46,15 +49,65 @@ class TestGCPNodePool(TestGCP):
         self.ctxmock.instance.runtime_properties['name'] = 'valid_name'
         self.ctxmock.instance.runtime_properties['cluster_id'] = 'cluster-test'
 
+        node_pools = mock_build().projects().zones().clusters().nodePools()
+        # started
+        node_pools.get().execute().get = mock.Mock(
+            return_value=node_pool.constants.KUBERNETES_RUNNING_STATUS)
         node_pool.start()
-        mock_build.assert_called_once()
+
+        # reconciling
+        node_pools.get().execute().get = mock.Mock(
+            return_value=node_pool.constants.KUBERNETES_RECONCILING_STATUS)
+        node_pool.start()
+
+        # provisioning
+        self.ctxmock.operation.retry = mock.Mock()
+        node_pools.get().execute().get = mock.Mock(
+            return_value=node_pool.constants.KUBERNETES_PROVISIONING_STATUS)
+        node_pool.start()
+        self.ctxmock.operation.retry.assert_called_with(
+            'Kubernetes resource is still provisioning.', 15)
+
+        # provisioning
+        self.ctxmock.operation.retry = mock.Mock()
+        node_pools.get().execute().get = mock.Mock(
+            return_value=node_pool.constants.KUBERNETES_ERROR_STATUS)
+        with self.assertRaises(NonRecoverableError):
+            node_pool.start()
+
+        # unknow
+        self.ctxmock.operation.retry = mock.Mock()
+        node_pools.get().execute().get = mock.Mock(return_value='unknow')
+        node_pool.start()
 
     def test_delete(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties['name'] = 'valid_name'
         self.ctxmock.instance.runtime_properties['cluster_id'] = 'cluster-test'
 
+        node_pools = mock_build().projects().zones().clusters().nodePools()
+
+        # started
+        self.ctxmock.operation.retry = mock.Mock()
+        node_pools.get().execute().get = mock.Mock(
+            return_value=node_pool.constants.KUBERNETES_RUNNING_STATUS)
         node_pool.delete()
-        mock_build.assert_called_once()
+        self.ctxmock.operation.retry.assert_called_with(
+            'Kubernetes resource is still running')
+
+        # stopping
+        self.ctxmock.operation.retry = mock.Mock()
+        node_pools.get().execute().get = mock.Mock(
+            return_value=node_pool.constants.KUBERNETES_STOPPING_STATUS)
+        node_pool.delete()
+        self.ctxmock.operation.retry.assert_called_with(
+            'Kubernetes resource is still de-provisioning')
+
+        # error
+        self.ctxmock.operation.retry = mock.Mock()
+        node_pools.get().execute().get = mock.Mock(
+            return_value=node_pool.constants.KUBERNETES_ERROR_STATUS)
+        with self.assertRaises(NonRecoverableError):
+            node_pool.delete()
 
     def test_stop(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties['name'] = 'valid_name'

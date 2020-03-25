@@ -22,6 +22,8 @@ from subprocess import check_output
 from os.path import basename, expanduser
 from abc import ABCMeta, abstractmethod
 
+from six.moves import http_client
+
 import yaml
 from proxy_tools import Proxy
 from googleapiclient.errors import HttpError
@@ -199,6 +201,63 @@ def resource_created(ctx, resource_field):
     return False
 
 
+def resource_started(ctx, resource):
+    resource_status = resource.get().get('status')
+
+    if resource_status == constants.KUBERNETES_RUNNING_STATUS:
+        ctx.logger.debug('Kubernetes resource running.')
+
+    elif resource_status == constants.KUBERNETES_READY_STATUS:
+        ctx.logger.debug('Kubernetes resource ready.')
+
+    elif resource_status == constants.KUBERNETES_RECONCILING_STATUS:
+        ctx.logger.debug('Kubernetes resource reconciling.')
+
+    elif resource_status == constants.KUBERNETES_PROVISIONING_STATUS:
+        ctx.operation.retry(
+            'Kubernetes resource is still provisioning.', 15)
+
+    elif resource_status == constants.KUBERNETES_ERROR_STATUS:
+        raise NonRecoverableError('Kubernetes resource in error state.')
+
+    else:
+        ctx.logger.warn(
+            'cluster resource is neither {0}, {1}, {2}.'
+            ' Unknown Status: {3}'.format(
+                constants.KUBERNETES_RUNNING_STATUS,
+                constants.KUBERNETES_PROVISIONING_STATUS,
+                constants.KUBERNETES_ERROR_STATUS, resource_status))
+
+
+def resource_deleted(ctx, resource):
+    try:
+        resource_status = resource.get().get('status')
+    except HttpError as e:
+        if e.resp.status == http_client.NOT_FOUND:
+            resource_status = None
+        else:
+            raise e
+
+    if not resource_status:
+        ctx.logger.debug('Kubernetes resource deleted.')
+
+    elif resource_status == constants.KUBERNETES_STOPPING_STATUS:
+        ctx.operation.retry(
+            'Kubernetes resource is still de-provisioning')
+
+    elif resource_status == constants.KUBERNETES_RUNNING_STATUS:
+        ctx.operation.retry(
+            'Kubernetes resource is still running')
+
+    elif resource_status == constants.KUBERNETES_READY_STATUS:
+        ctx.operation.retry(
+            'Kubernetes resource is still ready')
+
+    elif resource_status == constants.KUBERNETES_ERROR_STATUS:
+        raise NonRecoverableError(
+            'Kubernetes resource failed to delete.')
+
+
 def sync_operation(func):
     def _decorator(resource, *args, **kwargs):
         response = func(resource, *args, **kwargs)
@@ -281,31 +340,42 @@ def retry_on_failure(msg, delay=constants.RETRY_DEFAULT_DELAY):
 def throw_cloudify_exceptions(func):
     def _decorator(*args, **kwargs):
         try:
+            func_ctx = kwargs.get('ctx', ctx)
             result = func(*args, **kwargs)
-            current_action = ctx.operation.name
+            current_action = func_ctx.operation.name
+
             # in delete action
-            if current_action == constants.DELETE_NODE_ACTION:
-                # no retry actions
-                if not ctx.instance.runtime_properties.get('_operation'):
-                    ctx.logger.info('Cleanup resource.')
-                    # cleanup runtime
-                    runtime_properties_cleanup(ctx)
+            if current_action != constants.DELETE_NODE_ACTION:
+                return result
+
+            # not finished gcp operation
+            if func_ctx.instance.runtime_properties.get('_operation'):
+                return result
+
+            # called cloudify retry operation
+            if func_ctx.operation._operation_retry:
+                return result
+
+            # cleanup runtime
+            func_ctx.logger.info('Cleanup resource.')
+            runtime_properties_cleanup(func_ctx)
+
             # return result
             return result
         except (RecoverableError, NonRecoverableError) as e:
             raise e
         except GCPError as e:
-            ctx.logger.error('Error Message {0}'.format(str(e)))
+            func_ctx.logger.error('Error Message {0}'.format(str(e)))
             raise NonRecoverableError(str(e))
 
         except Exception as error:
             response = generate_traceback_exception()
 
-            ctx.logger.error(
+            func_ctx.logger.error(
                 'Error traceback {0} with message {1}'.format(
                     response['traceback'], response['message']))
 
-            ctx.logger.error('Error Message {0}'.format(error.message))
+            func_ctx.logger.error('Error Message {0}'.format(error.message))
             raise NonRecoverableError(error.message)
 
     return wraps(func)(_decorator)

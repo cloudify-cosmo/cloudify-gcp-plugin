@@ -435,6 +435,9 @@ def start(**kwargs):
                         name=props[constants.NAME],
                         zone=basename(props['zone']),
                         )
+
+    utils.resource_started(ctx, instance)
+
     set_ip(instance)
 
 
@@ -455,8 +458,6 @@ def delete(name, zone, **kwargs):
                             name=name,
                             zone=zone,
                             )
-        props.pop(constants.DISK, None)
-
         utils.delete_if_not_external(instance)
 
 

@@ -181,6 +181,7 @@ class NetworkPeering(GoogleCloudPlatform):
 @utils.throw_cloudify_exceptions
 def create(name, auto_subnets, additional_settings, **kwargs):
     if utils.resource_created(ctx, constants.RESOURCE_ID):
+        # network does not have status field, use on RESOURCE_ID
         return
 
     gcp_config = utils.get_gcp_config()
