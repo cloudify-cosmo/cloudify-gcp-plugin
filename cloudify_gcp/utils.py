@@ -202,19 +202,9 @@ def resource_created(ctx, resource_field):
 
 
 def resource_started(ctx, resource):
-    try:
-        resource_status = resource.get().get('status')
-    except HttpError as e:
-        if e.resp.status == http_client.NOT_FOUND:
-            resource_status = None
-        else:
-            raise e
+    resource_status = resource.get().get('status')
 
-    if not resource_status:
-        ctx.operation.retry(
-            'Kubernetes resource is still provisioning', 15)
-
-    elif resource_status == constants.KUBERNETES_RUNNING_STATUS:
+    if resource_status == constants.KUBERNETES_RUNNING_STATUS:
         ctx.logger.debug('Kubernetes resource running.')
 
     elif resource_status == constants.KUBERNETES_READY_STATUS:
