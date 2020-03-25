@@ -41,6 +41,7 @@ setup(
         "cloudify-common>=4.4.0",
         "pyyaml",
         "pycrypto",
-        "jsonschema==3.0.0"
+        "jsonschema==3.0.0",
+        "httplib2"
     ],
 )
