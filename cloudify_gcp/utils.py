@@ -185,7 +185,13 @@ def runtime_properties_cleanup(ctx):
 
 def delete_if_not_external(resource):
     if not should_use_external_resource(ctx):
-        return resource.delete()
+        try:
+            return resource.delete()
+        except HttpError as error:
+            if is_missing_resource_error(error):
+                ctx.logger.info('Resource already deleted.')
+            else:
+                raise error
     else:
         runtime_properties_cleanup(ctx)
 
@@ -230,6 +236,10 @@ def resource_started(ctx, resource):
 
 
 def resource_deleted(ctx, resource):
+    if should_use_external_resource(ctx):
+        ctx.logger.info('Used external resource.')
+        return
+
     try:
         resource_status = resource.get().get('status')
     except HttpError as e:

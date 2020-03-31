@@ -63,6 +63,13 @@ class InstanceGroup(GoogleCloudPlatform):
             project=self.project,
             zone=self.zone).execute()
 
+    @check_response
+    def list_instances(self):
+        return self.discovery.instanceGroups().listInstances(
+            project=self.project,
+            zone=self.zone,
+            instanceGroup=self.name).execute()
+
     @utils.async_operation(get=True)
     @check_response
     def create(self):
@@ -146,6 +153,12 @@ def add_to_instance_group(instance_group_name, instance_url, **kwargs):
     instance_group = InstanceGroup(gcp_config,
                                    ctx.logger,
                                    name=instance_group_name)
+
+    for instance in instance_group.list_instances().get('items', []):
+        if instance.get('instance') == instance_url:
+            ctx.logger.info('instance already added')
+            return
+
     instance_group.add_instance(instance_url)
 
 
@@ -153,7 +166,14 @@ def add_to_instance_group(instance_group_name, instance_url, **kwargs):
 @utils.throw_cloudify_exceptions
 def remove_from_instance_group(instance_group_name, instance_url, **kwargs):
     gcp_config = utils.get_gcp_config()
+    if not instance_url:
+        ctx.logger.info("Instance is not defined.")
+        return
+
     instance_group = InstanceGroup(gcp_config,
                                    ctx.logger,
                                    name=instance_group_name)
-    instance_group.remove_instance(instance_url)
+
+    for instance in instance_group.list_instances().get('items', []):
+        if instance.get('instance') == instance_url:
+            instance_group.remove_instance(instance_url)

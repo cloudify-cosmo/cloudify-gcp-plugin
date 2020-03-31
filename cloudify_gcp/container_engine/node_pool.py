@@ -156,12 +156,7 @@ def stop(**kwargs):
         node_pool = NodePool(gcp_config, ctx.logger,
                              name=name, cluster_id=cluster_id,)
 
-        remote_mode = get_node(node_pool)
-        if remote_mode:
-            utils.delete_if_not_external(node_pool)
-        else:
-            ctx.operation.retry(
-                'Node pool {0} stopped'.format(name))
+        utils.delete_if_not_external(node_pool)
 
 
 @operation(resumable=True)

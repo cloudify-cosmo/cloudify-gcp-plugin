@@ -12,8 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from mock import patch
+from mock import patch, Mock
 
 from cloudify.manager import DirtyTrackingDict
 
@@ -75,6 +74,9 @@ class TestInstanceGroup(TestGCP):
                 )
 
     def test_remove_from_instance_group(self, mock_build, *args):
+        mock_build().instanceGroups().listInstances().execute().get = Mock(
+            return_value=[{'instance': 'instance url'}])
+
         mock_build().globalOperations().get().execute.side_effect = [
                 {'status': 'PENDING', 'name': 'Dave'},
                 {'status': 'DONE', 'name': 'Dave'},
