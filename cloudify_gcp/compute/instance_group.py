@@ -156,7 +156,7 @@ def add_to_instance_group(instance_group_name, instance_url, **kwargs):
 
     for instance in instance_group.list_instances().get('items', []):
         if instance.get('instance') == instance_url:
-            ctx.logger.info('instance already added')
+            ctx.logger.info('Instance has already added.')
             return
 
     instance_group.add_instance(instance_url)
