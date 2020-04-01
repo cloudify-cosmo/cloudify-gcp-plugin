@@ -636,7 +636,7 @@ def validate_contained_in_network(**kwargs):
             ctx,
             filter_relationships='cloudify.gcp.relationships.'
                                  'instance_contained_in_network',
-            filter_nodes=[
+            filter_resource_types=[
                 'cloudify.gcp.nodes.Network',
                 'cloudify.gcp.nodes.SubNetwork',
                 ],

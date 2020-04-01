@@ -104,7 +104,12 @@ class RegionBackendService(GoogleCloudPlatform):
     @utils.sync_operation
     def add_backend(self, current_backends, group_self_url):
         new_backend = {'group': group_self_url}
-        backends = current_backends + [new_backend]
+        for backend in current_backends:
+            if backend.get('group') == group_self_url:
+                backends = current_backends
+                break
+        else:
+            backends = current_backends + [new_backend]
         return self.set_backends(backends)
 
     @utils.sync_operation
@@ -171,11 +176,12 @@ def remove_backend(backend_service_name, group_self_url, **kwargs):
 def _modify_backends(backend_service_name, group_self_url, modify_function):
     sprops = ctx.source.instance.runtime_properties
     gcp_config = utils.get_gcp_config()
-    backend_service = RegionBackendService(
-        gcp_config,
-        ctx.logger,
-        name=backend_service_name,
-        region=sprops['region'])
-    backends = sprops.get('backends', [])
-    modify_function(backend_service, backends, group_self_url)
-    sprops.update(backend_service.get())
+    if backend_service_name and sprops.get('region'):
+        backend_service = RegionBackendService(
+            gcp_config,
+            ctx.logger,
+            name=backend_service_name,
+            region=sprops['region'])
+        backends = sprops.get('backends', [])
+        modify_function(backend_service, backends, group_self_url)
+        sprops.update(backend_service.get())

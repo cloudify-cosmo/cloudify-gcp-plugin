@@ -124,12 +124,16 @@ class ForwardingRule(GoogleCloudPlatform):
 def creation_validation(**kwargs):
     props = ctx.node.properties
 
+    if props.get('scheme', 'EXTERNAL').lower() == 'internal':
+        ctx.logger.info("Used internal forwarding.")
+        return
+
     if not props['target_proxy']:
         rels = utils.get_relationships(
             ctx,
             filter_relationships='cloudify.gcp.relationships.'
             'forwarding_rule_connected_to_target_proxy',
-            filter_nodes='cloudify.gcp.nodes.TargetProxy')
+            filter_resource_types='cloudify.gcp.nodes.TargetProxy')
         if not rels:
             raise NonRecoverableError(
                     'Must supply a target proxy, '

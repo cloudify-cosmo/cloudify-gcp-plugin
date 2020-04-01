@@ -1,9 +1,11 @@
+1.6.3:
+  - Forwarding rule and instance group fixes.
 1.6.2:
   - Handle unstable network.
 1.6.1:
-  - Improve validatation of account credentials
-1.6.0:
   - Fix tear down of GKE
+1.6.0:
+  - Improve validatation of account credentials
 1.5.1: Support newlines in gcp_config['auth']['private_key']
 1.5.0: Support resumable actions.
 1.4.5: Remove duplicate keys in plugin.yaml.
