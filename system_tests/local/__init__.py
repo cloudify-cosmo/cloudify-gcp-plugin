@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+from __future__ import print_function
 from copy import copy
 from abc import ABCMeta, abstractmethod, abstractproperty
 

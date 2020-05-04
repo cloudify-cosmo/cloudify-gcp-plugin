@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import subprocess
+from __future__ import print_function
 from time import sleep
 
 from cosmo_tester.framework.testenv import TestCase

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import ssl
+from __future__ import print_function
 from time import sleep
 from httplib import HTTPSConnection
 
