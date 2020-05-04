@@ -2,3 +2,4 @@ dnspython
 mock
 pyopenssl
 pytest
+git+https://github.com/cloudify-cosmo/cloudify-common@master#egg=cloudify-common[dispatcher]==master

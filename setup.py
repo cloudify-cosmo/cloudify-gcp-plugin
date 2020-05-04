@@ -38,7 +38,7 @@ setup(
     install_requires=[
         "oauth2client==4.1.3",
         "google-api-python-client==1.7.11",
-        "cloudify-common>=4.4.0",
+        "cloudify-common==5.1.0.dev1",
         "pyyaml",
         "pycrypto",
         "jsonschema==3.0.0",
