@@ -114,7 +114,8 @@ class RegionBackendService(GoogleCloudPlatform):
 
     @utils.sync_operation
     def remove_backend(self, current_backends, group_self_url):
-        backends = [backend for backend in current_backends if backend['group'] != group_self_url]
+        backends = [backend for backend in current_backends if
+                    backend['group'] != group_self_url]
         return self.set_backends(backends)
 
 
