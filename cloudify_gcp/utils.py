@@ -57,7 +57,8 @@ def camel_farm(identifier):
     Convert from underscored to camelCase.
     """
     words = identifier.split('_')
-    return ''.join([words[0]] + map(string.capitalize, words[1:]))
+    return ''.join([words[0]] +
+                   [string.capitalize(word) for word in words[1:]])
 
 
 def get_item_from_gcp_response(key_field, key_name, items):
