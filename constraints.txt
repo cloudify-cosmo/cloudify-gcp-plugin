@@ -1,2 +1,2 @@
-pyyaml==3.10
+pyyaml==3.12
 git+https://github.com/cloudify-cosmo/cloudify-common@master#egg=cloudify-common[dispatcher]==master
