@@ -68,11 +68,7 @@ jobs:
           command: |
             source env/bin/activate
             tox -e py27
-      - run:
-          name: Run blueprints validate
-          command: |
-            source env/bin/activate
-            tox -e validate
+      
 
   wagon:
     docker:
