@@ -46,7 +46,7 @@ class HealthCheck(GoogleCloudPlatform):
             constants.NAME: self.name
         }
         gcp_settings = {utils.camel_farm(key): value
-                        for key, value in self.additional_settings.iteritems()}
+                        for key, value in self.additional_settings.items()}
         body.update(gcp_settings)
         return body
 
@@ -133,7 +133,7 @@ class TcpHealthCheck(HealthCheck):
             'tcpHealthCheck': {'port': self.port}
         }
         gcp_settings = {utils.camel_farm(key): value
-                        for key, value in self.additional_settings.iteritems()}
+                        for key, value in self.additional_settings.items()}
         body.update(gcp_settings)
         return body
 
@@ -167,7 +167,7 @@ class SslHealthCheck(HealthCheck):
             'sslHealthCheck': {'port': self.port}
         }
         gcp_settings = {utils.camel_farm(key): value
-                        for key, value in self.additional_settings.iteritems()}
+                        for key, value in self.additional_settings.items()}
         body.update(gcp_settings)
         return body
 

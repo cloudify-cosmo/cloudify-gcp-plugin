@@ -178,7 +178,8 @@ def create(resource):
 def runtime_properties_cleanup(ctx):
     # cleanup runtime properties
     # need to convert generaton to list, python 3
-    keys = [key for key in ctx.instance.runtime_properties.keys()]
+    # ctx.instance.runtime_properties is a dictionary, iterating over keys.
+    keys = [key for key in ctx.instance.runtime_properties]
     for key in keys:
         del ctx.instance.runtime_properties[key]
 

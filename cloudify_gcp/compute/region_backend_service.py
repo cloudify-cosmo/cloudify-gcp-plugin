@@ -56,7 +56,7 @@ class RegionBackendService(GoogleCloudPlatform):
             'protocol': self.protocol
         }
         gcp_settings = {utils.camel_farm(key): value
-                        for key, value in self.additional_settings.iteritems()}
+                        for key, value in self.additional_settings.items()}
         body.update(gcp_settings)
         return body
 
