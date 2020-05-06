@@ -8,6 +8,7 @@ checkout:
         git fetch origin +refs/pull/$PR_ID/merge:
         git checkout -qf FETCH_HEAD
       fi
+
 jobs:
 
   py3_compat:
@@ -18,6 +19,13 @@ jobs:
       - run:
           name: install futurize
           command: pip install future --user
+      - run:
+          # those modules contain code that futurize would want to change,
+          # so let's just remove them so that it doesn't report on them
+          # (there's no "exclude" functionality in futurize)
+          name: remove compat modules
+          command: |
+            rm cloudify_gcp/_compat.py
       - run:
           name: find python3-incompatible code
           command: |
@@ -36,6 +44,7 @@ jobs:
               cat futurize_diffs
               exit 1
             fi
+
   unittests:
     docker:
       - image: circleci/python:2.7.15-stretch
@@ -69,6 +78,20 @@ jobs:
             source env/bin/activate
             tox -e py27
       
+  unittests_py36:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+
+      - run:
+          name: install tox
+          command: pip install --user tox
+      - run:
+        name: run flake8 py36
+        command: /home/circleci/.local/bin/tox -e flake8
+
+
 
   wagon:
     docker:
@@ -169,6 +192,7 @@ workflows:
     jobs:
       - py3_compat
       - unittests
+      - unittests_py36
       - wagon
       - cloudify-manager:
           context: ecosystem
