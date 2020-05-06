@@ -27,6 +27,11 @@ if PY2:
     from urllib2 import urlopen
     from ConfigParser import SafeConfigParser
     from urlparse import urlparse, urljoin, parse_qs
+    from abc import ABCMeta
+
+    class ABC(object):
+        __metaclass__ = ABCMeta
+
     try:
         from cStringIO import StringIO
     except ImportError:
@@ -51,16 +56,16 @@ else:
         quote as urlquote, urlparse, urljoin, parse_qs, urlencode, unquote
     )
     from urllib.request import pathname2url, urlopen
+    from abc import ABC
 
     def reraise(exception_type, value, traceback):
         raise value.with_traceback(traceback)
 
+
     text_type = str
     exec_ = getattr(builtins, 'exec')
-
 
 __all__ = [
     'PY2', 'queue', 'StringIO', 'reraise', 'text_type', 'urlquote',
     'urlparse', 'exec_', 'urljoin', 'urlopen', 'pathname2url', 'parse_qs'
-    'urlencode', 'unquote', 'httplib', 'SafeConfigParser'
-]
+    'urlencode', 'unquote', 'httplib', 'SafeConfigParser', 'ABC']

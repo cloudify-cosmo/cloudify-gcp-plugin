@@ -12,12 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import abstractmethod, abstractproperty
 
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
+from .. import _compat
 from .. import utils
 from .. import constants
 from ..gcp import (
@@ -26,8 +27,7 @@ from ..gcp import (
         )
 
 
-class TargetProxy(GoogleCloudPlatform):
-    __metaclass__ = ABCMeta
+class TargetProxy(GoogleCloudPlatform, _compat.ABC):
 
     def __init__(self,
                  config,

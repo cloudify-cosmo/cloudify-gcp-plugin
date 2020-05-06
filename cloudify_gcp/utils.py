@@ -20,7 +20,7 @@ import time
 from functools import wraps
 from subprocess import check_output
 from os.path import basename, expanduser
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 
 from six.moves import http_client
 
@@ -33,7 +33,7 @@ from cloudify.context import CloudifyContext
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.utils import exception_to_error_cause
 
-from _compat import text_type
+from _compat import text_type, ABC
 from . import constants
 from .gcp import (
     GCPError,
@@ -536,8 +536,7 @@ def response_to_operation(response, config, logger):
         return GlobalOperation(config, logger, response)
 
 
-class Operation(GoogleCloudPlatform):
-    __metaclass__ = ABCMeta
+class Operation(GoogleCloudPlatform, ABC):
 
     def __init__(self, config, logger, response):
         super(Operation, self).__init__(config, logger, response['name'])
