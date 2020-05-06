@@ -75,7 +75,8 @@ class TestGCPInstance(TestGCP):
             'key': 'startup-script',
             'value': '🐻'
         }
-        self.assertEqual(json.loads(json.dumps(new_script_format)), instance._get_script(u'🐻'))
+        self.assertEqual(json.loads(json.dumps(new_script_format)),
+                         instance._get_script(u'🐻'))
 
     def test__get_script_bare_string_new_format_input(self, *_):
         new_script_format = {
