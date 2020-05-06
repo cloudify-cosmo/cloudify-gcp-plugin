@@ -89,6 +89,9 @@ jobs:
       - run:
           name: run flake8 py36
           command: /home/circleci/.local/bin/tox -e flake8
+      - run:
+          name: run unitests with py36
+          command: /home/circleci/.local/bin/tox -e py36
 
   wagon:
     docker:
