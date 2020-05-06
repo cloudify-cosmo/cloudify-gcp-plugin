@@ -33,6 +33,7 @@ from cloudify.context import CloudifyContext
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.utils import exception_to_error_cause
 
+from _compat import text_type
 from . import constants
 from .gcp import (
     GCPError,
@@ -418,7 +419,7 @@ def get_gcp_config():
     if 'auth' not in gcp_config:
         raise NonRecoverableError("No auth provided in gcp_config.")
     # if auth is a string so its a service account json
-    if isinstance(gcp_config['auth'], basestring):
+    if isinstance(gcp_config['auth'], text_type):
         try:
             gcp_config['auth'] = get_gcp_config_dict(gcp_config['auth'])
             # add on the fly the 'project' input
@@ -598,9 +599,9 @@ def get_relationships(
         # Shortcut to support supplying ctx directly
         relationships = relationships.instance.relationships
     # And coerce the other inputs to lists if they are strings:
-    if isinstance(filter_resource_types, basestring):
+    if isinstance(filter_resource_types, text_type):
         filter_resource_types = [filter_resource_types]
-    if isinstance(filter_relationships, basestring):
+    if isinstance(filter_relationships, text_type):
         filter_relationships = [filter_relationships]
     results = []
     for rel in relationships:

@@ -15,11 +15,10 @@
 
 from os.path import basename
 import re
-
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
-
+from .. import _compat
 from .. import utils
 from .. import constants
 from .keypair import KeyPair
@@ -676,7 +675,7 @@ def _get_script(startup_script):
         startup_script_metadata = {
             'key': 'startup-script',
             'value': startup_script if isinstance(startup_script,
-                                                  basestring) else ''
+                                                  _compat.text_type) else ''
         }
 
     install_agent_script = ctx.agent.init_script()

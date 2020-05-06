@@ -14,3 +14,6 @@
 -f lib2to3.fixes.fix_map
 -f lib2to3.fixes.fix_zip
 -f lib2to3.fixes.fix_xrange
+-f lib2to3.fixes.fix_basestring
+-f libfuturize.fixes.fix_cmp
+-f libfuturize.fixes.fix_division_safe
