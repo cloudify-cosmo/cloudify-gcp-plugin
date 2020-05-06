@@ -388,8 +388,8 @@ def throw_cloudify_exceptions(func):
                 'Error traceback {0} with message {1}'.format(
                     response['traceback'], response['message']))
 
-            func_ctx.logger.error('Error Message {0}'.format(error.message))
-            raise NonRecoverableError(error.message)
+            func_ctx.logger.error('Error Message {0}'.format(error))
+            raise NonRecoverableError(str(error))
 
     return wraps(func)(_decorator)
 
