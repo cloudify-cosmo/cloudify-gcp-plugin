@@ -33,7 +33,7 @@ from cloudify.context import CloudifyContext
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.utils import exception_to_error_cause
 
-from _compat import text_type, ABC
+from ._compat import text_type, ABC
 from . import constants
 from .gcp import (
     GCPError,
