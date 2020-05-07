@@ -15,6 +15,7 @@
 
 from os.path import basename
 import re
+
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError

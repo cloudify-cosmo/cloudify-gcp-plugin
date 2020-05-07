@@ -597,9 +597,9 @@ def get_relationships(
         # Shortcut to support supplying ctx directly
         relationships = relationships.instance.relationships
     # And coerce the other inputs to lists if they are strings:
-    if isinstance(filter_resource_types, text_type):
+    if isinstance(filter_resource_types, (text_type, bytes)):
         filter_resource_types = [filter_resource_types]
-    if isinstance(filter_relationships, text_type):
+    if isinstance(filter_relationships, (text_type, bytes)):
         filter_relationships = [filter_relationships]
     results = []
     for rel in relationships:
