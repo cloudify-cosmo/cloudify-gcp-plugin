@@ -17,55 +17,30 @@
 # flake8: noqa
 
 import sys
+
 PY2 = sys.version_info[0] == 2
 
-
 if PY2:
-    import httplib
-    import Queue as queue
-    from urllib import quote as urlquote, pathname2url, urlencode, unquote
-    from urllib2 import urlopen
-    from ConfigParser import SafeConfigParser
-    from urlparse import urlparse, urljoin, parse_qs
     from abc import ABCMeta
 
     class ABC(object):
         __metaclass__ = ABCMeta
 
-    try:
-        from cStringIO import StringIO
-    except ImportError:
-        from StringIO import StringIO
     exec("""
 def reraise(exception_type, value, traceback):
     raise exception_type, value, traceback
 """)
     text_type = unicode
-    exec("""
-def exec_(code, globs):
-    exec code in globs
-""")
+
 
 else:
     import builtins
-    import queue
-    from io import StringIO
-    import http.client as httplib
-    from configparser import SafeConfigParser
-    from urllib.parse import (
-        quote as urlquote, urlparse, urljoin, parse_qs, urlencode, unquote
-    )
-    from urllib.request import pathname2url, urlopen
     from abc import ABC
 
     def reraise(exception_type, value, traceback):
         raise value.with_traceback(traceback)
 
-
     text_type = str
-    exec_ = getattr(builtins, 'exec')
 
 __all__ = [
-    'PY2', 'queue', 'StringIO', 'reraise', 'text_type', 'urlquote',
-    'urlparse', 'exec_', 'urljoin', 'urlopen', 'pathname2url', 'parse_qs'
-    'urlencode', 'unquote', 'httplib', 'SafeConfigParser', 'ABC']
+    'PY2', 'reraise', 'text_type', 'ABC']
