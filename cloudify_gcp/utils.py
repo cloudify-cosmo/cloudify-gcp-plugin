@@ -15,7 +15,6 @@
 
 import re
 import sys
-import string
 import time
 from functools import wraps
 from subprocess import check_output
