@@ -48,8 +48,8 @@ class TestGCP(unittest.TestCase):
     def test_is_missing_resource_error(self):
         for exception, output in [
                 (None, False),
-                (HttpError(NS(status=404), ''), True),
-                (HttpError(NS(status=401), ''), False),
+                (HttpError(NS(status=404), ''.encode('utf-8')), True),
+                (HttpError(NS(status=401), ''.encode('utf-8')), False),
                 ]:
             print("Testing {}. Should be {}".format(exception, output))
             self.assertIs(
@@ -59,8 +59,8 @@ class TestGCP(unittest.TestCase):
     def test_is_resource_used_error(self):
         for exception, output in [
                 (None, False),
-                (HttpError(NS(status=400), ''), True),
-                (HttpError(NS(status=404), ''), False),
+                (HttpError(NS(status=400), ''.encode('utf-8')), True),
+                (HttpError(NS(status=404), ''.encode('utf-8')), False),
                 ]:
             print("Testing {}. Should be {}".format(exception, output))
             self.assertIs(

@@ -78,7 +78,8 @@ class TopicMessage(PubSubBase):
     def to_dict(self):
         for index, message in enumerate(self.messages):
             if message.get('data'):
-                message['data'] = base64.b64encode(message['data'])
+                message['data'] = base64.b64encode(
+                    message['data'].encode('utf-8')).decode('ascii')
 
         return {'messages': self.messages}
 

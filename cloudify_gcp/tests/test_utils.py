@@ -40,7 +40,7 @@ class NS(object):
 
 
 def raiser(code):
-    raise utils.HttpError(NS(status=code), '')
+    raise utils.HttpError(NS(status=code), ''.encode('utf-8'))
 
 
 class TestUtils(unittest.TestCase):
