@@ -20,7 +20,7 @@ setup(
 
     name='cloudify-gcp-plugin',
 
-    version='1.6.3',
+    version='1.6.4',
     description='Plugin for Google Cloud Platform',
 
     packages=[
@@ -38,10 +38,10 @@ setup(
     install_requires=[
         "oauth2client==4.1.3",
         "google-api-python-client==1.7.11",
-        "cloudify-common>=4.4.0",
-        "pyyaml",
-        "pycrypto",
+        "cloudify-common==5.1.0.dev1",
+        "pyyaml==3.12",
+        "pycrypto==2.6.1",
         "jsonschema==3.0.0",
-        "httplib2"
+        "httplib2==0.17.3"
     ],
 )

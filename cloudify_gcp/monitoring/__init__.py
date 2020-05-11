@@ -12,14 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABCMeta
-
+from .. import _compat
 from cloudify_gcp.gcp import GoogleCloudPlatform
 from .. import constants
 
 
-class MonitoringBase(GoogleCloudPlatform):
-    __metaclass__ = ABCMeta
+class MonitoringBase(GoogleCloudPlatform, _compat.ABC):
 
     def __init__(self, config, logger, name,
                  additional_settings=None,

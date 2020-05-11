@@ -56,7 +56,7 @@ class RegionBackendService(GoogleCloudPlatform):
             'protocol': self.protocol
         }
         gcp_settings = {utils.camel_farm(key): value
-                        for key, value in self.additional_settings.iteritems()}
+                        for key, value in self.additional_settings.items()}
         body.update(gcp_settings)
         return body
 
@@ -114,8 +114,8 @@ class RegionBackendService(GoogleCloudPlatform):
 
     @utils.sync_operation
     def remove_backend(self, current_backends, group_self_url):
-        backends = filter(lambda backend: backend['group'] != group_self_url,
-                          current_backends)
+        backends = [backend for backend in current_backends if
+                    backend['group'] != group_self_url]
         return self.set_backends(backends)
 
 

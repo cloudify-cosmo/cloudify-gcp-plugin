@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from functools import partial
 
 from mock import patch, Mock
@@ -74,7 +75,8 @@ class TestGCPInstance(TestGCP):
             'key': 'startup-script',
             'value': '🐻'
         }
-        self.assertEqual(new_script_format, instance._get_script('🐻'))
+        self.assertEqual(json.loads(json.dumps(new_script_format)),
+                         instance._get_script(u'🐻'))
 
     def test__get_script_bare_string_new_format_input(self, *_):
         new_script_format = {

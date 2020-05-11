@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from copy import copy
 
 from cloudify import ctx
@@ -21,12 +21,12 @@ from cloudify.exceptions import NonRecoverableError
 
 from .. import constants
 from .. import utils
+from .. import _compat
 from cloudify_gcp.gcp import GoogleCloudPlatform
 from cloudify_gcp.gcp import check_response
 
 
-class HealthCheck(GoogleCloudPlatform):
-    __metaclass__ = ABCMeta
+class HealthCheck(GoogleCloudPlatform, _compat.ABC):
 
     def __init__(self,
                  config,
@@ -46,7 +46,7 @@ class HealthCheck(GoogleCloudPlatform):
             constants.NAME: self.name
         }
         gcp_settings = {utils.camel_farm(key): value
-                        for key, value in self.additional_settings.iteritems()}
+                        for key, value in self.additional_settings.items()}
         body.update(gcp_settings)
         return body
 
@@ -133,7 +133,7 @@ class TcpHealthCheck(HealthCheck):
             'tcpHealthCheck': {'port': self.port}
         }
         gcp_settings = {utils.camel_farm(key): value
-                        for key, value in self.additional_settings.iteritems()}
+                        for key, value in self.additional_settings.items()}
         body.update(gcp_settings)
         return body
 
@@ -167,7 +167,7 @@ class SslHealthCheck(HealthCheck):
             'sslHealthCheck': {'port': self.port}
         }
         gcp_settings = {utils.camel_farm(key): value
-                        for key, value in self.additional_settings.iteritems()}
+                        for key, value in self.additional_settings.items()}
         body.update(gcp_settings)
         return body
 

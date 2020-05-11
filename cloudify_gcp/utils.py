@@ -15,12 +15,11 @@
 
 import re
 import sys
-import string
 import time
 from functools import wraps
 from subprocess import check_output
 from os.path import basename, expanduser
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 
 from six.moves import http_client
 
@@ -33,6 +32,7 @@ from cloudify.context import CloudifyContext
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.utils import exception_to_error_cause
 
+from ._compat import text_type, ABC
 from . import constants
 from .gcp import (
     GCPError,
@@ -57,7 +57,8 @@ def camel_farm(identifier):
     Convert from underscored to camelCase.
     """
     words = identifier.split('_')
-    return ''.join([words[0]] + map(string.capitalize, words[1:]))
+    return ''.join([words[0]] +
+                   [word.capitalize() for word in words[1:]])
 
 
 def get_item_from_gcp_response(key_field, key_name, items):
@@ -178,7 +179,8 @@ def create(resource):
 def runtime_properties_cleanup(ctx):
     # cleanup runtime properties
     # need to convert generaton to list, python 3
-    keys = [key for key in ctx.instance.runtime_properties.keys()]
+    # ctx.instance.runtime_properties is a dictionary, iterating over keys.
+    keys = [key for key in ctx.instance.runtime_properties]
     for key in keys:
         del ctx.instance.runtime_properties[key]
 
@@ -385,8 +387,8 @@ def throw_cloudify_exceptions(func):
                 'Error traceback {0} with message {1}'.format(
                     response['traceback'], response['message']))
 
-            func_ctx.logger.error('Error Message {0}'.format(error.message))
-            raise NonRecoverableError(error.message)
+            func_ctx.logger.error('Error Message {0}'.format(error))
+            raise NonRecoverableError(str(error))
 
     return wraps(func)(_decorator)
 
@@ -416,7 +418,7 @@ def get_gcp_config():
     if 'auth' not in gcp_config:
         raise NonRecoverableError("No auth provided in gcp_config.")
     # if auth is a string so its a service account json
-    if isinstance(gcp_config['auth'], basestring):
+    if isinstance(gcp_config['auth'], text_type):
         try:
             gcp_config['auth'] = get_gcp_config_dict(gcp_config['auth'])
             # add on the fly the 'project' input
@@ -533,8 +535,7 @@ def response_to_operation(response, config, logger):
         return GlobalOperation(config, logger, response)
 
 
-class Operation(GoogleCloudPlatform):
-    __metaclass__ = ABCMeta
+class Operation(GoogleCloudPlatform, ABC):
 
     def __init__(self, config, logger, response):
         super(Operation, self).__init__(config, logger, response['name'])
@@ -596,9 +597,9 @@ def get_relationships(
         # Shortcut to support supplying ctx directly
         relationships = relationships.instance.relationships
     # And coerce the other inputs to lists if they are strings:
-    if isinstance(filter_resource_types, basestring):
+    if isinstance(filter_resource_types, (text_type, bytes)):
         filter_resource_types = [filter_resource_types]
-    if isinstance(filter_relationships, basestring):
+    if isinstance(filter_relationships, (text_type, bytes)):
         filter_relationships = [filter_relationships]
     results = []
     for rel in relationships:

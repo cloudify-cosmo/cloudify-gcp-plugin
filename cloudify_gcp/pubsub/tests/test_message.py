@@ -37,5 +37,6 @@ class TestGCPTopicMessage(TestGCP):
 
         mock_build().projects().topics(
         ).publish.assert_called_once_with(
-            body={'messages': [{'data': base64.b64encode('topic-message-1')}]},
+            body={'messages': [{'data': base64.b64encode(
+                'topic-message-1'.encode('utf-8')).decode('ascii')}]},
             topic='projects/not really a project/topics/valid_name')

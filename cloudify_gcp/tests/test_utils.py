@@ -40,7 +40,7 @@ class NS(object):
 
 
 def raiser(code):
-    raise utils.HttpError(NS(status=code), '')
+    raise utils.HttpError(NS(status=code), ''.encode('utf-8'))
 
 
 class TestUtils(unittest.TestCase):
@@ -294,7 +294,7 @@ class TestUtilsWithCTX(TestGCP):
         self.assertEqual('default', conf['network'])
 
     def test_get_gcp_config_json_input(self, *args):
-        self.ctxmock.node.properties['gcp_config'] = {
+        self.ctxmock.node.properties['gcp_config'] = json.loads(json.dumps({
             'zone': '3',
             'auth': '''{"type": "sa",
                     "project_id": "1",
@@ -307,7 +307,7 @@ class TestUtilsWithCTX(TestGCP):
                     "auth_provider_x509_cert_url":
                     "https://www.googleapis.com/oauth2/v1/certs",
                     "client_x509_cert_url": "https://www.googleapis.com/.."}'''
-        }
+        }))
 
         auth_expected = json.loads(
             self.ctxmock.node.properties['gcp_config']['auth'])
@@ -323,7 +323,7 @@ class TestUtilsWithCTX(TestGCP):
 
     def test_get_gcp_config_json_input_field_missing(self, *args):
         # auth_provider_x509_cert_url is missing
-        self.ctxmock.node.properties['gcp_config'] = {
+        self.ctxmock.node.properties['gcp_config'] = json.loads(json.dumps({
             'zone': '3',
             'auth': '''{"type": "sa",
                             "project_id": "1",
@@ -336,7 +336,7 @@ class TestUtilsWithCTX(TestGCP):
                             "token_uri":"https://oauth2.googleapis.com/token",
                             "client_x509_cert_url":
                             "https://www.googleapis.com/..."}'''
-        }
+        }))
 
         with self.assertRaises(NonRecoverableError):
             utils.get_gcp_config()
