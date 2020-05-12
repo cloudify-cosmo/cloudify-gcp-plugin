@@ -36,7 +36,6 @@ blueprint_list = [
 @pytest.fixture(scope='function', params=blueprint_list)
 def blueprint_examples(request):
     dirname_param = os.path.dirname(request.param).split('/')[-1:][0]
-    print "************************************dirname param:",  dirname_param
     try:
         if dirname_param == "gcp-gke":
             inputs = "resource_prefix=gcpresource-{0}"
