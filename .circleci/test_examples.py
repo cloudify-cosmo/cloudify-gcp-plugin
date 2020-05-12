@@ -42,8 +42,9 @@ def blueprint_examples(request):
         basic_blueprint_test(
             request.param,
             dirname_param,
-            inputs='network_name=gcpnet-{0} -i subnet_name=gcpsub-{0} -i resource_prefix=gcpresource-{0}'.format(
-                os.environ['CIRCLE_BUILD_NUM']),
+            inputs='network_name=gcpnet-{0} -i subnet_name=gcpsub-{0}'
+                   ' -i resource_prefix=gcpresource-{0}'.format(
+                os.environ['CIRCLE_BUILD_NUM'])
 
         )
     except:
