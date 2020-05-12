@@ -42,9 +42,9 @@ def blueprint_examples(request):
         basic_blueprint_test(
             request.param,
             dirname_param,
-            inputs='network_name=ansnet-{0} -i subnet_name=anssub-{0}'.format(
+            inputs='network_name=gcpnet-{0} -i subnet_name=gcpsub-{0} -i resource_prefix=gcpresource-{0}'.format(
                 os.environ['CIRCLE_BUILD_NUM']),
-            timeout=3000
+
         )
     except:
         cleanup_on_failure(dirname_param)
