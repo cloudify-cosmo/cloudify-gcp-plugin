@@ -44,9 +44,7 @@ def blueprint_examples(request):
             dirname_param,
             inputs='network_name=gcpnet-{0} -i subnet_name=gcpsub-{0}'
                    ' -i resource_prefix=gcpresource-{0}'.format(
-                os.environ['CIRCLE_BUILD_NUM'])
-
-        )
+                os.environ['CIRCLE_BUILD_NUM']), timeout=3000)
     except:
         cleanup_on_failure(dirname_param)
         raise
