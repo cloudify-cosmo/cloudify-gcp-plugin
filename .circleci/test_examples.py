@@ -30,8 +30,6 @@ prepare_test(secrets=SECRETS_TO_CREATE)
 
 blueprint_list = [
     'examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml',
-    'examples/blueprint-examples/hello-world-example/gcp.yaml',
-    'examples/blueprint-examples/gcp-example-network/blueprint.yaml',
     'examples/blueprint-examples/virtual-machine/gcp.yaml']
 
 
