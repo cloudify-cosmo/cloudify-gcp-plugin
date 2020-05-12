@@ -36,17 +36,19 @@ blueprint_list = [
 @pytest.fixture(scope='function', params=blueprint_list)
 def blueprint_examples(request):
     dirname_param = os.path.dirname(request.param).split('/')[-1:][0]
+    print "************************************dirname param:",  dirname_param
     try:
+        if dirname_param == "gcp-gke":
+            inputs = "resource_prefix=gcpresource-{0}"
+        else:  # it`s virtual-machine example
+            inputs = 'network_name=gcpnet-{0} -i subnet_name=gcpsub-{0}'
         basic_blueprint_test(
-            request.param,
-            dirname_param,
-            inputs='network_name=ansnet-{0} -i subnet_name=anssub-{0}'.format(
-                os.environ['CIRCLE_BUILD_NUM']),
-            timeout=3000
-        )
+            request.param, dirname_param,
+            inputs=inputs.format(os.environ['CIRCLE_BUILD_NUM']), timeout=3000)
     except:
         cleanup_on_failure(dirname_param)
         raise
+
 
 
 def test_blueprints(blueprint_examples):
