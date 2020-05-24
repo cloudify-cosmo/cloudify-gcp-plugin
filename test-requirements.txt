@@ -1,0 +1,6 @@
+pycrypto==2.6.1
+git+https://github.com/cloudify-cosmo/cloudify-common@master#egg=cloudify-common[dispatcher]==master
+dnspython
+mock
+pyopenssl
+pytest
