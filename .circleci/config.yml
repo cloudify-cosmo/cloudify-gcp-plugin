@@ -178,7 +178,7 @@ commands:
           command: pip install --upgrade setuptools
       - run:
           name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
+          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/CY-2797-Speed-Up-Tests.zip
       - attach_workspace:
           at: workspace
       - run: python .circleci/package_release.py
@@ -214,7 +214,7 @@ commands:
           command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host cloudifyplatform/premium-cloudify-manager-aio
       - run:
           name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
+          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/CY-2797-Speed-Up-Tests.zip
       - run: pytest -s .circleci/test_examples.py
 
 jobs:
@@ -272,21 +272,21 @@ workflows:
       - py3_compat
       - unittests_py27
       - unittests_py36
-      - wagon:
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
-      - rhel_wagon:
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+      - wagon
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
+      - rhel_wagon
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
       - integration_tests:
           requires:
             - wagon
             - rhel_wagon
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
       - release:
           filters:
             branches:
