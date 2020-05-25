@@ -40,7 +40,7 @@ def blueprint_examples(request):
         if dirname_param == "gcp-gke":
             inputs = "resource_prefix=gcpresource-{0}"
         else:  # it`s virtual-machine example
-            inputs = 'network_name=gcpnet-{0} -i subnet_name=gcpsub-{0}'
+            inputs = ' -i -i network_name=gcpnet-{0} -i subnet_name=gcpsub-{0}'
         basic_blueprint_test(
             request.param, dirname_param,
             inputs=inputs.format(os.environ['CIRCLE_BUILD_NUM']), timeout=3000)
