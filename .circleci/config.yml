@@ -230,6 +230,7 @@ jobs:
     steps:
       - checkout
       - generate_rhel_py27py36_wagon
+
   integration_tests:
     executor: cloudify-machine
     environment:
@@ -253,21 +254,21 @@ workflows:
       - py3_compat
       - unittests_py27
       - unittests_py36
-      - wagon #:
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-      - rhel_wagon #:
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
+      - wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - rhel_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - integration_tests:
           requires:
             - wagon
             - rhel_wagon
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - release:
           filters:
             branches:
