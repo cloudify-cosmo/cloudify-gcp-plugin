@@ -30,13 +30,13 @@ UT_WAGON = 'https://github.com/cloudify-incubator/cloudify-utilities-plugin/' \
            '-Core-py27.py36-none-linux_x86_64.wgn'.format(v=UT_VERSION)
 UT_PLUGIN = 'https://github.com/cloudify-incubator/cloudify-utilities-' \
             'plugin/releases/download/{v}/plugin.yaml'.format(v=UT_VERSION)
-GCP_VERSION = '1.6.6'
-GCP_WAGON = 'https://github.com/cloudify-cosmo/cloudify-gcp-plugin/' \
-            'releases/download/{v}/cloudify_gcp_plugin-{v}-centos-' \
-            'Core-py27.py36-none-linux_x86_64.wgn'.format(v=GCP_VERSION)
-GCP_PLUGIN = 'https://github.com/cloudify-cosmo/cloudify-gcp-plugin/releases/' \
-             'download/{v}/plugin.yaml'.format(v=GCP_VERSION)
-PLUGINS_TO_UPLOAD = [(UT_WAGON, UT_PLUGIN), (GCP_WAGON, GCP_PLUGIN)]
+K8S_VERSION = '2.8.1'
+K8S_WAGON = 'https://github.com/cloudify-cosmo/cloudify-kubernetes-plugin/' \
+            'releases/download/{v}/cloudify_kubernetes_plugin-{v}-' \
+            'centos-Core-py27.py36-none-linux_x86_64.wgn'.format(v=K8S_VERSION)
+K8S_PLUGIN = 'https://github.com/cloudify-cosmo/cloudify-kubernetes-plugin/' \
+             'releases/download/{v}/plugin.yaml'.format(v=K8S_VERSION)
+PLUGINS_TO_UPLOAD = [(UT_WAGON, UT_PLUGIN), (K8S_WAGON, K8S_PLUGIN)]
 SECRETS_TO_CREATE = {
     'gcp_credentials': True
 }
