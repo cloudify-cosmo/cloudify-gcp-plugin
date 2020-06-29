@@ -44,7 +44,6 @@ SECRETS_TO_CREATE = {
 prepare_test(plugins=PLUGINS_TO_UPLOAD, secrets=SECRETS_TO_CREATE,
              execute_bundle_upload=False)
 
-# Temporary until kubernetes plugin will be released with py2py3 wagon.
 blueprint_list = [
     'examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml',
     'examples/blueprint-examples/virtual-machine/gcp.yaml']
