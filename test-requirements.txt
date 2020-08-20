@@ -1,10 +1,9 @@
+flake8
 pycrypto==2.6.1
 dnspython
 mock
 pyopenssl
 pytest==4.6.3
 git+https://github.com/cloudify-cosmo/cloudify-common@master#egg=cloudify-common[dispatcher]==master
-
 # For integration tests
 git+https://github.com/cloudify-cosmo/cloudify-cli@master#egg=cloudify-cli==master
-pyyaml==3.12
