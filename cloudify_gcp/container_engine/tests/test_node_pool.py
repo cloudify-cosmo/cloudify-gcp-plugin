@@ -118,8 +118,7 @@ class TestGCPNodePool(TestGCP):
         mock_build.assert_called_once()
 
         mock_build().projects().zones().clusters().nodePools(
-        ).delete.assert_called_with(
-            nodePoolId='valid_name',
-            clusterId='cluster-test',
-            projectId='not really a project',
-            zone='a very fake zone')
+        ).delete.assert_called_with(nodePoolId='valid_name',
+                                    clusterId='cluster-test',
+                                    projectId='not really a project',
+                                    zone='a very fake zone')
