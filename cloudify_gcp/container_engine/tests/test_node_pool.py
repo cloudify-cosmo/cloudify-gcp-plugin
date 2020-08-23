@@ -39,11 +39,11 @@ class TestGCPNodePool(TestGCP):
                          'cluster-test', additional_settings={}, )
 
         mock_build().projects().zones().clusters().nodePools(
-            ).create.assert_called_once_with(
-                body={'nodePool': {'name': 'valid_name', }, },
-                projectId='not really a project',
-                clusterId='cluster-test',
-                zone='a very fake zone')
+        ).create.assert_called_once_with(
+            body={'nodePool': {'name': 'valid_name', }, },
+            projectId='not really a project',
+            clusterId='cluster-test',
+            zone='a very fake zone')
 
     def test_start(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties['name'] = 'valid_name'
