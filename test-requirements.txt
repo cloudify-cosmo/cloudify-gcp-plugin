@@ -4,6 +4,9 @@ dnspython
 mock
 pyopenssl
 pytest==4.6.3
+testfixtures
+pytest-cov
+
 git+https://github.com/cloudify-cosmo/cloudify-common@master#egg=cloudify-common[dispatcher]==master
 # For integration tests
 git+https://github.com/cloudify-cosmo/cloudify-cli@master#egg=cloudify-cli==master
