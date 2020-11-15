@@ -145,8 +145,7 @@ def create(type, name, resources, ttl, **kwargs):
                     .format(name, zone.runtime_properties['dnsName']),
             "ttl": ttl,
             "type": type,
-            "rrdatas": resources,
-        }]).execute()
+            "rrdatas": resources}]).execute()
 
     response = wait_for_change_completion(dns_zone, response)
 
@@ -160,7 +159,7 @@ def create(type, name, resources, ttl, **kwargs):
 @operation(resumable=True)
 @utils.retry_on_failure('Retrying deleting DNS Record')
 @utils.throw_cloudify_exceptions
-def delete(**kwargs):
+def delete(**_):
     gcp_config = utils.get_gcp_config()
     if ctx.instance.runtime_properties.get('created'):
 
@@ -189,8 +188,8 @@ def delete(**kwargs):
         ctx.instance.runtime_properties.pop('created', None)
 
 
-def validate_contained_in(**kwargs):
-    if (ctx.target.type != 'cloudify.gcp.nodes.DNSZone' or
-            ctx.source.type != 'cloudify.gcp.nodes.DNSRecord'):
+def validate_contained_in(**_):
+    if ctx.target.type != 'cloudify.gcp.nodes.DNSZone' or \
+            ctx.source.type != 'cloudify.gcp.nodes.DNSRecord':
         raise NonRecoverableError(
                 'Unsupported types for {} relationship'.format(ctx.type))

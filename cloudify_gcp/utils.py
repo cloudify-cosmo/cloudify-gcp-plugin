@@ -57,8 +57,7 @@ def camel_farm(identifier):
     Convert from underscored to camelCase.
     """
     words = identifier.split('_')
-    return ''.join([words[0]] +
-                   [word.capitalize() for word in words[1:]])
+    return ''.join([words[0]] + [word.capitalize() for word in words[1:]])
 
 
 def get_item_from_gcp_response(key_field, key_name, items):
@@ -200,10 +199,8 @@ def delete_if_not_external(resource):
 
 def resource_created(ctx, resource_field):
     # resource_id is provided and all operations are finished
-    if (
-        ctx.instance.runtime_properties.get(resource_field)
-        and not ctx.instance.runtime_properties.get('_operation')
-    ):
+    if ctx.instance.runtime_properties.get(resource_field) and not \
+            ctx.instance.runtime_properties.get('_operation'):
         ctx.logger.info('Resource already created.')
         return True
     return False
@@ -558,7 +555,8 @@ class Operation(GoogleCloudPlatform, ABC):
         return self.last_response
 
     @abstractmethod
-    def _get(self): pass
+    def _get(self):
+        pass
 
 
 class GlobalOperation(Operation):
@@ -605,18 +603,14 @@ def get_relationships(
     for rel in relationships:
         res_type = get_resource_type(rel.target)
         if not any([
-                # if the instance runtime_properties doesn't have a 'kind' key
-                # filter it out regardless as it's not a GCP node.
-                (not res_type),
-
-                # filter on the GCP type ('kind' attribute)
-                (filter_resource_types and
-                 res_type not in filter_resource_types),
-
-                # Filter by relationship type
-                (filter_relationships and
-                 rel.type not in filter_relationships),
-                ]):
+            # if the instance runtime_properties doesn't have a 'kind' key
+            # filter it out regardless as it's not a GCP node.
+            not res_type,
+            # filter on the GCP type ('kind' attribute)
+            filter_resource_types and res_type not in filter_resource_types,
+            # Filter by relationship type
+            filter_relationships and rel.type not in filter_relationships
+        ]):
             results.append(rel)
     return results
 

@@ -508,10 +508,8 @@ def add_external_ip(instance_name, zone, **kwargs):
             )
 
     if utils.should_use_external_resource(ctx.target):
-        ip_address = (
-                ip_node.properties.get('ip_address') or
-                ctx.target.instance.runtime_properties.get(constants.IP)
-                )
+        ip_address = ip_node.properties.get('ip_address') or \
+                     ctx.target.instance.runtime_properties.get(constants.IP)
         if not ip_address:
             raise GCPError('{} is set, but ip_address is not set'
                            .format(constants.USE_EXTERNAL_RESOURCE))
@@ -646,8 +644,8 @@ def validate_contained_in_network(**kwargs):
                 'Instances may only be contained in 1 Network or SubNetwork')
     elif len(rels) == 1:
         network = rels[0].target
-        if (network.node.type == 'cloudify.gcp.nodes.Network' and
-                not network.node.properties['auto_subnets']):
+        if network.node.type == 'cloudify.gcp.nodes.Network' and \
+                not network.node.properties['auto_subnets']:
             raise NonRecoverableError(
                     'It is invalid to connect an instance directly to a '
                     'network with custom Subtneworks (i.e. `auto_subnets` '

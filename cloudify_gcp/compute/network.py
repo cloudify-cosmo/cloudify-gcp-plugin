@@ -225,7 +225,7 @@ def delete(name, **kwargs):
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
-def add_peering(name, network, peerNetwork, autoCreateRoutes, **kwargs):
+def add_peering(name, network, peerNetwork, autoCreateRoutes, **_):
     gcp_config = utils.get_gcp_config()
     name = utils.get_final_resource_name(name)
 
@@ -248,7 +248,7 @@ def add_peering(name, network, peerNetwork, autoCreateRoutes, **kwargs):
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
-def remove_peering(name, network, peerNetwork,  **kwargs):
+def remove_peering(name, network, peerNetwork, **_):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
