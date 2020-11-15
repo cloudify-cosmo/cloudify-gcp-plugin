@@ -142,7 +142,7 @@ class TestGCPInstance(TestGCP):
                     'name': 'name',
                     'resource_id': 'name',
                     '_operation': mock_build().instances().insert().execute(),
-                 },
+                },
                 self.ctxmock.instance.runtime_properties
                 )
 

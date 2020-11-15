@@ -104,20 +104,20 @@ class TestUtils(unittest.TestCase):
             return argc, kwargs
 
         fake_ctx._operation.name = "cloudify.interfaces.lifecycle.create"
-        self.assertEqual(test(ctx=fake_ctx),  ((), {'ctx': fake_ctx}))
+        self.assertEqual(test(ctx=fake_ctx), ((), {'ctx': fake_ctx}))
         self.assertEqual(fake_ctx.instance._runtime_properties, {"c": "d"})
 
         # delete without error
         fake_ctx.instance._runtime_properties = DirtyTrackingDict({"a": "b"})
         fake_ctx._operation.name = "cloudify.interfaces.lifecycle.delete"
-        self.assertEqual(test(ctx=fake_ctx),  ((), {'ctx': fake_ctx}))
+        self.assertEqual(test(ctx=fake_ctx), ((), {'ctx': fake_ctx}))
         self.assertFalse(fake_ctx.instance._runtime_properties)
 
         # delete postponed by gcp
         fake_ctx.instance._runtime_properties = DirtyTrackingDict(
             {"_operation": "b"})
         fake_ctx._operation.name = "cloudify.interfaces.lifecycle.delete"
-        self.assertEqual(test(ctx=fake_ctx),  ((), {'ctx': fake_ctx}))
+        self.assertEqual(test(ctx=fake_ctx), ((), {'ctx': fake_ctx}))
         self.assertEqual(fake_ctx.instance._runtime_properties,
                          {"_operation": "b"})
 
@@ -361,9 +361,9 @@ class TestUtilsWithCTX(TestGCP):
         self.ctxmock.instance.runtime_properties['_operation'] = 'rhinoplasty'
         mock_r2o.return_value.has_finished.side_effect = utils.GCPError('nooo')
         mock_r2o.return_value.last_response = {
-                'status': 'DONE',
-                'error': 'YEP! IT FAILED.',
-            }
+            'status': 'DONE',
+            'error': 'YEP! IT FAILED.',
+        }
 
         class FakeNodeType(object):
             @utils.async_operation()

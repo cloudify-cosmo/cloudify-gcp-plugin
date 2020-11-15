@@ -81,7 +81,7 @@ class TestGCPNetworkPolicy(TestGCP):
         )
 
         mock_build().projects().zones().clusters(
-        ).setNetworkPolicy.assert_called_once_with(
+                ).setNetworkPolicy.assert_called_once_with(
             body={'networkPolicy': {'provider': 'test-provider',
                                     'enabled': True}},
             projectId='not really a project',

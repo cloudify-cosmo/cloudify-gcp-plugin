@@ -13,16 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import os
 from setuptools import setup
 
+
+def read(rel_path):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(here, rel_path), 'r') as fp:
+        return fp.read()
+
+
+def get_version(rel_file):
+    lines = read(rel_file)
+    for line in lines.splitlines():
+        if 'package_version' in line:
+            split_line = line.split(':')
+            line_no_space = split_line[-1].replace(' ', '')
+            line_no_quotes = line_no_space.replace('\'', '')
+            return line_no_quotes.strip('\n')
+    raise RuntimeError('Unable to find version string.')
+
+
 setup(
-
     name='cloudify-gcp-plugin',
-
-    version='1.6.6',
+    version=get_version('plugin.yaml'),
     description='Plugin for Google Cloud Platform',
-
     packages=[
         'cloudify_gcp.admin',
         'cloudify_gcp',
@@ -32,7 +47,6 @@ setup(
         'cloudify_gcp.logging',
         'cloudify_gcp.dns',
     ],
-
     license='LICENSE',
     zip_safe=False,
     install_requires=[
@@ -42,6 +56,6 @@ setup(
         "pyyaml==3.12",
         "pycrypto==2.6.1",
         "jsonschema==3.0.0",
-        "httplib2==0.17.3"
+        "httplib2==0.17.3",
     ],
 )

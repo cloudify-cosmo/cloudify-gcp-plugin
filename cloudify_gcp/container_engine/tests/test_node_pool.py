@@ -40,10 +40,10 @@ class TestGCPNodePool(TestGCP):
 
         mock_build().projects().zones().clusters().nodePools(
         ).create.assert_called_once_with(
-                body={'nodePool': {'name': 'valid_name', }, },
-                projectId='not really a project',
-                clusterId='cluster-test',
-                zone='a very fake zone')
+            body={'nodePool': {'name': 'valid_name', }, },
+            projectId='not really a project',
+            clusterId='cluster-test',
+            zone='a very fake zone')
 
     def test_start(self, mock_build, *args):
         self.ctxmock.instance.runtime_properties['name'] = 'valid_name'
@@ -118,8 +118,7 @@ class TestGCPNodePool(TestGCP):
         mock_build.assert_called_once()
 
         mock_build().projects().zones().clusters().nodePools(
-        ).delete.assert_called_with(
-            nodePoolId='valid_name',
-            clusterId='cluster-test',
-            projectId='not really a project',
-            zone='a very fake zone')
+        ).delete.assert_called_with(nodePoolId='valid_name',
+                                    clusterId='cluster-test',
+                                    projectId='not really a project',
+                                    zone='a very fake zone')
