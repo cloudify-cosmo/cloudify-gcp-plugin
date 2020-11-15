@@ -56,6 +56,6 @@ setup(
         "pyyaml==3.12",
         "pycrypto==2.6.1",
         "jsonschema==3.0.0",
-        "httplib2==0.17.3",
+        "httplib2==0.18.0",
     ],
 )
