@@ -1,3 +1,4 @@
+1.6.8: Update depenencies.
 1.6.7: Update version maintenance.
 1.6.6:
   - Update wagon builder to py2py3 wagon.
