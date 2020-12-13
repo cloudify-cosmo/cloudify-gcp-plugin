@@ -1,3 +1,4 @@
 pyrsistent==0.16.1
 networkx==1.9.1
 cloudify==5.1.0
+cryptography==3.2.1
