@@ -242,7 +242,7 @@ commands:
           at: workspace
       - run:
           name: update pip
-          command: pip install -U pip
+          command: pip install -U pip===20.3.3
       - run:
           name: install cloudify
           command: |
@@ -277,7 +277,7 @@ commands:
           at: workspace
       - run:
           name: update pip
-          command: pip install -U pip
+          command: pip install -U pip===20.3.3
       - run:
           name: install cloudify
           command: |
@@ -353,19 +353,19 @@ jobs:
       - run_integration_tests_510
 
   validate_version:
-    executor: py27
+    executor: py36
     steps:
       - checkout
       - validate_version
 
   validate_documentation:
-    executor: py27
+    executor: py36
     steps:
       - checkout
       - validate_documentation
 
   release:
-    executor: py27
+    executor: py36
     steps:
       - checkout
       - release_plugin
