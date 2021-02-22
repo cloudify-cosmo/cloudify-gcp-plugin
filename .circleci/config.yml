@@ -441,18 +441,15 @@ workflows:
       - wagon:
           filters:
             branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-              only: /RD-1496-port-ci-to-use-ecosystem-tests-cli/
+              only: /([0-9\.]*\-build|master|dev)/
       - rhel_wagon:
           filters:
             branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-              only: /RD-1496-port-ci-to-use-ecosystem-tests-cli/
+              only: /([0-9\.]*\-build|master|dev)/
       - build_bundle:
           filters:
             branches:
-#              only: /master/
-              only: /RD-1496-port-ci-to-use-ecosystem-tests-cli/
+              only: /master/
           requires:
             - wagon
             - rhel_wagon
@@ -461,29 +458,25 @@ workflows:
             - build_bundle
           filters:
             branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-              only: /RD-1496-port-ci-to-use-ecosystem-tests-cli/
+              only: /([0-9\.]*\-build|master|dev)/
       - gke_integration_tests_505:
           requires:
             - build_bundle
           filters:
             branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-              only: /RD-1496-port-ci-to-use-ecosystem-tests-cli/
+              only: /([0-9\.]*\-build|master|dev)/
       - virtual_machine_integration_tests_py3:
           requires:
             - build_bundle
           filters:
             branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-              only: /RD-1496-port-ci-to-use-ecosystem-tests-cli/
+              only: /([0-9\.]*\-build|master|dev)/
       - gke_integration_tests_py3:
           requires:
             - build_bundle
           filters:
             branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-              only: /RD-1496-port-ci-to-use-ecosystem-tests-cli/
+              only: /([0-9\.]*\-build|master|dev)/
       - release:
           filters:
             branches:
