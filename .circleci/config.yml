@@ -512,31 +512,34 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - virtual_machine_integration_tests_505:
+      - build_bundle:
+          filters:
+            branches:
+              only: /master/
           requires:
             - wagon
             - rhel_wagon
+      - virtual_machine_integration_tests_505:
+          requires:
+            - build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
       - gke_integration_tests_505:
           requires:
-            - wagon
-            - rhel_wagon
+            - build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
       - virtual_machine_integration_tests_py3:
           requires:
-            - wagon
-            - rhel_wagon
+            - build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
       - gke_integration_tests_py3:
           requires:
-            - wagon
-            - rhel_wagon
+            - build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
