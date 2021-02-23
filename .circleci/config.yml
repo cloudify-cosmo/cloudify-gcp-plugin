@@ -26,7 +26,7 @@ executors:
     machine:
       image: ubuntu-1604:201903-01
 
-  cloudify-machine-510:
+  cloudify-machine-py3:
     machine:
       image: ubuntu-1604:201903-01
 
@@ -200,6 +200,24 @@ commands:
           paths:
             - build/*
 
+  build_archive:
+    steps:
+      - attach_workspace:
+          at: workspace
+      - run:
+          name: Create Workspace Build directory.
+          command: mkdir -p workspace/build
+      - run:
+          name: Build Bundle
+          command: |
+            git clone https://github.com/cloudify-incubator/cloudify-ecosystem-test.git
+            pip install -e cloudify-ecosystem-test
+            python -c 'from ecosystem_cicd_tools import packaging; packaging.build_plugins_bundle_with_workspace()'
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - build/*
+
   release_plugin:
     steps:
       - run:
@@ -232,7 +250,7 @@ commands:
           at: workspace
       - run: python .circleci/package_release.py
 
-  run_integration_tests_505:
+  create_manager_container_505:
     steps:
       - run:
           name: "Pull Submodules"
@@ -264,10 +282,9 @@ commands:
           command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host cloudifyplatform/premium-cloudify-manager-aio
       - run:
           name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
-      - run: pytest -s .circleci/test_examples.py
+          command:  pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
 
-  run_integration_tests_510:
+  create_manager_container_py3:
     steps:
       - run:
           name: "Pull Submodules"
@@ -302,8 +319,19 @@ commands:
           command: docker exec -it cfy_manager cfy_manager wait-for-starter
       - run:
           name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
-      - run: pytest -s .circleci/test_examples.py
+          command:  pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
+
+  prepare_test_manager:
+    steps:
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials --bundle-path workspace/build/cloudify-plugins-bundle.tgz
+
+  run_virtual_machine_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/virtual-machine/gcp.yaml --test-id=virtual-machine --on-failure=uninstall-force --timeout=1800
+
+  run_gke_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml --test-id=gcp-gke  -i resource_prefix=gcpresource-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
 
 jobs:
 
@@ -337,23 +365,51 @@ jobs:
       - checkout
       - generate_rhel_py27py36_wagon
 
-  integration_tests_505:
+  build_bundle:
+    executor: py36
+    steps:
+      - checkout
+      - build_archive
+
+  virtual_machine_integration_tests_505:
     executor: cloudify-machine
     environment:
       CLOUDIFY_SSL_TRUST_ALL: true
-      IAAS: gcp
     steps:
       - checkout
-      - run_integration_tests_505
+      - create_manager_container_505
+      - prepare_test_manager
+      - run_virtual_machine_test
 
-  integration_tests_510:
-    executor: cloudify-machine-510
+  gke_integration_tests_505:
+    executor: cloudify-machine
     environment:
       CLOUDIFY_SSL_TRUST_ALL: true
-      IAAS: gcp
     steps:
       - checkout
-      - run_integration_tests_510
+      - create_manager_container_505
+      - prepare_test_manager
+      - run_gke_test
+
+  virtual_machine_integration_tests_py3:
+    executor: cloudify-machine-py3
+    environment:
+      CLOUDIFY_SSL_TRUST_ALL: true
+    steps:
+      - checkout
+      - create_manager_container_py3
+      - prepare_test_manager
+      - run_virtual_machine_test
+
+  gke_integration_tests_py3:
+    executor: cloudify-machine-py3
+    environment:
+      CLOUDIFY_SSL_TRUST_ALL: true
+    steps:
+      - checkout
+      - create_manager_container_py3
+      - prepare_test_manager
+      - run_gke_test
 
   validate_version:
     executor: py36
@@ -390,17 +446,34 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - integration_tests_505:
+      - build_bundle:
+          filters:
+            branches:
+              only: /master/
           requires:
             - wagon
             - rhel_wagon
+      - virtual_machine_integration_tests_505:
+          requires:
+            - build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - integration_tests_510:
+      - gke_integration_tests_505:
           requires:
-            - wagon
-            - rhel_wagon
+            - build_bundle
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - virtual_machine_integration_tests_py3:
+          requires:
+            - build_bundle
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - gke_integration_tests_py3:
+          requires:
+            - build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
@@ -413,8 +486,11 @@ workflows:
             - unittests_py36
             - wagon
             - rhel_wagon
-            - integration_tests_505
-            - integration_tests_510
+            - virtual_machine_integration_tests_505
+            - gke_integration_tests_505
+            - virtual_machine_integration_tests_py3
+            - gke_integration_tests_py3
+
   nightly:
     triggers:
     - schedule:
@@ -436,17 +512,34 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - integration_tests_505:
+      - build_bundle:
+          filters:
+            branches:
+              only: /master/
           requires:
             - wagon
             - rhel_wagon
+      - virtual_machine_integration_tests_505:
+          requires:
+            - build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - integration_tests_510:
+      - gke_integration_tests_505:
           requires:
-            - wagon
-            - rhel_wagon
+            - build_bundle
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - virtual_machine_integration_tests_py3:
+          requires:
+            - build_bundle
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - gke_integration_tests_py3:
+          requires:
+            - build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
