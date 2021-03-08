@@ -55,7 +55,7 @@ setup(
         "cloudify-common>=4.5.5",
         "pyyaml>=4.2b1",
         "networkx==1.9.1",
-        "pycrypto==2.6.1",
+        "pycryptodome>=3.9.8,<3.10",
         "jsonschema==3.0.0",
         'httplib2>=0.18.0'
     ],
