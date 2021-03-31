@@ -46,6 +46,7 @@ setup(
         'cloudify_gcp.container_engine',
         'cloudify_gcp.logging',
         'cloudify_gcp.dns',
+        'cloudify_gcp.iam',
     ],
     license='LICENSE',
     zip_safe=False,
