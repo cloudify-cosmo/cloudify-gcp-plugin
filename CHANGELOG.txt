@@ -1,3 +1,4 @@
+1.7.0: Support IAM Role create and delete.
 1.6.9: Replace pycrypto 2.6.1 with pycryptodome 3.9.8
 1.6.8: Update depenencies.
 1.6.7: Update version maintenance.

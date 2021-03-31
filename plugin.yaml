@@ -2,9 +2,9 @@ plugins:
 
   gcp_plugin:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.6.9.zip
+    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.7.0.zip
     package_name: cloudify-gcp-plugin
-    package_version: '1.6.9'
+    package_version: '1.7.0'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -2002,7 +2002,7 @@ node_types:
         type: string
         default: Folder
 
-  cloudify.gcp.nodes.Logging.Organizatios.exclusions:
+  cloudify.gcp.nodes.Logging.Organizations.exclusions:
     derived_from: cloudify.gcp.nodes.LoggingExclusion
     properties:
       exclusion_type:
@@ -2010,6 +2010,10 @@ node_types:
           Logging Exclusion type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
         type: string
         default: Organization
+
+  # Original bug. Keeping until next major version.
+  cloudify.gcp.nodes.Logging.Organizatios.exclusions:
+    derived_from: cloudify.gcp.nodes.Logging.Organizations.exclusions
 
   cloudify.gcp.nodes.Logging.Projects.exclusions:
     derived_from: cloudify.gcp.nodes.LoggingExclusion
@@ -2053,6 +2057,60 @@ node_types:
              default: { get_property: [SELF, parent]}
            log_metric:
              default: { get_property: [SELF, log_metric]}
+
+  cloudify.gcp.nodes.IAM.Role:
+    derived_from: cloudify.nodes.Root
+    properties:
+      <<: *external_resource
+      <<: *resource_id
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      name:
+        description: >
+          GCP Role name
+        type: string
+        default: ''
+      title:
+        description: >
+          GCP Role title
+        type: string
+        default: ''
+      description:
+        description: >
+          GCP Role description
+        type: string
+        default: ''
+      permissions:
+        description: >
+          GCP Role included permissions
+        type: list
+        default: []
+      stage:
+        description: >
+          GCP Role stage
+        type: string
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.iam.role.create
+          inputs:
+            name:
+              default: { get_property: [SELF, name]}
+            title:
+              default: { get_property: [SELF, title]}
+            description:
+              default: { get_property: [SELF, description]}
+            permissions:
+              default: { get_property: [SELF, permissions]}
+            stage:
+              default: { get_property: [SELF, stage]}
+            additional_settings:
+              default: {}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.iam.role.delete
 
 relationships:
 
