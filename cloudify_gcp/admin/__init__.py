@@ -17,7 +17,6 @@ from oauth2client import GOOGLE_TOKEN_URI
 from oauth2client.client import GoogleCredentials
 
 from .. import gcp
-from .. import utils
 from .. import constants
 
 
