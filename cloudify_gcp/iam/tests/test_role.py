@@ -22,7 +22,7 @@ from mock import patch
 import mock
 
 # Local imports
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import OperationRetry
 
 from cloudify_gcp.iam import role
 from ...tests import TestGCP
@@ -35,11 +35,18 @@ from ...tests import TestGCP
 class TestGCPRole(TestGCP):
 
     def test_create(self, mock_build, *_):
-        role.create('valid_name')
+        role.create('valid_name', 'foo', 'bar', 'baz', 'taco')
 
         mock_build().projects().roles().create.assert_called_once_with(
-            body={'name': 'valid_name'},
-            projectId='not really a project')
+            parent='projects/not really a project',
+            body={'roleId': 'valid_name',
+                  'role': {
+                      'title': 'foo',
+                      'description': 'bar',
+                      'includedPermissions': 'baz',
+                      'stage': 'taco'
+                      }
+                  })
 
     def test_delete(self, mock_build, *_):
 
@@ -49,11 +56,12 @@ class TestGCPRole(TestGCP):
         # stopping
         self.ctxmock.operation.retry = mock.Mock()
         roles.get = mock.Mock(return_value={})
-        role.delete()
-        self.ctxmock.operation.retry.assert_called_with(role.DELETING_MESSAGE.format(deleted=None))
-
-        # error
-        self.ctxmock.operation.retry = mock.Mock()
-        roles.get = mock.Mock(return_value=role.DELETING_MESSAGE.format(deleted=True))
-        with self.assertRaises(NonRecoverableError):
+        with self.assertRaises(OperationRetry):
             role.delete()
+        # self.ctxmock.operation.retry.assert_called_with(
+        #     role.DELETING_MESSAGE.format(deleted=None))
+
+        self.ctxmock.operation.retry = mock.Mock()
+        roles.get = mock.Mock(return_value=role.DELETING_MESSAGE.format(
+            deleted=True))
+        role.delete()

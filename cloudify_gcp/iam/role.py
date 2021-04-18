@@ -140,6 +140,4 @@ def delete(**_):
             role.delete()
             ctx.logger.debug(
                 )
-            raise OperationRetry(
-                'Waiting for role to be deleted. '
-                'Role deleted value is {deleted}.'.format(deleted=deleted))
+            raise OperationRetry(DELETING_MESSAGE.format(deleted=deleted))
