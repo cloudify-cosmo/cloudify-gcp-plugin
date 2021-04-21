@@ -12,46 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from cloudify.decorators import operation
+
 from cloudify import ctx
+from cloudify.decorators import operation
 
-from oauth2client.client import GoogleCredentials
-from oauth2client import GOOGLE_TOKEN_URI
-
-from .. import constants
-from .. import utils
 from .. import gcp
+from .. import utils
+from .. import constants
+from . import CloudResourcesBase
 
 
-class Project(gcp.GoogleCloudApi):
+class Project(CloudResourcesBase):
 
-    def __init__(self, config, logger, project_id=None, name=None,
-                 scope=constants.COMPUTE_SCOPE,
-                 discovery=constants.CLOUDRESOURCES_DISCOVERY,
-                 api_version=constants.API_V1):
-        super(Project, self).__init__(config, logger, scope, discovery,
-                                      api_version)
-
+    def __init__(self, config, logger, project_id=None, name=None):
+        super(CloudResourcesBase, self).__init__(config, logger)
         self.project_id = utils.get_gcp_resource_name(project_id)
         self.name = name if name else self.project_id
-
-    def get_credentials(self, scope):
-        # check
-        # run: gcloud beta auth application-default login
-        # look to ~/.config/gcloud/application_default_credentials.json
-        credentials = GoogleCredentials(
-            access_token=None,
-            client_id=self.auth['client_id'],
-            client_secret=self.auth['client_secret'],
-            refresh_token=self.auth['refresh_token'],
-            token_expiry=None,
-            token_uri=GOOGLE_TOKEN_URI,
-            user_agent='Python client library'
-        )
-        self.logger.debug('Credentials: {}'.format(
-            repr(credentials.to_json())
-        ))
-        return credentials
 
     @gcp.check_response
     def get(self):
@@ -85,7 +61,7 @@ class Project(gcp.GoogleCloudApi):
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
-def create(**kwargs):
+def create(**_):
     if utils.resource_created(ctx, constants.RESOURCE_ID):
         return
 
@@ -104,7 +80,7 @@ def create(**kwargs):
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
-def delete(**kwargs):
+def delete(**_):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 

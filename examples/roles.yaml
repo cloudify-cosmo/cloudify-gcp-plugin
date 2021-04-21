@@ -1,0 +1,81 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: >
+  This blueprint installs an application using Cloudify on GCP.
+
+imports:
+  - https://cloudify.co/spec/cloudify/5.1.0/types.yaml
+  - plugin:cloudify-gcp-plugin?version= >=1.6.0
+
+inputs:
+
+  zone:
+    type: string
+    description: The GCP zone to deploy the application in, such as europe-west1-b.
+    default: 'europe-west1-b'
+
+  resource_suffix:
+    type: string
+    default: '1'
+
+  role_name:
+    type: string
+    default: { concat: [ 'myDemoRole' , { get_input: resource_suffix } ] }
+
+  role_title:
+    type: string
+    default: 'My Demo Role'
+
+  role_description:
+    type: string
+    default: 'The demo admin role allows company admins to access important resources'
+
+  role_permissions:
+    type: list
+    default:
+      - storage.objects.update
+
+  role_stage:
+    type: string
+    default: ALPHA
+
+  policy_binding_resource:
+    type: string
+    description: Requires permissions for the resource.
+    default: ''
+
+  policy_binding_role:
+    type: string
+    default: roles/logging.viewer
+
+  policy_members:
+    type: string
+    default: []
+
+dsl_definitions:
+
+  gcp_config: &gcp_config
+    auth: { get_secret: gcp_credentials }
+    zone: { get_input: zone }
+
+node_templates:
+
+  PolicyBinding:
+    type: cloudify.nodes.gcp.PolicyBinding
+    properties:
+      gcp_config: *gcp_config
+      resource: { get_input: policy_binding_resource }
+      policy:
+        bindings:
+          - role: { get_input: policy_binding_role }
+            members: { get_input: policy_members }
+
+  Role:
+    type: cloudify.gcp.nodes.IAM.Role
+    properties:
+      gcp_config: *gcp_config
+      name: { get_input: role_name }
+      title: { get_input: role_title }
+      description: { get_input: role_description }
+      permissions: { get_input: role_permissions }
+      stage: { get_input: role_stage }
