@@ -1,6 +1,5 @@
 pyrsistent==0.16.1
 networkx==1.9.1
 cloudify==5.1.0
-cryptography==3.2.1
-rsa==4.5
-decorator==4.4.2
+cryptography==3.3.2
+
