@@ -18,9 +18,9 @@ from os.path import basename
 
 import httplib2
 from Crypto.Random import atfork
-from googleapiclient.discovery import build
 from httplib2 import ServerNotFoundError
 from googleapiclient.errors import HttpError
+from googleapiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 
 from cloudify.exceptions import OperationRetry

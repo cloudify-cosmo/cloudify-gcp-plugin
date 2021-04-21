@@ -57,6 +57,41 @@ node_types:
         delete:
           implementation: gcp_plugin.cloudify_gcp.admin.projects.delete
 
+  cloudify.nodes.gcp.PolicyBinding:
+    derived_from: cloudify.nodes.Root
+    properties:
+      <<: *external_resource
+      <<: *resource_id
+      gcp_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      resource:
+        description: >
+          Optional project name. By default it will be the current project.
+        type: string
+        default: ''
+      policy:
+        description: A dict describing the policy.
+        type: string
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.iam.policy_binding.create
+          inputs:
+            resource:
+              default: { get_property: [SELF, resource]}
+            policy:
+              default: { get_property: [SELF, policy]}
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.iam.policy_binding.delete
+          inputs:
+            resource:
+              default: { get_property: [SELF, resource]}
+            policy:
+              default: { get_property: [SELF, policy]}
+
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.Compute
     properties:
@@ -2058,7 +2093,7 @@ node_types:
            log_metric:
              default: { get_property: [SELF, log_metric]}
 
-  cloudify.gcp.nodes.IAM.Role:
+  cloudify.nodes.gcp.IAM.Role:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *external_resource
@@ -2111,6 +2146,12 @@ node_types:
               default: {}
         delete:
           implementation: gcp_plugin.cloudify_gcp.iam.role.delete
+
+  cloudify.nodes.gcp.Project:
+    derived_from: cloudify.gcp.project
+
+  cloudify.gcp.nodes.IAM.Role:
+    derived_from: cloudify.nodes.gcp.IAM.Role
 
 relationships:
 

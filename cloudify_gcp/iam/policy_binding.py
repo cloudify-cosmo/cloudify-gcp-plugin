@@ -16,15 +16,20 @@
 from copy import deepcopy
 
 from cloudify import ctx
+from Crypto.Random import atfork
 from cloudify.decorators import operation
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from oauth2client.service_account import _JWTAccessCredentials
 
 from .. import gcp
 from .. import utils
 from .. import constants
-from ..admin import CloudResourcesBase
+
+EMPTY_POLICY_BINDING = {'bindings': []}
 
 
-class PolicyBinding(CloudResourcesBase):
+class PolicyBinding(gcp.GoogleCloudPlatform):
     # https://cloud.google.com/resource-manager/reference/rest/v1/Policy
     # Example Gcloud Command:
     # gcloud iam service-accounts add-iam-policy-binding
@@ -32,69 +37,145 @@ class PolicyBinding(CloudResourcesBase):
     # --member='user:[Service Account]'
     # --role=projects/[Project]/roles/[Role Name]
 
-    def __init__(self, config, logger, service_accounts, policies):
-        super(CloudResourcesBase, self).__init__(config, logger)
-        self.resource = service_accounts
-        self.new_policy = policies
+    def __init__(self, config, logger, resource, policy):
+        super(gcp.GoogleCloudPlatform, self).__init__(
+            config,
+            logger,
+            scope=constants.CLOUDRESOURCES_SCOPE,
+            discovery=constants.CLOUDRESOURCES_DISCOVERY)
+        self.resource = resource or config['project']
+        self.new_policy = policy
+
+    def get_credentials(self, scope):
+        # check
+        # run: gcloud beta auth application-default login
+        # look to ~/.config/gcloud/application_default_credentials.json
+        atfork()
+        if hasattr(self.auth, 'get'):
+            creds_func = _JWTAccessCredentials.from_json_keyfile_dict
+        else:
+            creds_func = _JWTAccessCredentials.from_json_keyfile_name
+        return creds_func(self.auth, scopes=self.scope)
+
+    def create_discovery(self, discovery, scope, api_version):
+        """
+        Create Google Cloud API discovery object and perform authentication.
+
+        :param discovery: name of the API discovery to be created
+        :param scope: scope the API discovery will have
+        :param api_version: version of the API
+        :return: discovery object
+        :raise: GCPError if there is a problem with service account JSON file:
+        e.g. the file is not under the given path or it has wrong permissions
+        """
+        # Crypto.Random.atfork() must be called here because celery doesn't do
+        # it
+        atfork()
+        try:
+            credentials = self.get_credentials(scope)
+            return build(discovery, api_version, credentials=credentials)
+        except IOError as e:
+            self.logger.error(str(e))
+            raise gcp.GCPError(str(e))
 
     @gcp.check_response
     def get(self):
-        return self.discovery.projects().getIamPolicy(
-            resource=self.resource).execute()
+        request_body = {
+            'options': {
+                'requestedPolicyVersion': 3
+            }
+        }
+        try:
+            return self.discovery.projects().getIamPolicy(
+                resource=self.resource, body=request_body).execute()
+        except HttpError as e:
+            self.logger.error(str(e))
+            return EMPTY_POLICY_BINDING
 
     @gcp.check_response
     def create(self):
         # https://cloud.google.com/resource-manager/
         # reference/rest/v1/projects/setIamPolicy
-        return self.discovery.projects().setIamPolicy(
-            resource=self.resource,
-            policy=self.add_new_policies_to_current_policy()).execute()
+        policy = self.add_new_policies_to_current_policy()
+        self.logger.debug('Attempting to update policy {}'.format(policy))
+        request_body = {
+            'policy': policy
+        }
+        try:
+            return self.discovery.projects().setIamPolicy(
+                resource=self.resource,
+                body=request_body).execute()
+        except HttpError as e:
+            error = str(e)
+            self.logger.error(error)
+            if '404' in error:
+                return ctx.operation.retry(
+                    message='Attempting to retry create policy binding: '
+                            '{error}.'.format(error=error))
+            else:
+                raise
 
     @gcp.check_response
     def delete(self):
         # https://cloud.google.com/iam/docs/granting-changing-revoking-access
-        return self.discovery.projects().setIamPolicy(
-            resource=self.resource,
-            policy=self.remove_new_policies_from_current_policy()).execute()
+        policy = self.remove_new_policies_from_current_policy()
+        if policy == EMPTY_POLICY_BINDING:
+            return EMPTY_POLICY_BINDING
+        self.logger.debug('Attempting to rollback policy {}'.format(policy))
+        request_body = {
+            'policy': policy
+        }
+        try:
+            return self.discovery.projects().setIamPolicy(
+                resource=self.resource,
+                body=request_body).execute()
+        except HttpError as e:
+            error = str(e)
+            self.logger.error(error)
+            if '404' in error:
+                return EMPTY_POLICY_BINDING
+            else:
+                raise
 
     def add_new_policies_to_current_policy(self):
         current_policy = deepcopy(self.get())
-        # TODO: Actually devise how to add a policy to an existing policy.
-        current_policy.update(self.new_policy)
+        for binding in self.new_policy['bindings']:
+            if binding not in current_policy['bindings']:
+                current_policy['bindings'].append(binding)
         return current_policy
 
     def remove_new_policies_from_current_policy(self):
         current_policy = self.get()
-        # TODO: Remove new policy
+        for n, binding in enumerate(self.new_policy['bindings']):
+            if binding in current_policy['bindings']:
+                del current_policy['bindings'][n]
         return current_policy
 
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
-def create(service_accounts, policies, **_):
-    # TODO: Decide which parameters should be exposed.
-    # TODO: Update Plugin YAML.
+def create(resource, policy, **_):
     if utils.resource_created(ctx, constants.RESOURCE_ID):
         return
     gcp_config = utils.get_gcp_config()
-    policy = PolicyBinding(
+    policybinding = PolicyBinding(
         gcp_config,
         ctx.logger,
-        service_accounts,
-        policies
+        resource,
+        policy
     )
-    utils.create(policy)
-    ctx.instance.runtime_properties.update(policy)
+    utils.create(policybinding)
+    ctx.instance.runtime_properties.update(policybinding.get())
 
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
-def delete(service_accounts, policies, **_):
+def delete(resource, policy, **_):
     gcp_config = utils.get_gcp_config()
-    policy = PolicyBinding(
+    policybinding = PolicyBinding(
         gcp_config,
         ctx.logger,
-        service_accounts,
-        policies
+        resource,
+        policy
     )
-    policy.delete()
+    policybinding.delete()

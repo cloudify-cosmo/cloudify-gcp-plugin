@@ -28,6 +28,7 @@ class CloudResourcesBase(gcp.GoogleCloudApi):
                  scope=constants.COMPUTE_SCOPE,
                  discovery=constants.CLOUDRESOURCES_DISCOVERY,
                  api_version=constants.API_V1):
+
         super(CloudResourcesBase, self).__init__(
             config,
             logger,
@@ -48,9 +49,6 @@ class CloudResourcesBase(gcp.GoogleCloudApi):
             token_uri=GOOGLE_TOKEN_URI,
             user_agent='Python client library'
         )
-        self.logger.debug('Credentials: {}'.format(
-            repr(credentials.to_json())
-        ))
         return credentials
 
     def get(self):

@@ -25,6 +25,7 @@ CONTAINER_SCOPE = 'https://www.googleapis.com/auth/cloud-platform'
 PUB_SUB_SCOPE = 'https://www.googleapis.com/auth/pubsub'
 LOGGING_SCOPE = 'https://www.googleapis.com/auth/logging.admin'
 IAM_SCOPE = 'https://www.googleapis.com/auth/iam'
+CLOUDRESOURCES_SCOPE = 'https://www.googleapis.com/auth/cloud-platform'
 
 COMPUTE_DISCOVERY = 'compute'
 STORAGE_DISCOVERY = 'storage'

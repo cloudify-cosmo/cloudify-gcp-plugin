@@ -138,6 +138,4 @@ def delete(**_):
         deleted = role_dict.get('deleted')
         if not deleted:
             role.delete()
-            ctx.logger.debug(
-                )
             raise OperationRetry(DELETING_MESSAGE.format(deleted=deleted))
