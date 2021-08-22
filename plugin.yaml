@@ -2,9 +2,9 @@ plugins:
 
   gcp_plugin:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.7.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-gcp-plugin/archive/1.8.0.zip
     package_name: cloudify-gcp-plugin
-    package_version: '1.7.0'
+    package_version: '1.8.0'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
