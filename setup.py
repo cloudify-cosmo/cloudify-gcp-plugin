@@ -47,6 +47,7 @@ setup(
         'cloudify_gcp.logging',
         'cloudify_gcp.dns',
         'cloudify_gcp.iam',
+        'cloudify_gcp.workflows',
     ],
     license='LICENSE',
     zip_safe=False,
