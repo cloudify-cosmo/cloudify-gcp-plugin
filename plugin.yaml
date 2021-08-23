@@ -2175,15 +2175,15 @@ node_types:
           inputs:
             resource_config:
               default: { get_property: [ SELF, resource_config ] }
-            locations:
-              default: { get_property: [ SELF, locations ] }
+            zones:
+              default: { get_property: [ SELF, zones ] }
         delete:
           implementation: gcp_plugin.cloudify_gcp.workflows.resources.deinitialize
           inputs:
             resource_config:
               default: { get_property: [ SELF, resource_config ] }
-            locations:
-              default: { get_property: [ SELF, locations ] }
+            zones:
+              default: { get_property: [ SELF, zones ] }
 
 relationships:
 
