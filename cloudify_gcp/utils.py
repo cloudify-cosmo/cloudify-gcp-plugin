@@ -16,10 +16,12 @@
 import re
 import sys
 import time
+import json
 from functools import wraps
+from abc import abstractmethod
+from jsonschema import validate
 from subprocess import check_output
 from os.path import basename, expanduser
-from abc import abstractmethod
 
 from six.moves import http_client
 
@@ -42,8 +44,13 @@ from .gcp import (
     is_resource_used_error,
 )
 
-import json
-from jsonschema import validate
+
+try:
+    from cloudify.constants import (
+        RELATIONSHIP_INSTANCE, NODE_INSTANCE)
+except ImportError:
+    NODE_INSTANCE = 'node-instance'
+    RELATIONSHIP_INSTANCE = 'relationship-instance'
 
 
 def generate_traceback_exception():
@@ -390,12 +397,33 @@ def throw_cloudify_exceptions(func):
     return wraps(func)(_decorator)
 
 
-def get_gcp_config():
+def get_node(_ctx, target=False):
+    if _ctx.type == RELATIONSHIP_INSTANCE:
+        if target:
+            return _ctx.target.node
+        return _ctx.source.node
+    else:  # _ctx.type == NODE_INSTANCE
+        return _ctx.node
+
+
+def get_gcp_config(node=None):
+
+    node = node or get_node(ctx)
+
     def _get_gcp_config_from_properties():
-        try:
-            return ctx.node.properties[constants.GCP_CONFIG]
-        except NonRecoverableError:
-            return ctx.source.node.properties[constants.GCP_CONFIG]
+        for config_key in [constants.GCP_CONFIG,
+                           constants.GCP_CONFIG_OLD]:
+            if config_key == constants.GCP_CONFIG_OLD:
+                ctx.logger.warn(
+                    'The client configuration key gcp_config is '
+                    'deprecated and will be removed in a future '
+                    'version of the plugin. '
+                    'Please use client_config instead.')
+            if config_key in node.properties:
+                return node.properties[config_key]
+        raise NonRecoverableError(
+            'No valid client configuration key was found in node or '
+            'source node properties. Valid keys: [client_config]')
 
     gcp_config_from_properties = _get_gcp_config_from_properties()
     if gcp_config_from_properties:

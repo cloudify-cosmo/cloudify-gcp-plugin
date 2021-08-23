@@ -2153,6 +2153,38 @@ node_types:
   cloudify.gcp.nodes.IAM.Role:
     derived_from: cloudify.nodes.gcp.IAM.Role
 
+  cloudify.nodes.gcp.Gcp:
+    derived_from: cloudify.nodes.Root
+    properties:
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      zones:
+        type: list
+        default: []
+      resource_config:
+        type: dict
+        default:
+          resource_types:
+            - projects.zones.clusters
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.workflows.resources.initialize
+          inputs:
+            resource_config:
+              default: { get_property: [ SELF, resource_config ] }
+            locations:
+              default: { get_property: [ SELF, locations ] }
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.workflows.resources.deinitialize
+          inputs:
+            resource_config:
+              default: { get_property: [ SELF, resource_config ] }
+            locations:
+              default: { get_property: [ SELF, locations ] }
+
 relationships:
 
   cloudify.gcp.relationships.instance_connected_to_security_group:
