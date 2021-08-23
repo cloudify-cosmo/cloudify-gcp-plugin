@@ -87,14 +87,14 @@ def get_resources(node, zones, resource_types, logger):
         # Clean it up for context serialization.
         # Add this stuff to the resources dict.
         for resource in iface.list():
-            resource_id = getattr(resource, resource_key)
-            resource_entry = {resource_id: resource.as_dict()}
-            if resource.zone not in resources:
-                resources[resource.zone] = {resource_type: resource_entry}
-            elif resource_type not in resources[resource.zone]:
-                resources[resource.zone][resource_type] = resource_entry
+            resource_id = resource[resource_key]
+            resource_entry = {resource_id: resource}
+            if resource['location'] not in resources:
+                resources[resource['location']] = {resource_type: resource_entry}
+            elif resource_type not in resources[resource['location']]:
+                resources[resource['location']][resource_type] = resource_entry
             else:
-                resources[resource.zone][resource_type][resource_id] = \
+                resources[resource['location']][resource_type][resource_id] = \
                     resource.as_dict()
     return resources
 
