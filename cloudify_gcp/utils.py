@@ -406,7 +406,7 @@ def get_node(_ctx, target=False):
         return _ctx.node
 
 
-def get_gcp_config(node=None):
+def get_gcp_config(node=None, requested_zone=None):
 
     node = node or get_node(ctx)
 
@@ -474,7 +474,8 @@ def get_gcp_config(node=None):
                                       .format(e))
         # If no network is specified, assume the GCP default network, 'default'
         gcp_config.setdefault('network', 'default')
-        return update_zone(gcp_config)
+        if not requested_zone:
+            return update_zone(gcp_config)
     return gcp_config
 
 

@@ -32,7 +32,7 @@ def initialize(resource_config=None, zones=None, ctx=None, **_):
     resource_types = resource_config.get('resource_types', [])
     ctx.logger.info('Checking for these resource types: {t}.'.format(
         t=resource_types))
-
+    zones = zones or get_zones()
     ctx.instance.runtime_properties['resources'] = get_resources(
         ctx.node, zones, resource_types, ctx.logger)
 
@@ -69,39 +69,42 @@ def get_resources(node, zones, resource_types, logger):
     # The structure goes resources.location.resource_type.resource, so we start
     # with location.
     # then resource type.
-    for resource_type in resource_types:
-        logger.info(
-            'Checking for this resource type: {t}.'.format(
-                t=resource_type))
-        # Get the class callable, the service name, and resource_id key.
-        class_decl, service_name, resource_key = TYPES_MATRIX.get(
-            resource_type)
-        # Note that the service_name needs to be updated in the Cloudify
-        # GCP plugin resource module class for supporting new types.
-        if not class_decl:
-            # It means that we don't support whatever they provided.
-            raise NonRecoverableError(
-                'Unsupported resource type: {t}.'.format(t=resource_type))
-        iface = get_resource_interface(node, class_decl, logger)
-        # Get the resource response from the API.
-        # Clean it up for context serialization.
-        # Add this stuff to the resources dict.
-        for resource in iface.list():
-            resource_id = resource[resource_key]
-            resource_entry = {resource_id: resource}
-            if resource['location'] not in resources:
-                resources[resource['location']] = {resource_type: resource_entry}
-            elif resource_type not in resources[resource['location']]:
-                resources[resource['location']][resource_type] = resource_entry
-            else:
-                resources[resource['location']][resource_type][resource_id] = \
-                    resource.as_dict()
+    for zone in zones:
+        for resource_type in resource_types:
+            logger.info(
+                'Checking for this resource type: {t}.'.format(
+                    t=resource_type))
+            # Get the class callable, the service name, and resource_id key.
+            class_decl, service_name, resource_key = TYPES_MATRIX.get(
+                resource_type)
+            # Note that the service_name needs to be updated in the Cloudify
+            # GCP plugin resource module class for supporting new types.
+            if not class_decl:
+                # It means that we don't support whatever they provided.
+                raise NonRecoverableError(
+                    'Unsupported resource type: {t}.'.format(t=resource_type))
+            iface = get_resource_interface(node, zone, class_decl, logger)
+            # Get the resource response from the API.
+            # Clean it up for context serialization.
+            # Add this stuff to the resources dict.
+            for resource in iface.list():
+                resource_id = resource[resource_key]
+                resource_entry = {resource_id: resource}
+                if zone not in resources:
+                    resources[zone] = {
+                        resource_type: resource_entry
+                    }
+                elif resource_type not in resources[resource['location']]:
+                    resources[zone][resource_type] = resource_entry
+                else:
+                    resources[zone][resource_type][resource_id] = resource
     return resources
 
 
-def get_resource_interface(node, class_decl, logger):
-    gcp_config = desecretize_client_config(
-        utils.get_gcp_config(node))
+def get_resource_interface(node, zone, class_decl, logger):
+    node.properties['client_config'] = desecretize_client_config(
+        node.properties['client_config'])
+    gcp_config = utils.get_gcp_config(node, requested_zone=zone)
     return class_decl(gcp_config, logger, 'foo')
 
 

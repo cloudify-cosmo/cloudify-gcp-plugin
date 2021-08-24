@@ -41,7 +41,7 @@ def discover_resources(node_id=None,
     node = ctx.get_node(node_id)
     for node_instance in node.instances:
         if not isinstance(zones, list) and not zones:
-            zones = get_locations(node, ctx.deployment.id)
+            zones = get_zones(node, ctx.deployment.id)
         resources = get_resources(node, zones, resource_types, ctx.logger)
         discovered_resources.update(resources)
         node_instance._node_instance.runtime_properties['resources'] = \
