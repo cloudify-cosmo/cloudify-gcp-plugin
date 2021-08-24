@@ -476,6 +476,8 @@ def get_gcp_config(node=None, requested_zone=None):
         gcp_config.setdefault('network', 'default')
         if not requested_zone:
             return update_zone(gcp_config)
+        else:
+            gcp_config['zone'] = requested_zone
     return gcp_config
 
 
