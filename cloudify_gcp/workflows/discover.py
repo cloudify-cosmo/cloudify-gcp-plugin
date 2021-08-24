@@ -139,7 +139,8 @@ def discover_and_deploy(node_id=None,
                 del label_list[-1]
             deployment_ids_list = []
             inputs_list = []
-    install_deployments(ctx.deployment.id)
+    if resources:
+        install_deployments(ctx.deployment.id)
 
 
 def get_gcp_account_node_id(nodes):

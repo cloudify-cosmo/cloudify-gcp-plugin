@@ -64,12 +64,12 @@ def get_resources(node, zones, resource_types, logger):
 
     logger.info('Checking for these resource types: {t}.'.format(
         t=resource_types))
-    logger.info('Checking in these zones: {z}'.format(z=zones))
     resources = {}
     # The structure goes resources.location.resource_type.resource, so we start
     # with location.
     # then resource type.
     for zone in zones:
+        logger.info('Checking in this zone: {z}'.format(z=zone))
         for resource_type in resource_types:
             logger.info(
                 'Checking for this resource type: {t}.'.format(
