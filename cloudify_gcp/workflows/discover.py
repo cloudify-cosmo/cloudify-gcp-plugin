@@ -109,23 +109,22 @@ def discover_and_deploy(node_id=None,
                                    ctx=ctx)
     # Loop over the resources to create new deployments from them.
     resource_type = None
-    for _, resource_types in resources.items():
+    for zone, resource_types in resources.items():
         deployment_ids_list = []
         inputs_list = []
         for resource_type, resources in resource_types.items():
             for resource_id, _ in resources.items():
                 # We are now at the resource level.
                 # Create the inputs and deployment ID for the new deployment.
-                resource_name = resource_id.split('/')
                 inputs_list.append(
                     {
-                        'resource_group_name': resource_name[-5],
-                        'managed_cluster_name': resource_name[-1]
+                        'zone': zone,
+                        'kubernetes_cluster_name': resource_id
                     }
                 )
                 deployment_ids_list.append(
                     generate_deployment_ids(
-                        ctx.deployment.id, resource_name[-1])
+                        ctx.deployment.id, resource_id)
                 )
 
             if deployment_ids_list:
