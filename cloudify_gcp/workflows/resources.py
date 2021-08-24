@@ -1,4 +1,5 @@
 from cloudify import ctx as _ctx
+from cloudify.context import NodeContext
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 from cloudify_common_sdk.utils import desecretize_client_config
@@ -102,8 +103,9 @@ def get_resources(node, zones, resource_types, logger):
 
 
 def get_resource_interface(node, zone, class_decl, logger):
-    node.properties['client_config'] = desecretize_client_config(
-        node.properties['client_config'])
+    if not isinstance(node, NodeContext):
+        node.properties['client_config'] = desecretize_client_config(
+            node.properties['client_config'])
     gcp_config = utils.get_gcp_config(node, requested_zone=zone)
     return class_decl(gcp_config, logger, 'foo')
 
