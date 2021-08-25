@@ -14,7 +14,7 @@ class GCPeWorkflowTests(TestCase):
         mock_node.properties = {
             'client_config': {},
             'resource_config': {},
-            'locations': []
+            'zones': []
         }
         nodes_list = [mock_node]
         mock_nodes_client = MagicMock()
@@ -53,7 +53,7 @@ class GCPeWorkflowTests(TestCase):
         params = {
             'node_id': 'foo',
             'resource_types': ['bar', 'baz'],
-            'locations': ['taco'],
+            'zones': ['taco'],
             'ctx': mock_ctx
         }
         self.assertEqual(discover.discover_resources(**params), result)
@@ -87,7 +87,7 @@ class GCPeWorkflowTests(TestCase):
         params = {
             'node_id': 'foo',
             'resource_types': ['bar', 'baz'],
-            'locations': ['taco'],
+            'zones': ['taco'],
             'blueprint_id': 'foo',
             'ctx': mock_ctx
         }
@@ -111,21 +111,21 @@ class GCPeWorkflowTests(TestCase):
         self.assertEqual(mock_deploy.call_count, 3)
         expected_calls = [
             call('foo', 'foo', ['foo-resource1', 'foo-resource2'],
-                 [{'resource_name': 'resource1',
-                   'location': 'region1'},
-                  {'resource_name': 'resource2',
-                   'location': 'region1'}],
+                 [{'kubernetes_cluster_name': 'resource1',
+                   'zone': 'region1'},
+                  {'kubernetes_cluster_name': 'resource2',
+                   'zone': 'region1'}],
                  [{'csys-env-type': 'environment'},
                   {'csys-obj-parent': 'foo'}],
                  mock_ctx),
             call('foo', 'foo', ['foo-resource3'], [
-                {'resource_name': 'resource3', 'location': 'region1'}],
+                {'kubernetes_cluster_name': 'resource3', 'zone': 'region1'}],
                  [{'csys-env-type': 'environment'},
                   {'csys-obj-parent': 'foo'}],
                  mock_ctx),
             call('foo', 'foo', ['foo-resource4'],
-                 [{'resource_name': 'resource4',
-                   'location': 'region2'}],
+                 [{'kubernetes_cluster_name': 'resource4',
+                   'zone': 'region2'}],
                  [{'csys-env-type': 'environment'},
                   {'csys-obj-parent': 'foo'}],
                  mock_ctx)]
@@ -165,15 +165,12 @@ class GCPeWorkflowTests(TestCase):
         mock_ctx.logger = MagicMock()
         params = {
             'node': node,
-            'locations': ['region1', 'region2'],
-            'resource_types': ['Microsoft.ContainerService/'
-                               'ManagedClusters'],
+            'zones': ['region1', 'region2'],
+            'resource_types': ['projects.zones.clusters'],
             'logger': mock_ctx.logger
         }
-        expected = {'region1': {'Microsoft.ContainerService/'
-                                'ManagedClusters': {}},
-                    'region2': {'Microsoft.ContainerService/'
-                                'ManagedClusters': {}}}
+        expected = {'region1': {'projects.zones.clusters': {}},
+                    'region2': {'projects.zones.clusters': {}}}
         self.assertEqual(resources.get_resources(**params), expected)
 
     @patch('cloudify_gcp.container_engine.cluster')
@@ -182,8 +179,8 @@ class GCPeWorkflowTests(TestCase):
         mock_ctx.instance = MagicMock(runtime_properties={'resources': {}})
         params = {
             'resource_config': {'resource_types': [
-                'Microsoft.ContainerService/ManagedClusters']},
-            'locations': ['region1', 'region2'],
+                'projects.zones.clusters']},
+            'zones': ['region1', 'region2'],
             'ctx': mock_ctx,
             'logger': mock_ctx.logger
         }
