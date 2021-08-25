@@ -176,6 +176,7 @@ class GCPeWorkflowTests(TestCase):
     @patch('cloudify_gcp.container_engine.cluster')
     def test_initialize(self, *_):
         mock_ctx = MagicMock()
+        mock_ctx.node = MagicMock(resource_config={'client_config': {'auth': {'foo': 'bar'}}})
         mock_ctx.instance = MagicMock(runtime_properties={'resources': {}})
         params = {
             'resource_config': {'resource_types': [
