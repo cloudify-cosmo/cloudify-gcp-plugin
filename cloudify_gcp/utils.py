@@ -419,8 +419,9 @@ def get_gcp_config(node=None, requested_zone=None):
                     'deprecated and will be removed in a future '
                     'version of the plugin. '
                     'Please use client_config instead.')
-            if config_key in node.properties:
-                return node.properties[config_key]
+            config = node.properties.get(config_key)
+            if config:
+                return config
         raise NonRecoverableError(
             'No valid client configuration key was found in node or '
             'source node properties. Valid keys: [client_config]')
