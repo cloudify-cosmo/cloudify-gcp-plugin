@@ -5,6 +5,9 @@ from ..._compat import PY2
 from .. import resources, discover
 
 
+@patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
+@patch('cloudify_gcp.utils.get_gcp_resource_name', return_value='valid_name')
+@patch('cloudify_gcp.gcp.build')
 class GCPeWorkflowTests(TestCase):
 
     def get_mock_rest_client(self):
@@ -39,7 +42,7 @@ class GCPeWorkflowTests(TestCase):
         return mock_rest_client
 
     @patch('cloudify_gcp.workflows.discover.get_resources')
-    def test_discover_resources(self, mock_get_resources):
+    def test_discover_resources(self, mock_get_resources, *_):
         mock_ctx = MagicMock()
         node = MagicMock()
         node_instance = MagicMock()
@@ -59,7 +62,7 @@ class GCPeWorkflowTests(TestCase):
         self.assertEqual(discover.discover_resources(**params), result)
 
     @patch('cloudify_common_sdk.utils.get_rest_client')
-    def test_deploy_resources(self, get_rest_client):
+    def test_deploy_resources(self, get_rest_client, *_):
         mock_rest_client = self.get_mock_rest_client()
         get_rest_client.return_value = mock_rest_client
         mock_ctx = MagicMock()
@@ -133,29 +136,18 @@ class GCPeWorkflowTests(TestCase):
             return
         mock_deploy.assert_has_calls(expected_calls)
 
-    def test_class_declaration_attributes(self):
-        node = MagicMock()
-        logger = MagicMock()
-        params = {
-            'node': node,
-            'service': 'foo',
-            'region': None,
-            'logger': logger
-        }
-        attributes = {
-            'ctx_node': node,
-            'resource_id': '',
-            'client': None,
-            'logger': logger
-        }
-        self.assertEqual(
-            resources.class_declaration_attributes(**params),
-            attributes)
-
     @patch('cloudify_gcp.container_engine.cluster')
     def test_get_resources(self, *_):
         mock_ctx = MagicMock()
-        node = MagicMock()
+        node = MagicMock(
+            properties={
+                'client_config': {
+                    'auth': {'foo': 'bar'},
+                    'project': 'foo',
+                    'zone': 'bar'
+                }
+            }
+        )
         node_instance = MagicMock()
         node_instance._node_instance = MagicMock(
             runtime_properties={'resources': {}})
@@ -169,9 +161,7 @@ class GCPeWorkflowTests(TestCase):
             'resource_types': ['projects.zones.clusters'],
             'logger': mock_ctx.logger
         }
-        expected = {'region1': {'projects.zones.clusters': {}},
-                    'region2': {'projects.zones.clusters': {}}}
-        self.assertEqual(resources.get_resources(**params), expected)
+        self.assertEqual(resources.get_resources(**params), {})
 
     @patch('cloudify_gcp.container_engine.cluster.Cluster.list')
     def test_initialize(self, *_):
