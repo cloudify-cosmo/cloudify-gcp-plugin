@@ -74,7 +74,8 @@ SECURITY_GROUPS = [MANAGEMENT_SECURITY_GROUP,
 USE_EXTERNAL_RESOURCE = 'use_external_resource'
 RESOURCE_ID = 'resource_id'
 
-GCP_CONFIG = 'gcp_config'
+GCP_CONFIG = 'client_config'
+GCP_CONFIG_OLD = 'gcp_config'
 AUTH = 'auth'
 PROJECT = 'project'
 ZONE = 'zone'
