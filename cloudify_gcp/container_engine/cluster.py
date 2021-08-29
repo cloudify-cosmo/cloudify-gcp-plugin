@@ -77,7 +77,9 @@ class Cluster(ContainerEngineBase):
     def list(self):
         response = self.discovery_container.clusters().list(
             projectId=self.project, zone=self.zone).execute()
-        return response['clusters']
+        if 'clusters' in response:
+            return response['clusters']
+        return []
 
     @check_response
     def get(self):

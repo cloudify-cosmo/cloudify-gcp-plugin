@@ -3,7 +3,7 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: '1.7.0'
+    package_version: '1.8.0'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -28,6 +28,17 @@ dsl_definitions:
       type: string
       default: ''
 
+  gcp_config: &client_config
+    gcp_config:
+      description: >
+        A dictionary of values to pass to authenticate with the GCP API.
+        DEPRECATION WARNING. Future versions of this plugin will remove this parameter. Use client_config instead.
+      default: {}
+    client_config:
+      description: >
+        A dictionary of values to pass to authenticate with the GCP API.
+      default: {}
+
 node_types:
 
   cloudify.gcp.project:
@@ -35,10 +46,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional project name. By default it will be instance id.
@@ -61,10 +69,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       resource:
         description: >
           Optional project name. By default it will be the current project.
@@ -96,10 +101,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       use_public_ip:
         type: boolean
         description: >
@@ -221,10 +223,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional instance name. By default it will be instance group id.
@@ -258,14 +257,11 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
+      <<: *client_config
       image:
         description: >
           The image of the Volume.
         default: ''
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-        default: {}
       name:
         description: >
           Optional disk name. By default it will be disk id.
@@ -306,10 +302,7 @@ node_types:
   cloudify.gcp.nodes.Snapshot:
     derived_from: cloudify.nodes.Root
     properties:
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-        default: {}
+      <<: *client_config
       disk_name:
         description: >
           Disk name.
@@ -332,6 +325,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
+      <<: *client_config
       name:
         description: >
           Optional Network name. The instance ID will be used by default.
@@ -341,10 +335,6 @@ node_types:
           Whether to use the GCP "autoCreateSubnetworks" feature (see
           https://cloud.google.com/compute/docs/subnetworks#networks_and_subnetworks)
         default: true
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-        default: {}
       additional_settings:
         description: >
           Additional setting for network
@@ -371,6 +361,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
+      <<: *client_config
       name:
         description: >
           Optional SubNetwork name. The instance ID will be used by default.
@@ -387,10 +378,6 @@ node_types:
           See https://cloud.google.com/compute/docs/subnetworks#networks_and_subnetworks
         type: string
         default: ''
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -411,6 +398,7 @@ node_types:
   cloudify.gcp.nodes.VPCNetworkPeering:
     derived_from: cloudify.nodes.Network
     properties:
+      <<: *client_config
       name:
         description: >
           Name of the peering, which should conform to RFC1035.
@@ -425,10 +413,6 @@ node_types:
         description: >
           Whether Google Compute Engine manages the routes automatically.
         default: true
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -455,6 +439,7 @@ node_types:
   cloudify.gcp.nodes.Route:
     derived_from: cloudify.nodes.Router
     properties:
+      <<: *client_config
       dest_range:
         description: >
           The outgoing range that this route will handle
@@ -476,10 +461,6 @@ node_types:
           Routes with lower priority numbers will be chosen first
           if more than one route with a matching prefix of the same length.
         default: 1000
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-        default: {}
       additional_settings:
         description: >
           Additional setting for firewall
@@ -512,6 +493,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
+      <<: *client_config
       name:
         description: >
           Optional security group name. By default it will be network name
@@ -537,10 +519,6 @@ node_types:
           List of target tags this rule should apply to. If no tags are
           specified, it will apply to all instances in the network
         default: []
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-        default: {}
       additional_settings:
         description: >
           Additional setting for firewall
@@ -566,6 +544,7 @@ node_types:
   cloudify.gcp.nodes.SecurityGroup:
     derived_from: cloudify.nodes.SecurityGroup
     properties:
+      <<: *client_config
       name:
         description: >
           Optional security group name. By default it will be network name
@@ -577,10 +556,6 @@ node_types:
           Only the `sources:` and `allowed:` fields should be supplied
           (see FirewallRule properties for details).
         default: []
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -601,22 +576,20 @@ node_types:
   cloudify.gcp.nodes.Access:
     derived_from: cloudify.nodes.Root
     properties:
+      <<: *client_config
       name:
         description: >
           Name of access rule
       interface:
         description: >
           Interface for rule
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-        default: {}
 
   cloudify.gcp.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *external_resource
       <<: *resource_id
+      <<: *client_config
       private_key_path:
         description: >
           The path where the key should be saved on the machine. If this is a bootstrap
@@ -629,10 +602,6 @@ node_types:
           The path to read from existing public key.
         type: string
         default: ''
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the Google Cloud Platform API.
-        default: {}
       user:
         description: >
           The user account for this key. A corresponding user account will be created by GCP when the key is added to the Instance. This must be supplied for a non-external resource key. See https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys
@@ -662,6 +631,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
+      <<: *client_config
       ip_address:
         description: >
           Address of this external IP. This should be address of already existing,
@@ -669,20 +639,13 @@ node_types:
           is set to true.
         type: string
         default: ''
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
 
   cloudify.gcp.nodes.GlobalAddress:
     derived_from: cloudify.nodes.VirtualIP
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional static ip name. By default it will be static ip id.
@@ -710,15 +673,12 @@ node_types:
   cloudify.gcp.nodes.Address:
     derived_from: cloudify.gcp.nodes.GlobalAddress
     properties:
+      <<: *client_config
       region:
         description: >
           Region to place the Address in. If not provided it defaults to the
           value in `gcp_config` (which defaults to 'default').
         default: ''
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -736,10 +696,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       image_name:
         description: >
           Name to use for the image. Defaults to the instance ID.
@@ -775,10 +732,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional health check name. By default it will be health check id.
@@ -824,10 +778,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional health check name. By default it will be backend service id.
@@ -868,10 +819,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional health check name. By default it will be backend service id.
@@ -919,10 +867,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional health check name. By default it will be URL map id.
@@ -956,10 +901,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional target proxy name. By default it will be target proxy id.
@@ -1015,10 +957,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional SSL certificate name. By default it will be SSL certificate id.
@@ -1063,10 +1002,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional global forwarding rule name. By default it will be
@@ -1161,10 +1097,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Optional global forwarding rule name. By default it will be
@@ -1220,6 +1153,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
+      <<: *client_config
       name:
         type: string
         description: >
@@ -1231,10 +1165,6 @@ node_types:
           Defaults to the instance ID.
         type: string
         default: ''
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
       additional_settings:
         description: >
           Additional settings
@@ -1256,6 +1186,7 @@ node_types:
   cloudify.gcp.nodes.DNSRecord:
     derived_from: cloudify.nodes.Root
     properties:
+      <<: *client_config
       type:
         description: >
           The type of this DNS record.
@@ -1284,10 +1215,6 @@ node_types:
           DNS entry Time To Live
         type: integer
         default: 86400
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -1333,10 +1260,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Kubernetes cluster name
@@ -1367,10 +1291,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Node Pool name of Kubernetes cluster.
@@ -1408,10 +1329,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       monitoring_service:
         description: >
           The monitoring service the cluster should use to write metrics.
@@ -1448,10 +1366,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       enabled:
         description: >
           Whether ABAC authorization will be enabled in the cluster.
@@ -1485,10 +1400,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       network_policy_config:
         description: >
           Configuration options for the NetworkPolicy feature.
@@ -1530,10 +1442,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Name of the topic
@@ -1554,10 +1463,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       policy:
         description: >
           The complete policy to be applied to the resource.
@@ -1585,10 +1491,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       messages:
         description: >
           The messages to publish.
@@ -1614,10 +1517,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           Name of the subscription
@@ -1666,10 +1566,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       policy:
         description: >
           The complete policy to be applied to the resource.
@@ -1697,10 +1594,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       subscription:
         description: >
           Name of the subscription
@@ -1728,10 +1622,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       subscription:
         description: >
           Name of the subscription
@@ -1767,10 +1658,7 @@ node_types:
   cloudify.gcp.nodes.StackDriverGroup:
     derived_from: cloudify.nodes.Root
     properties:
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       project_id:
         description: >
           Project id or number
@@ -1829,10 +1717,7 @@ node_types:
   cloudify.gcp.nodes.StackDriverTimeSeries:
     derived_from: cloudify.nodes.Root
     properties:
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       project_id:
         description: >
           Project id or number
@@ -1858,10 +1743,7 @@ node_types:
   cloudify.gcp.nodes.StackDriverUpTimeCheckConfig:
     derived_from: cloudify.nodes.Root
     properties:
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       project_id:
         description: >
           Project id or number
@@ -1885,10 +1767,7 @@ node_types:
   cloudify.gcp.nodes.LoggingSink:
     derived_from: cloudify.nodes.Root
     properties:
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       parent:
         description: >
           The resource in which to create the sink, it can be project, organization, billing account or folder
@@ -1935,10 +1814,7 @@ node_types:
   cloudify.gcp.nodes.LoggingExclusion:
     derived_from: cloudify.nodes.Root
     properties:
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       parent:
         description: >
           The resource in which to create the billing account exclusion, it can be project, organization, billing account or folder
@@ -2061,10 +1937,7 @@ node_types:
   cloudify.gcp.nodes.Logging.Projects.metrics:
     derived_from: cloudify.nodes.Root
     properties:
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       parent:
         description: >
           The resource in which to create the project metric
@@ -2097,10 +1970,7 @@ node_types:
     properties:
       <<: *external_resource
       <<: *resource_id
-      gcp_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        default: {}
+      <<: *client_config
       name:
         description: >
           GCP Role name
@@ -2151,6 +2021,38 @@ node_types:
 
   cloudify.gcp.nodes.IAM.Role:
     derived_from: cloudify.nodes.gcp.IAM.Role
+
+  cloudify.nodes.gcp.Gcp:
+    derived_from: cloudify.nodes.Root
+    properties:
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        default: {}
+      zones:
+        type: list
+        default: []
+      resource_config:
+        type: dict
+        default:
+          resource_types:
+            - projects.zones.clusters
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: gcp_plugin.cloudify_gcp.workflows.resources.initialize
+          inputs:
+            resource_config:
+              default: { get_property: [ SELF, resource_config ] }
+            zones:
+              default: { get_property: [ SELF, zones ] }
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.workflows.resources.deinitialize
+          inputs:
+            resource_config:
+              default: { get_property: [ SELF, resource_config ] }
+            zones:
+              default: { get_property: [ SELF, zones ] }
 
 relationships:
 
@@ -2340,3 +2242,30 @@ relationships:
               default: { get_property: [SOURCE, name] }
             interface:
               default: { get_property: [SOURCE, interface] }
+
+workflows:
+
+  discover_and_deploy:
+#    description: >
+#      Using provided credentials, list all discoverable resources of specified resource type.
+#      (Default is cloudify.azure.nodes.compute.ManagedCluster).
+#      This is restricted to provided credentials and region.
+#      Install new deployments for them.
+    mapping: gcp_plugin.cloudify_gcp.workflows.discover.discover_and_deploy
+    parameters:
+      node_id:
+        type: string
+        description: >
+          The node_id. Not required.
+        default: ''
+      resource_types:
+        description: >
+            The name of the resource to discover.
+            Default is [projects.zones.clusters], as that is the only currently supported resource.
+        type: list
+        default:
+          - projects.zones.clusters
+      blueprint_id:
+        description: The ID of the blueprint that should be used to deploy the new resources. Default is current blueprint.
+        type: string
+        default: 'existing-gke-cluster'
