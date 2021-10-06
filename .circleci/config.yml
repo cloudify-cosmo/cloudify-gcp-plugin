@@ -125,7 +125,7 @@ commands:
             command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
         - attach_workspace:
             at: workspace
-        - run: ecosystem-tests merge-docs
+        - run: ecosystem-test merge-docs
 
   run_unittest_py27:
     steps:
