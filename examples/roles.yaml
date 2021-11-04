@@ -5,7 +5,7 @@ description: >
 
 imports:
   - https://cloudify.co/spec/cloudify/5.1.0/types.yaml
-  - plugin:cloudify-gcp-plugin?version= >=1.6.0
+  - plugin:cloudify-gcp-plugin
 
 inputs:
 
