@@ -487,6 +487,7 @@ workflows:
           requires:
             - unittests_py27
             - unittests_py36
+            - arch64_wagon
             - wagon
             - rhel_wagon
             - virtual_machine_integration_tests_py3
