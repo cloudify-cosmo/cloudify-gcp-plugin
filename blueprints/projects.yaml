@@ -10,15 +10,17 @@ inputs:
     type: string
     default: { get_secret: zone }
 
-  refresh_token:
+  project_name:
     type: string
-    default: 'refresh_token'
+
+  project_id:
+    type: string
+    default: { get_secret: project_id }
 
 dsl_definitions:
 
   client_config: &gcp_config
     auth: { get_secret: gcp_credentials }
-    refresh_token: { get_input: refresh_token }
     zone: { get_input: zone }
 
 node_templates:
@@ -27,3 +29,5 @@ node_templates:
     type: cloudify.gcp.project
     properties:
       gcp_config: *gcp_config
+      name: { get_input: project_name }
+      id: { get_input: project_id }

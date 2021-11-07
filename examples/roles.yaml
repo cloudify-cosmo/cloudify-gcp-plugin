@@ -11,8 +11,7 @@ inputs:
 
   zone:
     type: string
-    description: The GCP zone to deploy the application in, such as europe-west1-b.
-    default: 'europe-west1-b'
+    default: { get_secret: zone }
 
   resource_suffix:
     type: string
