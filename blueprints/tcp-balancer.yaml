@@ -27,7 +27,7 @@ inputs:
 
   group_name:
     type: string
-    default: 'group-1'
+    default: { concat: [ { get_input: prefix }, '-group' ] }
 
   firewall_rule_target_tags:
     default:
@@ -99,7 +99,6 @@ node_templates:
     type: cloudify.gcp.nodes.InstanceGroup
     properties:
       gcp_config: *gcp_config
-      use_external_resource: true
       name: { get_input: group_name }
 
   fw_rule:
@@ -117,7 +116,6 @@ node_templates:
   subnetwork:
     type: cloudify.gcp.nodes.SubNetwork
     properties:
-    #  use_external_resource: true
       name: { get_input: subnetwork_name }
       region: { get_input: region }
       subnet: { get_input: network_subnet0_cidr }
@@ -129,7 +127,6 @@ node_templates:
   network:
     type: cloudify.gcp.nodes.Network
     properties:
-    #  use_external_resource: true
       name: { get_input: network_name }
       gcp_config: *gcp_config
       auto_subnets: false

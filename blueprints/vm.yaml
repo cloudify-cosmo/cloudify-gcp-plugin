@@ -6,15 +6,16 @@ imports:
 
 inputs:
 
+  prefix:
+    type: string
+
   network_name:
     type: string
-    description: The name of your GCP Virtual Network.
-    default: hellovnet
+    default: { concat: [ { get_input: prefix }, '-network' ] }
 
-  subnet_name:
+  subnetwork_name:
     type: string
-    description: The name of your GCP Virtual Network.
-    default: hellosubnet
+    default: { concat: [ { get_input: prefix }, '-subnetwork' ] }
 
   image:
     type: string
@@ -33,6 +34,9 @@ inputs:
   region:
     type: string
     default: { get_secret: region }
+
+  network_subnet0_cidr:
+    default: 10.11.12.0/22
 
 
 dsl_definitions:
@@ -73,9 +77,9 @@ node_templates:
   subnet:
     type: cloudify.gcp.nodes.SubNetwork
     properties:
-      name: { get_input: subnet_name }
+      name: { get_input: subnetwork_name }
       region: { get_input: region }
-      subnet: 10.11.12.0/22
+      subnet: { get_input: network_subnet0_cidr }
       gcp_config: *gcp_config
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network

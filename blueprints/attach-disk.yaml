@@ -15,15 +15,16 @@ inputs:
     type: string
     default: { get_secret: region }
 
+  prefix:
+    type: string
+
   network_name:
     type: string
-    default: 'boot-disk-network-0'
-    # default: { get_secret: management_network_name }
+    default: { concat: [ { get_input: prefix }, '-network' ] }
 
   subnetwork_name:
     type: string
-    default: 'boot-disk-subnetwork-0'
-    # default: { get_secret: management_subnetwork_name }
+    default: { concat: [ { get_input: prefix }, '-subnetwork' ] }
 
   network_subnet0_cidr:
     default: 10.11.12.0/22
@@ -78,7 +79,6 @@ node_templates:
   subnet:
     type: cloudify.gcp.nodes.SubNetwork
     properties:
-      # use_external_resource: true
       name: { get_input: subnetwork_name }
       region: { get_input: region }
       subnet: { get_input: network_subnet0_cidr }
@@ -90,7 +90,6 @@ node_templates:
   network:
     type: cloudify.gcp.nodes.Network
     properties:
-      # use_external_resource: true
       name: { get_input: network_name }
       gcp_config: *gcp_config
       auto_subnets: false

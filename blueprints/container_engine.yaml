@@ -14,15 +14,16 @@ inputs:
     type: string
     default: { get_secret: region }
 
+  prefix:
+    type: string
+
   network_name:
     type: string
-    default: 'boot-disk-network-0'
-    # default: { get_secret: management_network_name }
+    default: { concat: [ { get_input: prefix }, '-network' ] }
 
   subnetwork_name:
     type: string
-    default: 'boot-disk-subnetwork-0'
-    # default: { get_secret: management_subnetwork_name }
+    default: { concat: [ { get_input: prefix }, '-subnetwork' ] }
 
 dsl_definitions:
 
