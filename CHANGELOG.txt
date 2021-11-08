@@ -1,3 +1,4 @@
+1.8.1: Rerelease for aarch64 wagon.
 1.8.0: RD-2198 GKE Discovery
 1.7.0: Support IAM Role create and delete.
 1.6.9: Replace pycrypto 2.6.1 with pycryptodome 3.9.8
