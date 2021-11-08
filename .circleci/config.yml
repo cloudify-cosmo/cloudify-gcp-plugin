@@ -348,6 +348,40 @@ commands:
     steps:
       - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml --test-id=gcp-gke  -i resource_prefix=gcpresource-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
 
+  # test blueprints
+  run_attach_disk_test:
+     steps:
+       - run: ecosystem-test local-blueprint-test  -b blueprints/attach-disk.yaml --test-id=gcp-attach-disk -i prefix=gcp-attach-disk-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_container_engine_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/container-engine.yaml --test-id=gcp-container-engine -i prefix=gcp-container-engine-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_http_balancer_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/http-balancer.yaml --test-id=gcp-http-balancer -i prefix=gcp-http-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_https_balancer_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/https-balancer.yaml --test-id=gcp-https-balancer -i prefix=gcp-https-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_ssl_balancer_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/ssl-balancer.yaml --test-id=gcp-ssl-balancer -i prefix=gcp-ssl-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_tcp_balancer_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/tcp-balancer.yaml --test-id=gcp-tcp-balancer -i prefix=gcp-tcp-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_vm_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/vm.yaml --test-id=gcp-vm -i prefix=gcp-vm-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_gcp_example_network_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/gcp-example-network/blueprint.yaml --test-id=gcp-example-network-test  -i resource_prefix=gcp-example-network-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+  # cloudify-community/blueprint-examples/gcp-example-network/blueprint.yaml
+
 jobs:
 
   unittests_py27:
