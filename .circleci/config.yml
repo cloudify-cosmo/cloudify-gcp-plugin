@@ -338,7 +338,7 @@ commands:
 
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials --bundle-path workspace/build/cloudify-plugins-bundle.tgz
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -es region=$region -es zone=$zone -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key  --bundle-path workspace/build/cloudify-plugins-bundle.tgz
 
   run_virtual_machine_test:
     steps:
@@ -470,7 +470,7 @@ jobs:
       - checkout
       - merge_docs
 
-  attach_disk_test_py3:
+  attach_disk_and_container_engine_test_py3:
     executor: cloudify-machine-py3
     environment:
       CLOUDIFY_SSL_TRUST_ALL: true
@@ -479,18 +479,9 @@ jobs:
       - create_manager_container_py3
       - prepare_test_manager
       - run_attach_disk_test
-
-  container_engin_test_py3:
-    executor: cloudify-machine-py3
-    environment:
-      CLOUDIFY_SSL_TRUST_ALL: true
-    steps:
-      - checkout
-      - create_manager_container_py3
-      - prepare_test_manager
       - run_container_engine_test
 
-  http_balancer_test_py3:
+  http_balancer_and_https_balancer_test_py3:
     executor: cloudify-machine-py3
     environment:
       CLOUDIFY_SSL_TRUST_ALL: true
@@ -499,19 +490,9 @@ jobs:
       - create_manager_container_py3
       - prepare_test_manager
       - run_http_balancer_test
-
-  https_balancer_test_py3:
-    executor: cloudify-machine-py3
-    environment:
-      CLOUDIFY_SSL_TRUST_ALL: true
-    steps:
-      - checkout
-      - create_manager_container_py3
-      - prepare_test_manager
       - run_https_balancer_test
 
-
-  ssl_balancer_test_py3:
+  ssl_balancer_and_tcp_balancer_test_py3:
     executor: cloudify-machine-py3
     environment:
       CLOUDIFY_SSL_TRUST_ALL: true
@@ -520,18 +501,9 @@ jobs:
       - create_manager_container_py3
       - prepare_test_manager
       - run_ssl_balancer_test
-
-  tcp_balancer_test_py3:
-    executor: cloudify-machine-py3
-    environment:
-      CLOUDIFY_SSL_TRUST_ALL: true
-    steps:
-      - checkout
-      - create_manager_container_py3
-      - prepare_test_manager
       - run_tcp_balancer_test
 
-  vm_test_py3:
+  vm_and_gcp_example_network_test_py3:
     executor: cloudify-machine-py3
     environment:
       CLOUDIFY_SSL_TRUST_ALL: true
@@ -540,16 +512,8 @@ jobs:
       - create_manager_container_py3
       - prepare_test_manager
       - run_vm_test
-
-  gcp_example_network_test_py3:
-    executor: cloudify-machine-py3
-    environment:
-      CLOUDIFY_SSL_TRUST_ALL: true
-    steps:
-      - checkout
-      - create_manager_container_py3
-      - prepare_test_manager
       - run_gcp_example_network_test
+
 
 workflows:
   version: 2.1
@@ -695,7 +659,7 @@ workflows:
               - wagon
               - rhel_wagon
               - arch64_wagon
-        - container_engin_test_py3:
+        - attach_disk_and_container_engine_test_py3:
             requires:
               - build_bundle
               - wagon
@@ -704,15 +668,7 @@ workflows:
             filters:
               branches:
                 only: /([0-9\.]*\-build|master|dev)/
-        - attach_disk_test_py3:
-            requires:
-              - build_bundle
-              - wagon
-              - rhel_wagon
-              - arch64_wagon
-            filters:
-              branches:
-                only: /([0-9\.]*\-build|master|dev)/
+
 
   run_test_only_on_monday:
     triggers:
@@ -746,7 +702,7 @@ workflows:
             - wagon
             - rhel_wagon
             - arch64_wagon
-      - http_balancer_test_py3:
+      - http_balancer_and_https_balancer_test_py3:
           requires:
             - build_bundle
             - wagon
@@ -755,15 +711,7 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - https_balancer_test_py3:
-          requires:
-            - build_bundle
-            - wagon
-            - rhel_wagon
-            - arch64_wagon
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+
 
   run_test_only_on_tuesday:
     triggers:
@@ -797,16 +745,7 @@ workflows:
             - wagon
             - rhel_wagon
             - arch64_wagon
-      - ssl_balancer_test_py3:
-          requires:
-            - build_bundle
-            - wagon
-            - rhel_wagon
-            - arch64_wagon
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
-      - tcp_balancer_test_py3:
+      - ssl_balancer_and_tcp_balancer_test_py3:
           requires:
             - build_bundle
             - wagon
@@ -849,16 +788,7 @@ workflows:
             - wagon
             - rhel_wagon
             - arch64_wagon
-      - vm_test_py3:
-          requires:
-            - build_bundle
-            - wagon
-            - rhel_wagon
-            - arch64_wagon
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
-      - gcp_example_network_test_py3:
+      - vm_and_gcp_example_network_test_py3:
           requires:
             - build_bundle
             - wagon
