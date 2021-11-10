@@ -2,27 +2,36 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://cloudify.co/spec/cloudify/4.5/types.yaml
-  - plugin:cloudify-gcp-plugin
+  - plugin.yaml
 
 inputs:
 
-  small_instance_type:
-    default: g1-small
+  client_x509_cert_url:
+    type: string
+    default: { get_secret: client_x509_cert_url }
+
+  client_email:
+    type: string
+    default: { get_secret: client_email }
+
+  client_id:
+    type: string
+    default: { get_secret: client_id }
 
   project_id:
     type: string
     default: { get_secret: project_id }
 
-  network_name:
+  private_key_id:
     type: string
-    default: { concat: [ { get_input: prefix }, '-network' ] }
+    default: { get_secret: private_key_id }
 
-dsl_definitions:
+  private_key:
+    type: string
+    default: { get_secret: private_key }
 
-  client_config: &gcp_config
-    auth: { get_secret: gcp_credentials }
-    zone: { get_input: zone }
-
+  small_instance_type:
+    default: g1-small
 
 node_templates:
 
@@ -30,28 +39,49 @@ node_templates:
   network:
     type: cloudify.gcp.nodes.Network
     properties:
-      # use_external_resource: true
-      name: { get_input: network_name }
-      gcp_config: *gcp_config
+      name: my-custom-network
       auto_subnets: false
+      gcp_config:
+        auth: &google_auth
+          type: service_account
+          auth_uri: https://accounts.google.com/o/oauth2/auth
+          token_uri: https://accounts.google.com/o/oauth2/token
+          auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+          client_x509_cert_url: { get_input: client_x509_cert_url }
+          client_email: { get_input: client_email }
+          client_id: { get_input: client_id }
+          project_id: { get_input: project_id }
+          private_key_id: { get_input: private_key_id }
+          private_key: { get_input: private_key }
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
 
   # gcloud compute networks subnets create my-custom-subnet --network my-custom-network --range 10.128.0.0/20 --region us-central1
   network_subnet:
     type: cloudify.gcp.nodes.SubNetwork
     properties:
-      gcp_config: { get_secret: gcp_credentials }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
       name: my-custom-subnet
       subnet: 10.128.0.0/20
-      region: { get_input: region }
+      region: us-central1
     relationships:
-      - type: cloudify.gcp.relationships.contained_in_network
-        target: network
+    - type: cloudify.gcp.relationships.contained_in_network
+      target: network
 
    # gcloud compute firewall-rules create allow-all-10-128-0-0-20 --network my-custom-network --allow tcp,udp,icmp --source-ranges 10.128.0.0/20
   allow_all:
     type: cloudify.gcp.nodes.FirewallRule
     properties:
-      gcp_config: { get_secret: gcp_credentials }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
       name: allow-all-10-128-0-0-20
       sources:
       - 10.128.0.0/20
@@ -69,7 +99,11 @@ node_templates:
   allow_22_3389:
     type: cloudify.gcp.nodes.FirewallRule
     properties:
-      gcp_config: { get_secret: gcp_credentials }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
       name: allow-tcp22-tcp3389-icmp
       sources:
       - 0.0.0.0/0
@@ -89,7 +123,11 @@ node_templates:
     properties:
       use_external_resource: true
       family: debian-9
-      gcp_config: { get_secret: gcp_credentials }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: debian-cloud
 
   # gcloud compute instances create ig-us-central1-1 --image-family debian-9 --image-project debian-cloud --tags int-lb --zone us-central1-b --subnet my-custom-subnet --metadata startup-script="#! /bin/bash
   #   apt-get update
@@ -112,8 +150,10 @@ node_templates:
       instance_type: { get_input: small_instance_type }
       agent_config:
         install_method: none
-      gcp_config: { get_secret: gcp_credentials }
-      project: { get_input: project_id }
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-b
+        project: { get_input: project_id }
       # if false, delete-access-config is not required
       external_ip: true
     relationships:
@@ -145,8 +185,10 @@ node_templates:
       instance_type: { get_input: small_instance_type }
       agent_config:
         install_method: none
-      gcp_config: { get_secret: gcp_credentials }
-      project: { get_input: project_id }
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-b
+        project: { get_input: project_id }
       # if false, delete-access-config is not required
       external_ip: true
     relationships:
@@ -178,8 +220,10 @@ node_templates:
       instance_type: { get_input: small_instance_type }
       agent_config:
         install_method: none
-      gcp_config: { get_secret: gcp_credentials }
-      project: { get_input: project_id }
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-c
+        project: { get_input: project_id }
       # if false, delete-access-config is not required
       external_ip: true
     relationships:
@@ -211,8 +255,10 @@ node_templates:
       instance_type: { get_input: small_instance_type }
       agent_config:
         install_method: none
-      gcp_config: { get_secret: gcp_credentials }
-      project: { get_input: project_id }
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-c
+        project: { get_input: project_id }
       # if false, delete-access-config is not required
       external_ip: true
     relationships:
@@ -229,10 +275,11 @@ node_templates:
     type: cloudify.gcp.nodes.InstanceGroup
     properties:
       name: us-ig1
-      gcp_config: { get_secret: gcp_credentials }
-      zone: us-central1-b
-      project: { get_input: project_id }
-      network: { get_property: [network, name] }
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-b
+        project: { get_input: project_id }
+        network: { get_property: [network, name] }
     relationships:
       - type: cloudify.relationships.depends_on
         target: network_subnet
@@ -243,10 +290,11 @@ node_templates:
     type: cloudify.gcp.nodes.InstanceGroup
     properties:
       name: us-ig2
-      gcp_config: { get_secret: gcp_credentials }
-      zone: us-central1-c
-      project: { get_input: project_id }
-      network: { get_property: [network, name] }
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-c
+        project: { get_input: project_id }
+        network: { get_property: [network, name] }
     relationships:
       - type: cloudify.relationships.depends_on
         target: network_subnet
@@ -258,7 +306,11 @@ node_templates:
       health_check_type: tcp
       port: 80
       name: my-tcp-health-check
-      gcp_config: { get_secret: gcp_credentials }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        project: { get_input: project_id }
+        zone: global
     relationships:
       # wait for all slaves
       - type: cloudify.relationships.depends_on
@@ -284,7 +336,11 @@ node_templates:
         loadBalancingScheme: INTERNAL
         protocol: TCP
         timeoutSec: 30
-      gcp_config: { get_secret: gcp_credentials }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        project: { get_input: project_id }
+        zone: global
     relationships:
       - type: cloudify.relationships.depends_on
         target: my_tcp_health_check
@@ -305,7 +361,11 @@ node_templates:
       subnet: { get_attribute: [ network_subnet, selfLink ] }
       region: us-central1
       backend_service: { get_attribute: [ my_int_lb, selfLink ] }
-      gcp_config: { get_secret: gcp_credentials }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        project: { get_input: project_id }
+        zone: global
     relationships:
       - type: cloudify.relationships.depends_on
         target: network_subnet
@@ -316,7 +376,11 @@ node_templates:
   allow_internal_lb:
     type: cloudify.gcp.nodes.FirewallRule
     properties:
-      gcp_config: { get_secret: gcp_credentials }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
       name: allow-internal-lb
       sources:
       - 10.128.0.0/20
@@ -338,7 +402,11 @@ node_templates:
   allow_health_check:
     type: cloudify.gcp.nodes.FirewallRule
     properties:
-      gcp_config: { get_secret: gcp_credentials }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        zone: global
+        project: { get_input: project_id }
       name: allow-health-check
       sources:
       - 130.211.0.0/22
@@ -368,8 +436,10 @@ node_templates:
       instance_type: { get_input: small_instance_type }
       agent_config:
         install_method: none
-      gcp_config: { get_secret: gcp_credentials }
-      project: { get_input: project_id }
+      gcp_config:
+        auth: *google_auth
+        zone: us-central1-c
+        project: { get_input: project_id }
       # if false, delete-access-config is not required
       external_ip: true
     relationships:
@@ -387,7 +457,11 @@ node_templates:
     properties:
       name: External NAT
       interface: nic0
-      gcp_config: { get_secret: gcp_credentials }
+      gcp_config:
+        auth: *google_auth
+        # we don't need it really
+        project: { get_input: project_id }
+        zone: global
     relationships:
     - type: cloudify.gcp.relationships.instance_remove_access_config
       target: ig_us_central1_1

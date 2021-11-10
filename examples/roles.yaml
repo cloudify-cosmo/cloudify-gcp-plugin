@@ -5,13 +5,14 @@ description: >
 
 imports:
   - https://cloudify.co/spec/cloudify/5.1.0/types.yaml
-  - plugin:cloudify-gcp-plugin
+  - plugin:cloudify-gcp-plugin?version= >=1.6.0
 
 inputs:
 
   zone:
     type: string
-    default: { get_secret: zone }
+    description: The GCP zone to deploy the application in, such as europe-west1-b.
+    default: 'europe-west1-b'
 
   resource_suffix:
     type: string

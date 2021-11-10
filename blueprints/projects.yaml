@@ -2,32 +2,35 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://cloudify.co/spec/cloudify/4.5/types.yaml
-  - plugin:cloudify-gcp-plugin
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-gcp-plugin/master/plugin.yaml
 
 inputs:
-
-  zone:
-    type: string
-    default: { get_secret: zone }
 
   project_name:
     type: string
 
   project_id:
     type: string
-    default: { get_secret: project_id }
 
-dsl_definitions:
+  # gcp look to ~/.config/gcloud/application_default_credentials.json
+  client_id:
+    type: string
 
-  client_config: &gcp_config
-    auth: { get_secret: gcp_credentials }
-    zone: { get_input: zone }
+  client_secret:
+    type: string
+
+  refresh_token:
+    type: string
 
 node_templates:
 
   project:
     type: cloudify.gcp.project
     properties:
-      gcp_config: *gcp_config
+      gcp_config:
+        auth:
+          client_id: { get_input: client_id }
+          client_secret: { get_input: client_secret }
+          refresh_token: { get_input: refresh_token }
       name: { get_input: project_name }
       id: { get_input: project_id }
