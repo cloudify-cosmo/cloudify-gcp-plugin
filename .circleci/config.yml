@@ -338,7 +338,7 @@ commands:
 
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials --bundle-path workspace/build/cloudify-plugins-bundle.tgz
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -es region=$region -es zone=$zone -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key  --bundle-path workspace/build/cloudify-plugins-bundle.tgz
 
   run_virtual_machine_test:
     steps:
@@ -347,6 +347,40 @@ commands:
   run_gke_test:
     steps:
       - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml --test-id=gcp-gke  -i resource_prefix=gcpresource-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  # test blueprints
+  run_attach_disk_test:
+     steps:
+       - run: ecosystem-test local-blueprint-test  -b blueprints/attach-disk.yaml --test-id=gcp-attach-disk -i prefix=gcp-attach-disk-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_container_engine_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/container-engine.yaml --test-id=gcp-container-engine -i prefix=gcp-container-engine-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_http_balancer_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/http-balancer.yaml --test-id=gcp-http-balancer -i prefix=gcp-http-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_https_balancer_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/https-balancer.yaml --test-id=gcp-https-balancer -i prefix=gcp-https-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_ssl_balancer_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/ssl-balancer.yaml --test-id=gcp-ssl-balancer -i prefix=gcp-ssl-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_tcp_balancer_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/tcp-balancer.yaml --test-id=gcp-tcp-balancer -i prefix=gcp-tcp-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_vm_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b blueprints/vm.yaml --test-id=gcp-vm -i prefix=gcp-vm-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+
+  run_gcp_example_network_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/gcp-example-network/blueprint.yaml --test-id=gcp-example-network-test  -i resource_prefix=gcp-example-network-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+  # cloudify-community/blueprint-examples/gcp-example-network/blueprint.yaml
 
 jobs:
 
@@ -435,6 +469,51 @@ jobs:
     steps:
       - checkout
       - merge_docs
+
+  attach_disk_and_container_engine_test_py3:
+    executor: cloudify-machine-py3
+    environment:
+      CLOUDIFY_SSL_TRUST_ALL: true
+    steps:
+      - checkout
+      - create_manager_container_py3
+      - prepare_test_manager
+      - run_attach_disk_test
+      - run_container_engine_test
+
+  http_balancer_and_https_balancer_test_py3:
+    executor: cloudify-machine-py3
+    environment:
+      CLOUDIFY_SSL_TRUST_ALL: true
+    steps:
+      - checkout
+      - create_manager_container_py3
+      - prepare_test_manager
+      - run_http_balancer_test
+      - run_https_balancer_test
+
+  ssl_balancer_and_tcp_balancer_test_py3:
+    executor: cloudify-machine-py3
+    environment:
+      CLOUDIFY_SSL_TRUST_ALL: true
+    steps:
+      - checkout
+      - create_manager_container_py3
+      - prepare_test_manager
+      - run_ssl_balancer_test
+      - run_tcp_balancer_test
+
+  vm_and_gcp_example_network_test_py3:
+    executor: cloudify-machine-py3
+    environment:
+      CLOUDIFY_SSL_TRUST_ALL: true
+    steps:
+      - checkout
+      - create_manager_container_py3
+      - prepare_test_manager
+      - run_vm_test
+      - run_gcp_example_network_test
+
 
 workflows:
   version: 2.1
@@ -545,6 +624,177 @@ workflows:
       - gke_integration_tests_py3:
           requires:
             - build_bundle
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+
+  run_test_only_on_sunday:
+      triggers:
+      - schedule:
+          cron: "0 3 * * 0"
+          filters:
+            branches:
+              only:
+                - master
+      jobs:
+        - py3_compat
+        - unittests_py36
+        - validate_version
+        - rhel_wagon:
+            filters:
+              branches:
+                only: /([0-9\.]*\-build|master|dev)/
+        - wagon:
+            filters:
+              branches:
+                only: /([0-9\.]*\-build|master|dev)/
+        - arch64_wagon:
+            filters:
+              branches:
+                only: /([0-9\.]*\-build|master|dev)/
+        - build_bundle:
+            filters:
+              branches:
+                only: /master/
+            requires:
+              - wagon
+              - rhel_wagon
+              - arch64_wagon
+        - attach_disk_and_container_engine_test_py3:
+            requires:
+              - build_bundle
+              - wagon
+              - rhel_wagon
+              - arch64_wagon
+            filters:
+              branches:
+                only: /([0-9\.]*\-build|master|dev)/
+
+
+  run_test_only_on_monday:
+    triggers:
+      - schedule:
+          cron: "0 3 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - py3_compat
+      - unittests_py36
+      - validate_version
+      - rhel_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - arch64_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - build_bundle:
+          filters:
+            branches:
+              only: /master/
+          requires:
+            - wagon
+            - rhel_wagon
+            - arch64_wagon
+      - http_balancer_and_https_balancer_test_py3:
+          requires:
+            - build_bundle
+            - wagon
+            - rhel_wagon
+            - arch64_wagon
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+
+
+  run_test_only_on_tuesday:
+    triggers:
+      - schedule:
+          cron: "0 3 * * 2"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - py3_compat
+      - unittests_py36
+      - validate_version
+      - rhel_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - arch64_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - build_bundle:
+          filters:
+            branches:
+              only: /master/
+          requires:
+            - wagon
+            - rhel_wagon
+            - arch64_wagon
+      - ssl_balancer_and_tcp_balancer_test_py3:
+          requires:
+            - build_bundle
+            - wagon
+            - rhel_wagon
+            - arch64_wagon
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+
+
+  run_test_only_on_wednesday:
+    triggers:
+      - schedule:
+          cron: "0 3 * * 3"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - py3_compat
+      - unittests_py36
+      - validate_version
+      - rhel_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - arch64_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - build_bundle:
+          filters:
+            branches:
+              only: /master/
+          requires:
+            - wagon
+            - rhel_wagon
+            - arch64_wagon
+      - vm_and_gcp_example_network_test_py3:
+          requires:
+            - build_bundle
+            - wagon
+            - rhel_wagon
+            - arch64_wagon
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/

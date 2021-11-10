@@ -1,21 +1,21 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://cloudify.co/spec/cloudify/4.5/types.yaml
-  # - plugin:cloudify-gcp-plugin
-  - plugin.yaml
+  - https://cloudify.co/spec/cloudify/6.1.0/types.yaml
+  - plugin:cloudify-gcp-plugin
 
 inputs:
 
+  prefix:
+    type: string
+
   network_name:
     type: string
-    description: The name of your GCP Virtual Network.
-    default: hellovnet
+    default: { concat: [ { get_input: prefix }, '-network' ] }
 
-  subnet_name:
+  subnetwork_name:
     type: string
-    description: The name of your GCP Virtual Network.
-    default: hellosubnet
+    default: { concat: [ { get_input: prefix }, '-subnetwork' ] }
 
   image:
     type: string
@@ -27,48 +27,23 @@ inputs:
     description: A small GCP machine type.
     default: n1-standard-1
 
-  gcp_client_x509_cert_url:
+  zone:
     type: string
+    default: { get_secret: zone }
 
-  gcp_client_email:
+  region:
     type: string
+    default: { get_secret: region }
 
-  gcp_client_id:
-    type: string
-
-  gcp_project_id:
-    type: string
-
-  gcp_private_key_id:
-    type: string
-
-  gcp_private_key:
-    type: string
-
-  gcp_zone:
-    type: string
-
-  gcp_region:
-    type: string
-    description: The GCP region to deploy the application in, such as europe-west1.
+  network_subnet0_cidr:
+    default: 10.11.12.0/22
 
 
 dsl_definitions:
 
   client_config: &gcp_config
-    auth:
-      type: service_account
-      auth_uri: https://accounts.google.com/o/oauth2/auth
-      token_uri: https://accounts.google.com/o/oauth2/token
-      auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
-      client_x509_cert_url: { get_input: gcp_client_x509_cert_url }
-      client_email: { get_input: gcp_client_email }
-      client_id: { get_input: gcp_client_id }
-      project_id: { get_input: gcp_project_id }
-      private_key_id: { get_input: gcp_private_key_id }
-      private_key: { get_input: gcp_private_key }
-    project: { get_input: gcp_project_id }
-    zone: { get_input: gcp_zone }
+    auth: { get_secret: gcp_credentials }
+    zone: { get_input: zone }
 
 node_templates:
 
@@ -80,7 +55,7 @@ node_templates:
         install_method: none
       image_id: { get_input: image }
       instance_type: { get_input: instance_type }
-      zone: { get_input: gcp_zone }
+      zone: { get_input: zone }
       external_ip: true
     relationships:
     - type: cloudify.relationships.depends_on
@@ -102,9 +77,9 @@ node_templates:
   subnet:
     type: cloudify.gcp.nodes.SubNetwork
     properties:
-      name: { get_input: subnet_name }
-      region: { get_input: gcp_region }
-      subnet: 10.11.12.0/22
+      name: { get_input: subnetwork_name }
+      region: { get_input: region }
+      subnet: { get_input: network_subnet0_cidr }
       gcp_config: *gcp_config
     relationships:
     - type: cloudify.gcp.relationships.contained_in_network
