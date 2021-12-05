@@ -373,10 +373,6 @@ commands:
     steps:
       - run: ecosystem-test local-blueprint-test  -b blueprints/tcp-balancer.yaml --test-id=gcp-tcp-balancer -i prefix=gcp-tcp-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
 
-  run_vm_test:
-    steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/vm.yaml --test-id=gcp-vm -i prefix=gcp-vm-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
-
   run_gcp_example_network_test:
     steps:
       - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/gcp-example-network/blueprint.yaml --test-id=gcp-example-network-test  -i resource_prefix=gcp-example-network-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
@@ -503,7 +499,7 @@ jobs:
       - run_ssl_balancer_test
       - run_tcp_balancer_test
 
-  vm_and_gcp_example_network_test_py3:
+  gcp_example_network_test_py3:
     executor: cloudify-machine-py3
     environment:
       CLOUDIFY_SSL_TRUST_ALL: true
@@ -511,7 +507,6 @@ jobs:
       - checkout
       - create_manager_container_py3
       - prepare_test_manager
-      - run_vm_test
       - run_gcp_example_network_test
 
 
@@ -789,7 +784,7 @@ workflows:
             - wagon
             - rhel_wagon
             - arch64_wagon
-      - vm_and_gcp_example_network_test_py3:
+      - gcp_example_network_test_py3:
           requires:
             - build_bundle
             - wagon
