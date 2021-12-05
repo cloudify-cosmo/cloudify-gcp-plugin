@@ -519,24 +519,24 @@ workflows:
       - unittests_py36
       - validate_version
       - validate_documentation
-      - wagon:
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
-      - rhel_wagon:
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+      - wagon
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
+      - rhel_wagon
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
 
-      - arch64_wagon:
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+      - arch64_wagon
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
 
       - build_bundle:
-          filters:
-            branches:
-              only: /master/
+#          filters:
+#            branches:
+#              only: /master/
           requires:
             - wagon
             - arch64_wagon
@@ -573,6 +573,12 @@ workflows:
           requires:
             - release
             - validate_documentation
+      - gcp_example_network_test_py3:
+          requires:
+            - build_bundle
+            - wagon
+            - rhel_wagon
+            - arch64_wagon
 
   nightly:
     triggers:
