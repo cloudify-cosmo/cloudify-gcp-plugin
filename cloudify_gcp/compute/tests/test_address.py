@@ -17,7 +17,6 @@ import pytest
 from mock import patch, PropertyMock
 
 from .. import address
-from cloudify import ctx
 
 
 @pytest.fixture(autouse=True)
@@ -42,8 +41,7 @@ def patch_zones():
         (None, 'cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
     ],
 )
-def test_create(mock_build, region=None, node_type=None, section=None,
-                ctx=ctx):
+def test_create(mock_build, region, node_type, section, ctx):
     ctx.node.type_hierarchy = [node_type]
 
     address.create(
@@ -74,7 +72,7 @@ def test_create(mock_build, region=None, node_type=None, section=None,
         ('cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
     ],
 )
-def test_delete(mock_build, node_type=None, section=None, ctx=ctx):
+def test_delete(mock_build, node_type, section, ctx):
     ctx.node.type_hierarchy = [node_type]
     ctx.instance.runtime_properties.update({
         'gcp_name': 'delete me',
