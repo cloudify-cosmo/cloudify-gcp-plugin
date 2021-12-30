@@ -41,8 +41,10 @@ def patch_zones():
         (None, 'cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
     ],
 )
-def test_create(mock_build=None, region=None, node_type=None, section=None,
+def test_create(mock_build, region=None, node_type=None, section=None,
                 ctx=None):
+    if not ctx:
+        ctx = mock_build()
     ctx.node.type_hierarchy = [node_type]
 
     address.create(
@@ -73,7 +75,7 @@ def test_create(mock_build=None, region=None, node_type=None, section=None,
         ('cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
     ],
 )
-def test_delete(mock_build=None, node_type=None, section=None, ctx=None):
+def test_delete(mock_build, node_type=None, section=None, ctx=None):
     ctx.node.type_hierarchy = [node_type]
     ctx.instance.runtime_properties.update({
         'gcp_name': 'delete me',
