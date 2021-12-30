@@ -10,10 +10,6 @@ checkout:
       fi
 
 executors:
-  py27:
-    docker:
-      - image: circleci/python:2.7
-
   py36:
     docker:
       - image: circleci/python:3.6
@@ -32,71 +28,6 @@ executors:
       image: ubuntu-1604:201903-01
 
 commands:
-
-
-  validate_documentation:
-    steps:
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update --remote --recursive
-      - run:
-          name: Download pip
-          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-      - run:
-          name: Install pip
-          command: sudo python get-pip.py
-      - run:
-          name: Install virtualenv
-          command: pip install --user virtualenv
-      - run:
-          name: Init virtualenv
-          command: virtualenv env
-      - run:
-          name: install tox
-          command: pip install --user pygithub pyyaml==3.10
-      - run:
-          name: upgrade setuptools
-          command: pip install --upgrade setuptools
-      - run:
-          name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
-      - attach_workspace:
-          at: workspace
-      - run: ecosystem-test validate-docs
-
-  validate_version:
-    steps:
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update --remote --recursive
-      - run:
-          name: Download pip
-          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-      - run:
-          name: Install pip
-          command: sudo python get-pip.py
-      - run:
-          name: Install virtualenv
-          command: pip install --user virtualenv
-      - run:
-          name: Init virtualenv
-          command: virtualenv env
-      - run:
-          name: install tox
-          command: pip install --user pygithub pyyaml==3.10
-      - run:
-          name: upgrade setuptools
-          command: pip install --upgrade setuptools
-      - run:
-          name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
-      - attach_workspace:
-          at: workspace
-      - run: ecosystem-test validate-plugin-version
 
   merge_docs:
       steps:
@@ -131,71 +62,6 @@ commands:
         - attach_workspace:
             at: workspace
         - run: ecosystem-test merge-docs
-
-  run_unittest_py27:
-    steps:
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update --remote --recursive
-      - run:
-          name: install tox
-          command: pip install --user tox
-      - run:
-          name: Run Flake8
-          command: /home/circleci/.local/bin/tox -e flake8
-      - run:
-          name: run unitests with py27
-          command: /home/circleci/.local/bin/tox -e py27
-
-  run_unittest_py36:
-    steps:
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update --remote --recursive
-      - run:
-          name: install tox
-          command: pip install --user tox
-      - run:
-          name: Run Flake8
-          command: /home/circleci/.local/bin/tox -e flake8
-      - run:
-          name: run unitests with py36
-          command: /home/circleci/.local/bin/tox -e py36
-
-  check_py3_compat:
-    steps:
-      - run:
-          name: install futurize
-          command: pip install future --user
-      - run:
-          # those modules contain code that futurize would want to change,
-          # so let's just remove them so that it doesn't report on them
-          # (there's no "exclude" functionality in futurize)
-          name: remove compat modules
-          command: |
-            rm cloudify_gcp/_compat.py
-      - run:
-          name: find python3-incompatible code
-          command: |
-            FUTURIZE="futurize ."
-            while read line; do
-              [[ "$line" =~ ^#.* ]] && continue
-              FUTURIZE="${FUTURIZE} ${line}"
-            done<.circleci/py3fixers
-            echo "Running: $FUTURIZE"
-            $FUTURIZE>futurize_diffs
-      - run:
-          name: check that there is no python3-incompatible code
-          command: |
-            if [[ -s futurize_diffs ]]; then
-              echo "Python-3-incompatible code found"
-              cat futurize_diffs
-              exit 1
-            fi
 
   generate_py36_wagon:
     steps:
@@ -383,24 +249,6 @@ commands:
 
 jobs:
 
-  unittests_py27:
-    executor: py27
-    steps:
-      - checkout
-      - run_unittest_py27
-
-  unittests_py36:
-    executor: py36
-    steps:
-      - checkout
-      - run_unittest_py36
-
-  py3_compat:
-    executor: py27
-    steps:
-      - checkout
-      - check_py3_compat
-
   wagon:
     executor: wagon_generator
     steps:
@@ -444,18 +292,6 @@ jobs:
       - create_manager_container_py3
       - prepare_test_manager
       - run_gke_test
-
-  validate_version:
-    executor: py36
-    steps:
-      - checkout
-      - validate_version
-
-  validate_documentation:
-    executor: py36
-    steps:
-      - checkout
-      - validate_documentation
 
   release:
     executor: py36
@@ -517,11 +353,10 @@ workflows:
   version: 2.1
   tests:
     jobs:
-      - py3_compat
-      - unittests_py27
-      - unittests_py36
-      - validate_version
-      - validate_documentation
+      - node/check_py3_compat_job
+      - node/unittests_job
+      - node/validate_version_job
+      - node/validate_documentation_job
       - wagon:
           filters:
             branches:
@@ -562,8 +397,7 @@ workflows:
             branches:
               only: /master/
           requires:
-            - unittests_py27
-            - unittests_py36
+            - node/unittests_job
             - arch64_wagon
             - wagon
             - rhel_wagon
@@ -575,7 +409,7 @@ workflows:
               only: /master/
           requires:
             - release
-            - validate_documentation
+            - node/validate_documentation_job
 
   nightly:
     triggers:
@@ -586,10 +420,9 @@ workflows:
             only:
               - master
     jobs:
-      - py3_compat
-      - unittests_py27
-      - unittests_py36
-      - validate_version
+      - node/check_py3_compat_job
+      - node/unittests_job
+      - node/validate_version_job
       - wagon:
           filters:
             branches:
@@ -635,9 +468,9 @@ workflows:
               only:
                 - master
       jobs:
-        - py3_compat
-        - unittests_py36
-        - validate_version
+        - node/check_py3_compat_job
+        - node/unittests_job
+        - node/validate_version_job
         - rhel_wagon:
             filters:
               branches:
@@ -678,9 +511,9 @@ workflows:
               only:
                 - master
     jobs:
-      - py3_compat
-      - unittests_py36
-      - validate_version
+      - node/check_py3_compat_job
+      - node/unittests_job
+      - node/validate_version_job
       - rhel_wagon:
           filters:
             branches:
@@ -721,9 +554,9 @@ workflows:
               only:
                 - master
     jobs:
-      - py3_compat
-      - unittests_py36
-      - validate_version
+      - node/check_py3_compat_job
+      - node/unittests_job
+      - node/validate_version_job
       - rhel_wagon:
           filters:
             branches:
@@ -764,9 +597,9 @@ workflows:
               only:
                 - master
     jobs:
-      - py3_compat
-      - unittests_py36
-      - validate_version
+      - node/check_py3_compat_job
+      - node/unittests_job
+      - node/validate_version_job
       - rhel_wagon:
           filters:
             branches:
