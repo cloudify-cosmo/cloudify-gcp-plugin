@@ -27,36 +27,36 @@ def patch_zones():
             return_value={
                 'a very fake zone': {
                     'region_name': 'expected region name',
-                    },
                 },
-            ):
+            },
+    ):
         yield
 
 
 @patch('cloudify_gcp.gcp.build')
 @pytest.mark.parametrize(
-        'region, node_type, section', [
-            ('region', 'cloudify.gcp.nodes.Address', 'addresses'),
-            (None, 'cloudify.gcp.nodes.Address', 'addresses'),
-            (None, 'cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
-            ],
-        )
+    'region, node_type, section', [
+        ('region', 'cloudify.gcp.nodes.Address', 'addresses'),
+        (None, 'cloudify.gcp.nodes.Address', 'addresses'),
+        (None, 'cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
+    ],
+)
 def test_create(mock_build, region, node_type, section, ctx):
     ctx.node.type_hierarchy = [node_type]
 
     address.create(
-            'name',
-            additional_settings={},
-            region=region,
-            )
+        'name',
+        additional_settings={},
+        region=region,
+    )
 
     expected = {
-            'body': {
-                'description': 'Cloudify generated Address',
-                'name': 'name',
-                },
-            'project': 'not really a project',
-            }
+        'body': {
+            'description': 'Cloudify generated Address',
+            'name': 'name',
+        },
+        'project': 'not really a project',
+    }
     if region:
         expected['region'] = 'region'
     elif section == 'addresses':
@@ -67,28 +67,28 @@ def test_create(mock_build, region, node_type, section, ctx):
 
 @patch('cloudify_gcp.gcp.build')
 @pytest.mark.parametrize(
-        'node_type, section', [
-            ('cloudify.gcp.nodes.Address', 'addresses'),
-            ('cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
-            ],
-        )
+    'node_type, section', [
+        ('cloudify.gcp.nodes.Address', 'addresses'),
+        ('cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
+    ],
+)
 def test_delete(mock_build, node_type, section, ctx):
     ctx.node.type_hierarchy = [node_type]
     ctx.instance.runtime_properties.update({
         'gcp_name': 'delete me',
         'region': 'Costa Del Sol',
         'name': 'delete me',
-        })
+    })
 
     address.delete()
 
     expected = dict(
-            project='not really a project',
-            address='delete me',
-            )
+        project='not really a project',
+        address='delete me',
+    )
     if section == 'addresses':
         expected['region'] = 'Costa Del Sol'
 
     getattr(mock_build(), section)().delete.assert_called_once_with(
-            **expected
-            )
+        **expected
+    )
