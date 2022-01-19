@@ -4,6 +4,7 @@ orbs:
   node: cloudify/public-unittest-orb@1.0.2 #orb version
   wagonorb: cloudify/wagon-bulder-orb@1.0.3 #orb version
   releaseorb: cloudify/release-orb@1.0.5 #orb version
+  managerorb: cloudify/manager-orb@1.0.0
 
 checkout:
   post:
@@ -24,40 +25,6 @@ executors:
       image: ubuntu-1604:201903-01
 
 commands:
-  create_manager_container_py3:
-    steps:
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule update --init --recursive --remote
-      - attach_workspace:
-          at: workspace
-      - run:
-          name: update pip
-          command: pip install -U pip===20.3.3
-      - run:
-          name: install cloudify
-          command: |
-            pip install -r test-requirements.txt
-      - run:
-          name: download manager docker image
-          command:  wget http://repository.cloudifysource.org/cloudify/6.2.0/ga-release/cloudify-manager-aio-docker-6.2.0-ga.tar
-      - run:
-          name: load docker manager image
-          command: docker load -i cloudify-manager-aio-docker-6.2.0-ga.tar
-      - run:
-          name: show images
-          command: docker images
-      - run:
-          name: start docker container
-          command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host cloudify-manager-aio-x86_64
-      - run:
-          name: wait for starter
-          command: docker exec -it cfy_manager cfy_manager wait-for-starter
-      - run:
-          name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
-
   prepare_test_manager:
     steps:
       - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -es region=$region -es zone=$zone -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key  --bundle-path workspace/build/cloudify-plugins-bundle.tgz
@@ -107,7 +74,7 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - create_manager_container_py3
+      - managerorb/create_manager_container_latest
       - prepare_test_manager
       - run_virtual_machine_test
 
@@ -117,7 +84,7 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - create_manager_container_py3
+      - managerorb/create_manager_container_latest
       - prepare_test_manager
       - run_gke_test
 
@@ -127,7 +94,7 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - create_manager_container_py3
+      - managerorb/create_manager_container_latest
       - prepare_test_manager
       - run_attach_disk_test
       - run_container_engine_test
@@ -138,7 +105,7 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - create_manager_container_py3
+      - managerorb/create_manager_container_latest
       - prepare_test_manager
       - run_http_balancer_test
       - run_https_balancer_test
@@ -149,7 +116,7 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - create_manager_container_py3
+      - managerorb/create_manager_container_latest
       - prepare_test_manager
       - run_ssl_balancer_test
       - run_tcp_balancer_test
@@ -160,7 +127,7 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - create_manager_container_py3
+      - managerorb/create_manager_container_latest
       - prepare_test_manager
       - run_gcp_example_network_test
 
