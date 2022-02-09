@@ -40,7 +40,7 @@ commands:
   # test blueprints
   run_attach_disk_test:
      steps:
-       - run: ecosystem-test local-blueprint-test  -b blueprints/attach-disk.yaml --test-id=gcp-attach-disk -i prefix=gcp-attach-disk-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+       - run: ecosystem-test local-blueprint-test  -b blueprints/attach-disk.yaml --test-id=gcp-attach-disk  -i zone=europe-west1-b -i region=europe-west1 -i prefix=gcp-attach-disk-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
 
   run_container_engine_test:
     steps:
