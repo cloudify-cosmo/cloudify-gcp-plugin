@@ -9,11 +9,9 @@ inputs:
 
   zone:
     type: string
-    default: { get_secret: zone }
 
   region:
     type: string
-    default: { get_secret: region }
 
   prefix:
     type: string
