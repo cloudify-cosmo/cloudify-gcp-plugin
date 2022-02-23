@@ -8,11 +8,11 @@ inputs:
 
   zone:
     type: string
-    default: { get_secret: zone }
+    default: europe-west1-d
 
   region:
     type: string
-    default: { get_secret: region }
+    default: europe-west1
 
   prefix:
     type: string
