@@ -2254,7 +2254,7 @@ workflows:
     mapping: gcp_plugin.cloudify_gcp.workflows.discover.discover_and_deploy
     parameters:
       node_id:
-        type: string
+        type: node_id
         description: >
           The node_id. Not required.
         default: ''
@@ -2267,7 +2267,7 @@ workflows:
           - projects.zones.clusters
       blueprint_id:
         description: The ID of the blueprint that should be used to deploy the new resources. Default is current blueprint.
-        type: Blueprint_ID
+        type: blueprint_id
         default: 'existing-gke-cluster'
 
 
