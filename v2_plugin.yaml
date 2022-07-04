@@ -2271,6 +2271,7 @@ workflows:
         default: 'existing-gke-cluster'
 
 
+
 blueprint_labels:
   obj-type:
     values:
@@ -2280,3 +2281,8 @@ labels:
   obj-type:
     values:
       - gcp
+
+resource_tags:
+  tenant: get_sys [tenant, name]
+  deployment_id: get_sys [deplyment, id]
+  owner: get_sys [deplyment, owner]
