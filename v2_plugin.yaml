@@ -3,7 +3,7 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: '1.8.2'
+    package_version: '1.8.3'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -2254,7 +2254,7 @@ workflows:
     mapping: gcp_plugin.cloudify_gcp.workflows.discover.discover_and_deploy
     parameters:
       node_id:
-        type: node_id
+        type: string
         description: >
           The node_id. Not required.
         default: ''
@@ -2267,7 +2267,7 @@ workflows:
           - projects.zones.clusters
       blueprint_id:
         description: The ID of the blueprint that should be used to deploy the new resources. Default is current blueprint.
-        type: blueprint_id
+        type: string
         default: 'existing-gke-cluster'
 
 
