@@ -1,3 +1,4 @@
+1.8.4: Resource tags.
 1.8.3: Resource tags.
 1.8.2: Add Blueprint ID to plugin yaml v2
 1.8.1: Rerelease for aarch64 wagon.
