@@ -3,7 +3,7 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: '1.8.3'
+    package_version: '1.8.4'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -2283,6 +2283,6 @@ labels:
       - gcp
 
 resource_tags:
-  tenant: get_sys [tenant, name]
-  deployment_id: get_sys [deplyment, id]
-  owner: get_sys [deplyment, owner]
+  tenant: { get_sys: [ tenant, name ] }
+  deployment_id: { get_sys: [ deployment, id ] }
+  owner: { get_sys: [ deployment, owner ] }

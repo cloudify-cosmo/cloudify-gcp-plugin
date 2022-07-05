@@ -3,7 +3,7 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: '1.8.3'
+    package_version: '1.8.4'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
