@@ -27,7 +27,7 @@ executors:
 commands:
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -es region=$region -es zone=$zone -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key  --bundle-path workspace/build/cloudify-plugins-bundle.tgz
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -s region=us-east1 -s zone=us-east1-b -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key  --bundle-path workspace/build/cloudify-plugins-bundle.tgz
 
   run_virtual_machine_test:
     steps:
