@@ -584,7 +584,6 @@ node_types:
         description: >
           Interface for rule
 
-
   cloudify.gcp.nodes.KeyPair:
     derived_from: cloudify.nodes.Root
     properties:
