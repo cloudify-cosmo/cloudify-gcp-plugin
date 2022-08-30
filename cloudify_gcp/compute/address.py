@@ -46,7 +46,7 @@ class Address(GoogleCloudPlatform):
         self.region = region
 
     def _get_resource_type(self):
-        if 'cloudify.gcp.nodes.Address' in ctx.node.type_hierarchy:
+        if 'cloudify.nodes.gcp.Address' in ctx.node.type_hierarchy:
             return self.discovery.addresses()
         return self.discovery.globalAddresses()
 
@@ -59,7 +59,7 @@ class Address(GoogleCloudPlatform):
 
     def _common_kwargs(self):
         args = {'project': self.project}
-        if 'cloudify.gcp.nodes.Address' in ctx.node.type_hierarchy:
+        if 'cloudify.nodes.gcp.Address' in ctx.node.type_hierarchy:
             if self.region:
                 args['region'] = self.region
             else:

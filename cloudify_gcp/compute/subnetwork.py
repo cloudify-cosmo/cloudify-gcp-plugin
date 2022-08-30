@@ -175,7 +175,7 @@ def creation_validation(**kwargs):
         raise NonRecoverableError("region must be supplied")
 
     rel_type = 'cloudify.gcp.relationships.contained_in_network'
-    node_type = 'cloudify.gcp.nodes.Network'
+    node_type = 'cloudify.nodes.gcp.Network'
 
     rels = utils.get_relationships(
             ctx,
