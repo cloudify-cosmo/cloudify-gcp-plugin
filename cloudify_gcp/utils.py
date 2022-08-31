@@ -617,13 +617,15 @@ class ZoneOperation(Operation):
 def get_relationships(
         relationships,
         filter_relationships=None,
-
         filter_resource_types=None):
     """
     Get all relationships of a particular node or the current context.
 
     Optionally filter based on relationship type, node type.
     """
+    filter_relationships = filter_relationships or []
+    filter_resource_types = filter_resource_types or []
+
     if isinstance(relationships, (CloudifyContext, Proxy)):
         # Shortcut to support supplying ctx directly
         relationships = relationships.instance.relationships
