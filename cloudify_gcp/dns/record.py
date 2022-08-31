@@ -190,6 +190,8 @@ def delete(**_):
 
 def validate_contained_in(**_):
     if ctx.target.type != 'cloudify.nodes.gcp.DNSZone' or \
-            ctx.source.type != 'cloudify.nodes.gcp.DNSRecord':
+            ctx.source.type != 'cloudify.nodes.gcp.DNSRecord' or \
+            ctx.target.type != 'cloudify.gcp.nodes.DNSZone' or \
+            ctx.source.type != 'cloudify.gcp.nodes.DNSRecord':
         raise NonRecoverableError(
                 'Unsupported types for {} relationship'.format(ctx.type))

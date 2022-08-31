@@ -617,6 +617,7 @@ class ZoneOperation(Operation):
 def get_relationships(
         relationships,
         filter_relationships=None,
+
         filter_resource_types=None):
     """
     Get all relationships of a particular node or the current context.

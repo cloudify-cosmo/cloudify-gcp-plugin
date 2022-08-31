@@ -637,6 +637,8 @@ def validate_contained_in_network(**kwargs):
             filter_resource_types=[
                 'cloudify.nodes.gcp.Network',
                 'cloudify.nodes.gcp.SubNetwork',
+                'cloudify.gcp.nodes.Network',
+                'cloudify.gcp.nodes.SubNetwork',
                 ],
             )
     if len(rels) > 1:
@@ -644,7 +646,8 @@ def validate_contained_in_network(**kwargs):
                 'Instances may only be contained in 1 Network or SubNetwork')
     elif len(rels) == 1:
         network = rels[0].target
-        if network.node.type == 'cloudify.nodes.gcp.Network' and \
+        if network.node.type == 'cloudify.nodes.gcp.Network' or \
+                network.node.type == 'cloudify.gcp.nodes.Network' and \
                 not network.node.properties['auto_subnets']:
             raise NonRecoverableError(
                     'It is invalid to connect an instance directly to a '
