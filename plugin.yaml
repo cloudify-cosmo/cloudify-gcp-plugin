@@ -2231,7 +2231,7 @@ node_types:
 
 relationships:
 
-  cloudify.gcp.relationships.instance_connected_to_security_group:
+  cloudify.relationships.gcp.instance_connected_to_security_group:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -2254,7 +2254,10 @@ relationships:
             tag:
               default: [{ get_attribute: [TARGET, name] }]
 
-  cloudify.gcp.relationships.instance_connected_to_ip:
+  cloudify.gcp.relationships.instance_connected_to_security_group:
+    derived_from: cloudify.relationships.gcp.instance_connected_to_security_group
+
+  cloudify.relationships.gcp.instance_connected_to_ip:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -2273,7 +2276,10 @@ relationships:
             zone:
               default: { get_attribute: [SOURCE, zone] }
 
-  cloudify.gcp.relationships.instance_connected_to_keypair:
+  cloudify.gcp.relationships.instance_connected_to_ip:
+    derived_from: cloudify.relationships.gcp.instance_connected_to_ip
+
+  cloudify.relationships.gcp.instance_connected_to_keypair:
     derived_from: cloudify.relationships.connected_to
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -2283,7 +2289,10 @@ relationships:
             instance_name:
               default: { get_attribute: [SOURCE, name] }
 
-  cloudify.gcp.relationships.instance_connected_to_disk:
+  cloudify.gcp.relationships.instance_connected_to_keypair:
+    derived_from: cloudify.relationships.gcp.instance_connected_to_keypair
+
+  cloudify.relationships.gcp.instance_connected_to_disk:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -2306,7 +2315,11 @@ relationships:
             disk_name:
               default: { get_attribute: [SOURCE, name] }
 
-  cloudify.gcp.relationships.instance_connected_to_instance_group:
+
+  cloudify.gcp.relationships.instance_connected_to_disk:
+    derived_from: cloudify.relationships.gcp.instance_connected_to_disk
+
+  cloudify.relationships.gcp.instance_connected_to_instance_group:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -2325,7 +2338,10 @@ relationships:
             instance_url:
               default: { get_attribute: [SOURCE, selfLink] }
 
-  cloudify.gcp.relationships.uses_as_backend:
+  cloudify.gcp.relationships.instance_connected_to_instance_group:
+      derived_from: cloudify.relationships.gcp.instance_connected_to_instance_group
+
+  cloudify.relationships.gcp.uses_as_backend:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -2344,7 +2360,10 @@ relationships:
             group_self_url:
               default: { get_attribute: [TARGET, selfLink] }
 
-  cloudify.gcp.relationships.uses_as_region_backend:
+  cloudify.gcp.relationships.uses_as_backend:
+      derived_from: cloudify.relationships.gcp.uses_as_backend
+
+  cloudify.relationships.gcp.uses_as_region_backend:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -2363,46 +2382,76 @@ relationships:
             group_self_url:
               default: { get_attribute: [TARGET, selfLink] }
 
-  cloudify.gcp.relationships.contained_in_compute:
+  cloudify.gcp.relationships.uses_as_region_backend:
+    derived_from: cloudify.relationships.gcp.uses_as_region_backend
+
+  cloudify.relationships.gcp.contained_in_compute:
     derived_from: cloudify.relationships.contained_in
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.contained_in
 
-  cloudify.gcp.relationships.dns_record_contained_in_zone:
+  cloudify.gcp.relationships.contained_in_compute:
+    derived_from: cloudify.relationships.gcp.contained_in_compute
+
+  cloudify.relationships.gcp.dns_record_contained_in_zone:
     derived_from: cloudify.relationships.contained_in
     source_interfaces:
       cloudify.interfaces.validation:
         create:
           implementation: gcp_plugin.cloudify_gcp.dns.record.validate_contained_in
 
+  cloudify.gcp.relationships.dns_record_contained_in_zone:
+    derived_from: cloudify.relationships.gcp.dns_record_contained_in_zone
+
+  cloudify.relationships.gcp.dns_record_connected_to_instance:
+    derived_from: cloudify.relationships.connected_to
+
   cloudify.gcp.relationships.dns_record_connected_to_instance:
+      derived_from: cloudify.relationships.gcp.dns_record_connected_to_instance
+
+  cloudify.relationships.gcp.dns_record_connected_to_ip:
     derived_from: cloudify.relationships.connected_to
 
   cloudify.gcp.relationships.dns_record_connected_to_ip:
-    derived_from: cloudify.relationships.connected_to
+    derived_from: cloudify.relationships.gcp.dns_record_connected_to_ip
 
-  cloudify.gcp.relationships.contained_in_network:
+  cloudify.relationships.gcp.contained_in_network:
     derived_from: cloudify.relationships.contained_in
 
-  cloudify.gcp.relationships.instance_contained_in_network:
+  cloudify.gcp.relationships.contained_in_network:
+    derived_from: cloudify.relationships.gcp.contained_in_network
+
+  cloudify.relationships.gcp.instance_contained_in_network:
     derived_from: cloudify.relationships.contained_in
     source_interfaces:
       cloudify.interfaces.validation:
         create:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.validate_contained_in_network
 
+  cloudify.gcp.relationships.instance_contained_in_network:
+    derived_from: cloudify.relationships.gcp.instance_contained_in_network
+
+  cloudify.relationships.gcp.forwarding_rule_connected_to_target_proxy:
+    derived_from: cloudify.relationships.connected_to
+
   cloudify.gcp.relationships.forwarding_rule_connected_to_target_proxy:
+    derived_from: cloudify.relationships.gcp.forwarding_rule_connected_to_target_proxy
+
+  cloudify.relationships.gcp.vpn_network_peering_connected_to_network:
     derived_from: cloudify.relationships.connected_to
 
   cloudify.gcp.relationships.vpn_network_peering_connected_to_network:
+    derived_from: cloudify.relationships.gcp.vpn_network_peering_connected_to_network
+
+  cloudify.relationships.gcp.subscription_connected_to_topic:
     derived_from: cloudify.relationships.connected_to
 
   cloudify.gcp.relationships.subscription_connected_to_topic:
-    derived_from: cloudify.relationships.connected_to
+    derived_from: cloudify.relationships.gcp.subscription_connected_to_topic
 
-  cloudify.gcp.relationships.instance_remove_access_config:
+  cloudify.relationships.gcp.instance_remove_access_config:
     derived_from: cloudify.relationships.depends_on
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -2417,6 +2466,9 @@ relationships:
               default: { get_property: [SOURCE, name] }
             interface:
               default: { get_property: [SOURCE, interface] }
+
+  cloudify.gcp.relationships.instance_remove_access_config:
+    derived_from: cloudify.relationships.gcp.instance_remove_access_config
 
 workflows:
 
