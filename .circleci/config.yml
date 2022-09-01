@@ -6,12 +6,6 @@ orbs:
   releaseorb: cloudify/release-orb@1.4.0 #orb version
   managerorb: cloudify/manager-orb@2.0.1
 
-general:
-  branches:
-    only:
-      - master # list of branches to build
-      - /[0-9\.]*\-build/ # or regexes
-
 checkout:
   post:
     - >
@@ -74,6 +68,13 @@ commands:
   # cloudify-community/blueprint-examples/gcp-example-network/blueprint.yaml
 
 jobs:
+  
+  validate_branch: 
+    executor: cloudify-machine-py3
+    steps: 
+      - run: 
+        name: Validate Branch 
+        command: python3 validate_branch.py
   virtual_machine_integration_tests_py3:
     executor: cloudify-machine-py3
     environment:
