@@ -136,7 +136,7 @@ workflows:
   version: 2.1
   tests:
     jobs:
-      - python3 validate_docs.py
+      - python3 validate_branch.py
       - node/check_py3_compat_job
       - node/unittests_job
       - node/validate_version_job
