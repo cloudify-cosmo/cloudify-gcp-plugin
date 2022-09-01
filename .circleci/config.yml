@@ -74,11 +74,7 @@ jobs:
     executor: cloudify-machine-py3
     steps: 
       - checkout
-<<<<<<< HEAD
       - run: python .circleci/validate_branch.py
-=======
-      - run: python validate_branch.py
->>>>>>> ce48a34f78a5ec0d8e3228233cc78fe28a4f1fc1
   
   virtual_machine_integration_tests_py3:
     executor: cloudify-machine-py3
