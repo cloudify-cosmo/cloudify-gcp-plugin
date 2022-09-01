@@ -73,7 +73,7 @@ jobs:
   validate_branch:
     executor: cloudify-machine-py3
     steps: 
-      - run: python validate_branch.py
+      - echo "$CIRCLE_BRANCH"
   
   virtual_machine_integration_tests_py3:
     executor: cloudify-machine-py3
