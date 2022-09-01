@@ -6,11 +6,6 @@ orbs:
   releaseorb: cloudify/release-orb@1.4.0 #orb version
   managerorb: cloudify/manager-orb@2.0.1
 
-general:
-  branches:
-      only:
-        - master # list of branches to build
-        - [0-9\.]*\-build
 checkout:
   post:
     - >
