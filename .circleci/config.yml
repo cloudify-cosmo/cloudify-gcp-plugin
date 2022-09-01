@@ -72,10 +72,9 @@ jobs:
   validate_branch: 
     executor: cloudify-machine-py3
     steps: 
-      - run: 
-        name: Validate Branch 
-        command: python3 validate_branch.py
-        
+      - checkout
+      - python3 validate_branch.py
+
   virtual_machine_integration_tests_py3:
     executor: cloudify-machine-py3
     environment:
