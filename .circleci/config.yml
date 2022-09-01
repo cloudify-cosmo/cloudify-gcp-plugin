@@ -25,6 +25,7 @@ executors:
        image: ubuntu-2004:202201-02
 
 commands:
+
   prepare_test_manager:
     steps:
       - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -s region=us-east1 -s zone=us-east1-b -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key  --bundle-path workspace/build/cloudify-plugins-bundle.tgz
@@ -68,6 +69,11 @@ commands:
   # cloudify-community/blueprint-examples/gcp-example-network/blueprint.yaml
 
 jobs:
+
+  validate_branch:
+    executor: cloudify-machine-py3
+    steps: 
+      - run: python validate_branch.py
   
   virtual_machine_integration_tests_py3:
     executor: cloudify-machine-py3
@@ -136,13 +142,7 @@ workflows:
   version: 2.1
   tests:
     jobs:
-      - validate_branch:
-        executor: cloudify-machine-py3
-        steps: 
-          - checkout
-          - run: 
-              name: Run tests
-              command: python3 validate_branch.py
+      - validate_branch 
       - node/check_py3_compat_job
       - node/unittests_job
       - node/validate_version_job
