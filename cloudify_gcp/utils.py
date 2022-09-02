@@ -623,6 +623,9 @@ def get_relationships(
 
     Optionally filter based on relationship type, node type.
     """
+    filter_relationships = filter_relationships or []
+    filter_resource_types = filter_resource_types or []
+
     if isinstance(relationships, (CloudifyContext, Proxy)):
         # Shortcut to support supplying ctx directly
         relationships = relationships.instance.relationships

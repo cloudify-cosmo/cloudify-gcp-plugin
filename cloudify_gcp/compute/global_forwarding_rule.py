@@ -92,7 +92,8 @@ def creation_validation(**kwargs):
             ctx,
             filter_relationships='cloudify.gcp.relationships.'
             'forwarding_rule_connected_to_target_proxy',
-            filter_resource_types='cloudify.gcp.nodes.TargetProxy')
+            filter_resource_types=['cloudify.nodes.gcp.TargetProxy',
+                                   'cloudify.gcp.nodes.TargetProxy'])
         if not rels:
             raise NonRecoverableError(
                     'Must supply a target proxy, '
