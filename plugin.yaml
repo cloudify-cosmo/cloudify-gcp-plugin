@@ -2062,7 +2062,7 @@ node_types:
     derived_from: cloudify.nodes.gcp.InstanceGroup
 
   cloudify.gcp.nodes.Volume:
-    derived_from: ccloudify.nodes.gcp.Volume
+    derived_from: cloudify.nodes.gcp.Volume
 
   cloudify.gcp.nodes.Snapshot:
       derived_from: cloudify.nodes.gcp.Snapshot
