@@ -1947,8 +1947,8 @@ node_types:
            sink_type:
              default: { get_property: [SELF, sink_type]}
 
-   cloudify.gcp.nodes.LoggingSink:
-     derived_from: cloudify.nodes.gcp.LoggingSink
+  cloudify.gcp.nodes.LoggingSink:
+    derived_from: cloudify.nodes.gcp.LoggingSink
 
   cloudify.nodes.gcp.LoggingExclusion:
     derived_from: cloudify.nodes.Root
