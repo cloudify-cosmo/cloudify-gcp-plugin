@@ -1,3 +1,4 @@
+1.8.7: Fix issues from deprecate.
 1.8.6: Deprecate old node types.
 1.8.5: release redhat8 wagon and dsl 1_4 yaml.
 1.8.4: Resource tags.
