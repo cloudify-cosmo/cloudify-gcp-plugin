@@ -226,6 +226,14 @@ node_types:
               default: { get_attribute: [SELF, name] }
             zone:
               default: { get_attribute: [SELF, zone]}
+      cloudify.interfaces.operations:
+        stop:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.stop
+          inputs:
+            name:
+              default: { get_attribute: [ SELF, name ] }
+            zone:
+              default: { get_attribute: [ SELF, zone ] }
 
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.gcp.Instance

@@ -92,6 +92,22 @@ class Instance(GoogleCloudPlatform):
         self.subnetwork = subnetwork
         self.can_ip_forward = can_ip_forward
 
+    @utils.async_operation()
+    @check_response
+    def stop(self):
+        """
+        Delete GCP instance.
+        Zone operation.
+
+        :return: REST response with operation responsible for the instance
+        deletion process and its status
+        """
+        self.logger.info('Stop instance {0}'.format(self.name))
+        return self.discovery.instances().stop(
+            project=self.project,
+            zone=basename(self.zone),
+            instance=self.name).execute()
+
     @utils.async_operation(get=True)
     @check_response
     def create(self):
@@ -459,6 +475,26 @@ def delete(name, zone, **kwargs):
                             zone=zone,
                             )
         utils.delete_if_not_external(instance)
+
+
+@operation(resumable=True)
+@utils.throw_cloudify_exceptions
+def stop(name, zone, **kwargs):
+    gcp_config = utils.get_gcp_config()
+    props = ctx.instance.runtime_properties
+
+    if not zone:
+        zone = props.get('zone')
+    if not name:
+        name = props.get(constants.NAME)
+
+    if name:
+        instance = Instance(gcp_config,
+                            ctx.logger,
+                            name=name,
+                            zone=zone,
+                            )
+        instance.stop()
 
 
 @operation(resumable=True)
