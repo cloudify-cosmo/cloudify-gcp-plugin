@@ -96,11 +96,11 @@ class Instance(GoogleCloudPlatform):
     @check_response
     def stop(self):
         """
-        Delete GCP instance.
+        Stop GCP instance.
         Zone operation.
 
         :return: REST response with operation responsible for the instance
-        deletion process and its status
+        stop process and its status
         """
         self.logger.info('Stop instance {0}'.format(self.name))
         return self.discovery.instances().stop(
@@ -480,6 +480,7 @@ def delete(name, zone, **kwargs):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def stop(name, zone, **kwargs):
+    ctx.logger.info('** in stop operation ')
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
@@ -489,6 +490,7 @@ def stop(name, zone, **kwargs):
         name = props.get(constants.NAME)
 
     if name:
+        ctx.logger.info('** in name stop operation ')
         instance = Instance(gcp_config,
                             ctx.logger,
                             name=name,
