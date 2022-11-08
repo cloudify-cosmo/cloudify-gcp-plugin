@@ -219,14 +219,6 @@ node_types:
           inputs:
             name:
               default: { get_attribute: [SELF, name]}
-        delete:
-          implementation: gcp_plugin.cloudify_gcp.compute.instance.delete
-          inputs:
-            name:
-              default: { get_attribute: [SELF, name] }
-            zone:
-              default: { get_attribute: [SELF, zone]}
-      cloudify.interfaces.operations:
         stop:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.stop
           inputs:
@@ -234,6 +226,28 @@ node_types:
               default: { get_attribute: [ SELF, name ] }
             zone:
               default: { get_attribute: [ SELF, zone ] }
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.delete
+          inputs:
+            name:
+              default: { get_attribute: [SELF, name] }
+            zone:
+              default: { get_attribute: [SELF, zone]}
+      cloudify.interfaces.operation:
+        resize:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.resize
+          inputs:
+            name:
+              default: { get_attribute: [ SELF, name ] }
+            zone:
+              default: { get_attribute: [ SELF, zone ] } # machine_type_zone
+            set_machine_type: # instances_set_machine_type_request_resource
+              type: string
+              description: Full or partial URL of the machine type resource. See Machine Types for a full list of machine types.
+              For example zones/us-central1-f/machineTypes/n1-standard-1 This field is a member of oneof_ _machine_type.
+              default: ""
+
+
 
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.gcp.Instance

@@ -94,6 +94,23 @@ class Instance(GoogleCloudPlatform):
 
     @utils.async_operation()
     @check_response
+    def set_machine_type(self, set_machine_type):
+        """
+        Set machine type GCP instance.
+        Zone operation.
+
+        :return: REST response with operation responsible for the instance
+        set machine type process and its status
+        """
+        self.logger.info('Set machine type instance {0}'.format(self.name))
+        return self.discovery.instances().set_machine_type(
+            project=self.project,
+            zone=basename(self.zone),
+            instance=self.name,
+            instances_set_machine_type_request_resource=set_machine_type).execute()
+
+    @utils.async_operation()
+    @check_response
     def stop(self):
         """
         Stop GCP instance.
@@ -497,6 +514,29 @@ def stop(name, zone, **kwargs):
                             zone=zone,
                             )
         instance.stop()
+
+
+@operation(resumable=True)
+@utils.throw_cloudify_exceptions
+def resize(name, zone, set_machine_type, **kwargs):
+    ctx.logger.info('** in resize operation ')
+    gcp_config = utils.get_gcp_config()
+    props = ctx.instance.runtime_properties
+
+    if not zone:
+        zone = props.get('zone')
+    if not name:
+        name = props.get(constants.NAME)
+
+    if name:
+        ctx.logger.info('** in name resize operation ')
+        instance = Instance(gcp_config,
+                            ctx.logger,
+                            name=name,
+                            zone=zone,
+                            )
+        instance.stop()
+        instance.set_machine_type(set_machine_type)
 
 
 @operation(resumable=True)
