@@ -125,6 +125,22 @@ class Instance(GoogleCloudPlatform):
             zone=basename(self.zone),
             instance=self.name).execute()
 
+    @utils.async_operation()
+    @check_response
+    def start(self):
+        """
+        Start GCP instance.
+        Zone operation.
+
+        :return: REST response with operation responsible for the instance
+        Start process and its status
+        """
+        self.logger.info('start instance {0}'.format(self.name))
+        return self.discovery.instances().start(
+            project=self.project,
+            zone=basename(self.zone),
+            instance=self.name).execute()
+
     @utils.async_operation(get=True)
     @check_response
     def create(self):
@@ -460,18 +476,25 @@ def create(instance_type,
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
-def start(**kwargs):
+def start(name, **kwargs):
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
-    instance = Instance(gcp_config,
-                        ctx.logger,
-                        name=props[constants.NAME],
-                        zone=basename(props['zone']),
-                        )
 
-    utils.resource_started(ctx, instance)
+    if not name:
+        name = props.get(constants.NAME)
 
-    set_ip(instance)
+    if name:
+        instance = Instance(gcp_config,
+                            ctx.logger,
+                            name=name,
+                            zone=basename(props['zone']),
+                            )
+
+        utils.resource_started(ctx, instance)
+        set_ip(instance)
+
+        instance.start()
+        ctx.instance.runtime_properties[constants.NAME] = instance.name
 
 
 @operation(resumable=True)
@@ -497,7 +520,6 @@ def delete(name, zone, **kwargs):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def stop(name, zone, **kwargs):
-    ctx.logger.info('** in stop operation ')
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
@@ -507,18 +529,18 @@ def stop(name, zone, **kwargs):
         name = props.get(constants.NAME)
 
     if name:
-        ctx.logger.info('** in name stop operation ')
         instance = Instance(gcp_config,
                             ctx.logger,
                             name=name,
                             zone=zone,
                             )
         instance.stop()
+        ctx.instance.runtime_properties[constants.NAME] = instance.name
 
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
-def resize(name, zone, set_machine_type, **kwargs):
+def resize(name, zone, **kwargs):
     ctx.logger.info('** in resize operation ')
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
@@ -536,7 +558,8 @@ def resize(name, zone, set_machine_type, **kwargs):
                             zone=zone,
                             )
         instance.stop()
-        instance.set_machine_type(set_machine_type)
+        instance.set_machine_type()
+        instance.start()
 
 
 @operation(resumable=True)
