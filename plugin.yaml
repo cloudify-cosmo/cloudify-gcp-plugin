@@ -226,14 +226,6 @@ node_types:
               default: { get_attribute: [ SELF, name ] }
             zone:
               default: { get_attribute: [ SELF, zone ] }
-        delete:
-          implementation: gcp_plugin.cloudify_gcp.compute.instance.delete
-          inputs:
-            name:
-              default: { get_attribute: [SELF, name] }
-            zone:
-              default: { get_attribute: [SELF, zone]}
-      cloudify.interfaces.operations:
         resize:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.resize
           inputs:
@@ -241,8 +233,18 @@ node_types:
               default: { get_attribute: [ SELF, name ] }
             machine_type_zone:
               default: { get_attribute: [ SELF, zone ] }
-            instances_set_machine_type_request_resource:
+            machine_type:
               type: string
+              default: 'e2-standard-2'
+
+        delete:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.delete
+          inputs:
+            name:
+              default: { get_attribute: [SELF, name] }
+            zone:
+              default: { get_attribute: [SELF, zone]}
+
 
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.gcp.Instance
