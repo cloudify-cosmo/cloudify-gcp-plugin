@@ -315,7 +315,7 @@ def async_operation(get=False):
                     raise
 
                 if has_finished:
-                    for key in '_operation', 'name', 'selfLink':
+                    for key in '_operation', 'selfLink':
                         props.pop(key, None)
                     if get:
                         props.update(self.get())
