@@ -1,4 +1,0 @@
-operation_kwargs:
-  instances_set_machine_type_request_resource: e2-standard-2
-node_ids:
-  - vm
