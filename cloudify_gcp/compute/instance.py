@@ -94,7 +94,7 @@ class Instance(GoogleCloudPlatform):
 
     @utils.async_operation()
     @check_response
-    def set_machine_type(self, machine_type):
+    def set_machine_type(self, name, zone, machine_type):
         """
         Set machine type GCP instance.
         Zone operation.
@@ -105,8 +105,8 @@ class Instance(GoogleCloudPlatform):
         self.logger.info('Set machine type instance {0}'.format(self.name))
         return self.discovery.instances().set_machine_type(
             project=self.project,
-            zone=basename(self.zone),
-            instance=self.name,
+            zone=zone,
+            instance=name,
             instances_set_machine_type_request_resource=machine_type).execute()
 
     @utils.async_operation()

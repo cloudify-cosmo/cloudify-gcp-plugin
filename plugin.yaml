@@ -231,7 +231,7 @@ node_types:
           inputs:
             name:
               default: { get_attribute: [ SELF, name ] }
-            machine_type_zone:
+            zone:
               default: { get_attribute: [ SELF, zone ] }
             machine_type:
               type: string
