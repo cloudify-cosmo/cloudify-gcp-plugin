@@ -165,13 +165,14 @@ class TestGCPInstance(TestGCP):
                 scopes='scopes',
                 tags=['tags'],
                 )
-
+        print('*** {}'.format(self.ctxmock.instance.runtime_properties))
         self.assertEqual(
                 {
                     'startup_script': {'type': 'string'},
                     'you pass': 'the test',
                     'zone': 'zone',
                     'resource_id': 'name',
+                    'name': 'name'
                     },
                 self.ctxmock.instance.runtime_properties
                 )
@@ -527,7 +528,7 @@ class TestGCPInstance(TestGCP):
     def test_start(self, mock_getitem, mock_build, *args):
         self.ctxmock.node.properties['external_ip'] = False
         self.ctxmock.instance.runtime_properties['name'] = 'name'
-        instance.start()
+        instance.start('name')
 
         self.assertEqual(
                 self.ctxmock.instance.runtime_properties['ip'],
@@ -543,7 +544,7 @@ class TestGCPInstance(TestGCP):
     def test_start_with_external_ip(self, mock_getitem, mock_build, *args):
         self.ctxmock.node.properties['external_ip'] = True
         self.ctxmock.instance.runtime_properties['name'] = 'name'
-        instance.start()
+        instance.start('name')
 
         self.assertEqual(
                 self.ctxmock.instance.runtime_properties[
