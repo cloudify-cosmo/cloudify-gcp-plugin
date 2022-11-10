@@ -78,8 +78,7 @@ class Instance(GoogleCloudPlatform):
             config,
             logger,
             utils.get_gcp_resource_name(name),
-            additional_settings,
-            api_version='beta')
+            additional_settings)
         self.image = image
         self.machine_type = machine_type
         self.startup_script = startup_script
@@ -498,7 +497,6 @@ def start(name, **kwargs):
         set_ip(instance)
 
         instance.start()
-        # ctx.instance.runtime_properties[constants.NAME] = instance.name
 
 
 @operation(resumable=True)
@@ -540,7 +538,6 @@ def stop(name, zone, **kwargs):
                             zone=zone,
                             )
         instance.stop()
-        # ctx.instance.runtime_properties[constants.NAME] = instance.name
 
 
 @operation(resumable=True)
