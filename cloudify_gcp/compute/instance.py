@@ -78,7 +78,8 @@ class Instance(GoogleCloudPlatform):
             config,
             logger,
             utils.get_gcp_resource_name(name),
-            additional_settings)
+            additional_settings,
+            api_version='beta')
         self.image = image
         self.machine_type = machine_type
         self.startup_script = startup_script
@@ -92,7 +93,7 @@ class Instance(GoogleCloudPlatform):
         self.subnetwork = subnetwork
         self.can_ip_forward = can_ip_forward
 
-    @utils.async_operation()
+    @utils.sync_operation
     @check_response
     def set_machine_type(self, name, zone, machine_type):
         """
@@ -103,13 +104,15 @@ class Instance(GoogleCloudPlatform):
         set machine type process and its status
         """
         self.logger.info('Set machine type instance {0}'.format(self.name))
-        return self.discovery.instances().set_machine_type(
+        full_machine_type = "{0}/machineTypes/{1}".format(
+            zone, machine_type)
+        return self.discovery.instances().setMachineType(
             project=self.project,
-            zone=zone,
+            zone=basename(zone),
             instance=name,
-            instances_set_machine_type_request_resource=machine_type).execute()
+            body={'machineType': full_machine_type}).execute()
 
-    @utils.async_operation()
+    @utils.sync_operation
     @check_response
     def stop(self):
         """
@@ -125,7 +128,7 @@ class Instance(GoogleCloudPlatform):
             zone=basename(self.zone),
             instance=self.name).execute()
 
-    @utils.async_operation()
+    @utils.sync_operation
     @check_response
     def start(self):
         """
@@ -135,7 +138,7 @@ class Instance(GoogleCloudPlatform):
         :return: REST response with operation responsible for the instance
         Start process and its status
         """
-        self.logger.info('start instance {0}'.format(self.name))
+        self.logger.info('Start instance {0}'.format(self.name))
         return self.discovery.instances().start(
             project=self.project,
             zone=basename(self.zone),
@@ -477,6 +480,7 @@ def create(instance_type,
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def start(name, **kwargs):
+    ctx.logger.info('Start operation')
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
@@ -494,7 +498,7 @@ def start(name, **kwargs):
         set_ip(instance)
 
         instance.start()
-        ctx.instance.runtime_properties[constants.NAME] = instance.name
+        # ctx.instance.runtime_properties[constants.NAME] = instance.name
 
 
 @operation(resumable=True)
@@ -520,6 +524,7 @@ def delete(name, zone, **kwargs):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def stop(name, zone, **kwargs):
+    ctx.logger.info('Stop operation')
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
@@ -535,13 +540,13 @@ def stop(name, zone, **kwargs):
                             zone=zone,
                             )
         instance.stop()
-        ctx.instance.runtime_properties[constants.NAME] = instance.name
+        # ctx.instance.runtime_properties[constants.NAME] = instance.name
 
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def resize(name, zone, machine_type, **kwargs):
-    ctx.logger.info('** in resize operation ')
+    ctx.logger.info('Resize operation')
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
@@ -551,19 +556,14 @@ def resize(name, zone, machine_type, **kwargs):
         name = props.get(constants.NAME)
 
     if name:
-        ctx.logger.info('** in name resize operation ')
         instance = Instance(gcp_config,
                             ctx.logger,
                             name=name,
                             zone=zone,
                             )
-        ctx.logger.info('** 1 ')
         instance.stop()
-        ctx.logger.info('** 2 ')
-        instance.set_machine_type(machine_type)
-        ctx.logger.info('** 3 ')
+        instance.set_machine_type(name, zone, machine_type)
         instance.start()
-        ctx.logger.info('** 4 ')
 
 
 @operation(resumable=True)
