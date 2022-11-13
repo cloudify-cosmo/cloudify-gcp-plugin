@@ -81,6 +81,7 @@ PROJECT = 'project'
 ZONE = 'zone'
 NETWORK = 'network'
 NAME = 'name'
+MACHINE_TYPE = 'machine_type'
 
 GCP_OP_DONE = 'DONE'
 

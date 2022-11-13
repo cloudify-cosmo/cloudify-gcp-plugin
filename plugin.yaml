@@ -3,7 +3,7 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: '1.8.7'
+    package_version: '1.8.8'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -219,6 +219,13 @@ node_types:
           inputs:
             name:
               default: { get_attribute: [SELF, name]}
+        stop:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.stop
+          inputs:
+            name:
+              default: { get_attribute: [ SELF, name ] }
+            zone:
+              default: { get_attribute: [ SELF, zone ] }
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.delete
           inputs:
@@ -226,6 +233,17 @@ node_types:
               default: { get_attribute: [SELF, name] }
             zone:
               default: { get_attribute: [SELF, zone]}
+      cloudify.interfaces.operation:
+        resize:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.resize
+          inputs:
+            name:
+              default: { get_attribute: [ SELF, name ] }
+            zone:
+              default: { get_attribute: [ SELF, zone ] }
+            machine_type:
+              type: string
+              default: 'e2-standard-2'
 
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.gcp.Instance
