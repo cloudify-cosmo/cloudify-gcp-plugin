@@ -226,6 +226,17 @@ node_types:
               default: { get_attribute: [SELF, name] }
             zone:
               default: { get_attribute: [SELF, zone]}
+      cloudify.interfaces.operation:
+        resize:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.resize
+          inputs:
+            name:
+              default: { get_attribute: [ SELF, name ] }
+            zone:
+              default: { get_attribute: [ SELF, zone ] }
+            machine_type:
+              type: string
+              default: 'e2-standard-2'
 
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.gcp.Instance
