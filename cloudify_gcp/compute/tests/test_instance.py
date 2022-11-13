@@ -134,12 +134,12 @@ class TestGCPInstance(TestGCP):
                 project='not really a project',
                 zone='zone'
                 )
-
         self.assertEqual(
                 {
                     'zone': 'zone',
                     'startup_script': {'type': 'string'},
                     'name': 'name',
+                    'machine_type': 'instance_type',
                     'resource_id': 'name',
                     '_operation': mock_build().instances().insert().execute(),
                 },
@@ -165,13 +165,15 @@ class TestGCPInstance(TestGCP):
                 scopes='scopes',
                 tags=['tags'],
                 )
+
         self.assertEqual(
                 {
                     'startup_script': {'type': 'string'},
                     'you pass': 'the test',
                     'zone': 'zone',
                     'resource_id': 'name',
-                    'name': 'name'
+                    'name': 'name',
+                    'machine_type': 'instance_type'
                     },
                 self.ctxmock.instance.runtime_properties
                 )
@@ -532,24 +534,21 @@ class TestGCPInstance(TestGCP):
                 self.ctxmock.instance.runtime_properties['ip'],
                 'a')
 
-    def test_resize(self, mock_getitem, mock_build, *args):
-        self.ctxmock.instance.runtime_properties['zone'] = 'zone'
-        self.ctxmock.instance.runtime_properties['name'] = 'name'
-        self.ctxmock.instance.runtime_properties['machine_type'] = \
-            'n1-standard-2'
-        print('**1 {}'.format(self.ctxmock.instance.runtime_properties))
-
-        instance.resize('name', 'zone', 'e2-standard-2')
-        print('**2 {}'.format(self.ctxmock.instance.runtime_properties))
-
-        self.assertEqual(
-                {
-                    'zone': 'zone',
-                    'machine_type': 'e2-standard-2',
-                    'name': 'name'
-                    },
-                self.ctxmock.instance.runtime_properties
-                )
+    def test_resize(self, mock_build, *args):
+        instance.resize('foo', 'bar', 'baz')
+        mock_build().instances().stop.assert_called_with(
+            project='not really a project',
+            instance='foo',
+            zone='bar')
+        mock_build().instances().setMachineType.assert_called_with(
+            project='not really a project',
+            instance='foo',
+            zone='bar',
+            body={'machineType': 'bar/machineTypes/baz'})
+        mock_build().instances().start.assert_called_with(
+            project='not really a project',
+            instance='foo',
+            zone='bar')
 
     @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
         'networkInterfaces': [

@@ -473,6 +473,8 @@ def create(instance_type,
 
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = instance.name
     ctx.instance.runtime_properties[constants.NAME] = instance.name
+    ctx.instance.runtime_properties[constants.MACHINE_TYPE] = \
+        instance.machine_type
     utils.create(instance)
 
 
@@ -561,6 +563,8 @@ def resize(name, zone, machine_type, **kwargs):
         instance.stop()
         instance.set_machine_type(name, zone, machine_type)
         instance.start()
+        ctx.instance.runtime_properties[constants.MACHINE_TYPE] = machine_type
+        instance.machine_type = machine_type
 
 
 @operation(resumable=True)
