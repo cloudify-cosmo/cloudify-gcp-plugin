@@ -165,7 +165,6 @@ class TestGCPInstance(TestGCP):
                 scopes='scopes',
                 tags=['tags'],
                 )
-        print('*** {}'.format(self.ctxmock.instance.runtime_properties))
         self.assertEqual(
                 {
                     'startup_script': {'type': 'string'},
@@ -529,10 +528,28 @@ class TestGCPInstance(TestGCP):
         self.ctxmock.node.properties['external_ip'] = False
         self.ctxmock.instance.runtime_properties['name'] = 'name'
         instance.start('name')
-
         self.assertEqual(
                 self.ctxmock.instance.runtime_properties['ip'],
                 'a')
+
+    def test_resize(self, mock_getitem, mock_build, *args):
+        self.ctxmock.instance.runtime_properties['zone'] = 'zone'
+        self.ctxmock.instance.runtime_properties['name'] = 'name'
+        self.ctxmock.instance.runtime_properties['machine_type'] = \
+            'n1-standard-2'
+        print('**1 {}'.format(self.ctxmock.instance.runtime_properties))
+
+        instance.resize('name', 'zone', 'e2-standard-2')
+        print('**2 {}'.format(self.ctxmock.instance.runtime_properties))
+
+        self.assertEqual(
+                {
+                    'zone': 'zone',
+                    'machine_type': 'e2-standard-2',
+                    'name': 'name'
+                    },
+                self.ctxmock.instance.runtime_properties
+                )
 
     @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
         'networkInterfaces': [
