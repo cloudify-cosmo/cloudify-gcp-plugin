@@ -427,8 +427,9 @@ def get_gcp_config(node=None, requested_zone=None):
             'source node properties. Valid keys: [client_config]')
 
     gcp_config_from_properties = _get_gcp_config_from_properties()
+    plugin_props = getattr(ctx.plugin, 'properties', {})
     if gcp_config_from_properties:
-        gcp_config = gcp_config_from_properties
+        gcp_config = gcp_config_from_properties.update(plugin_props)
     else:
         try:
             with open(expanduser(constants.GCP_DEFAULT_CONFIG_PATH)) as f:
