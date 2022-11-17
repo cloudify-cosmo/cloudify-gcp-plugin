@@ -426,10 +426,14 @@ def get_gcp_config(node=None, requested_zone=None):
             'No valid client configuration key was found in node or '
             'source node properties. Valid keys: [client_config]')
 
+    gcp_config = {}
+    gcp_config.update(getattr(ctx.plugin, 'properties', {}))
     gcp_config_from_properties = _get_gcp_config_from_properties()
+
     if gcp_config_from_properties:
-        gcp_config = gcp_config_from_properties
-    else:
+        gcp_config.update(gcp_config_from_properties)
+
+    if not gcp_config:
         try:
             with open(expanduser(constants.GCP_DEFAULT_CONFIG_PATH)) as f:
                 gcp_config = yaml.load(f)
