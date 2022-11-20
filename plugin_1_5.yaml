@@ -8,11 +8,10 @@ plugins:
       Manage GCP resources.
       Credentials documentation:
     properties:
-    client_config:
-      description: >
-        A dictionary of values to pass to authenticate with the GCP API.
-      default: {}
-      display_label:  Client Config
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the GCP API.
+        display_label:  Client Config
 
 
 dsl_definitions:
