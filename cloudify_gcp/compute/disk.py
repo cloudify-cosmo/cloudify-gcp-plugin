@@ -78,6 +78,15 @@ class Disk(GoogleCloudPlatform):
             zone=self.zone,
             body=self.to_dict()).execute()
 
+    @utils.sync_operation
+    @check_response
+    def resize(self, size_gb):
+        return self.discovery.disks().resize(
+            project=self.project,
+            zone=self.zone,
+            disk=self.name,
+            body={'sizeGb': size_gb}).execute()
+
     @utils.async_operation()
     @check_response
     def delete(self):
@@ -131,3 +140,27 @@ def add_boot_disk(**kwargs):
     disk_body = ctx.target.instance.runtime_properties[constants.DISK]
     disk_body['boot'] = True
     ctx.source.instance.runtime_properties[constants.DISK] = disk_body
+
+
+@operation(resumable=True)
+@utils.throw_cloudify_exceptions
+def resize(name, zone, size_gb, **kwargs):
+    ctx.logger.info('Resize disk operation')
+    gcp_config = utils.get_gcp_config()
+    props = ctx.instance.runtime_properties
+
+    if not zone:
+        zone = props.get('zone')
+    if not name:
+        name = props.get(constants.NAME)
+    if not isinstance(size_gb, str):
+        size_gb = str(size_gb)
+
+    if name:
+        disk = Disk(gcp_config,
+                    ctx.logger,
+                    name=name,
+                    size_gb=size_gb)
+        disk.resize(size_gb)
+        ctx.instance.runtime_properties['sizeGb'] = size_gb
+        disk.size_gb = size_gb
