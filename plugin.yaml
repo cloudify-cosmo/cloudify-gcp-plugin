@@ -331,6 +331,16 @@ node_types:
               default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.disk.delete
+      cloudify.interfaces.operation:
+        resize:
+          implementation: gcp_plugin.cloudify_gcp.compute.disk.resize
+          inputs:
+            name:
+              default: { get_attribute: [ SELF, name ] }
+            zone:
+              default: { get_attribute: [ SELF, zone ] }
+            size_gb:
+              default: { get_attribute: [ SELF, size ] }
 
   cloudify.gcp.nodes.Volume:
     derived_from: cloudify.nodes.gcp.Volume
