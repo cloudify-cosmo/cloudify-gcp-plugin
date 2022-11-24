@@ -3,15 +3,19 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: '1.8.7'
+    package_version: '1.8.8'
     properties_description: |
       Manage GCP resources.
       Credentials documentation:
     properties:
-      client_config:
-        description: >
-          A dictionary of values to pass to authenticate with the GCP API.
-        display_label:  Client Config
+      auth:
+        type: string
+        description: 'gcp_credentials'
+        display_label: Auth
+      zone:
+        type: string
+        description: A GCP zone such as `us-west1-a`.
+        display_label: Zone
 
 
 dsl_definitions:
