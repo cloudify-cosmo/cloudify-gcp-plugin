@@ -536,7 +536,6 @@ class TestGCPInstance(TestGCP):
 
     def test_resize(self, mock_build, *args):
         instance.resize('foo', 'bar', 'baz')
-        mock_build.assert_called_once()
         mock_build().instances().stop.assert_called_with(
             project='not really a project',
             instance='foo',
@@ -546,6 +545,10 @@ class TestGCPInstance(TestGCP):
             instance='foo',
             zone='bar',
             body={'machineType': 'bar/machineTypes/baz'})
+        mock_build().instances().start.assert_called_with(
+            project='not really a project',
+            instance='foo',
+            zone='bar')
 
     @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
         'networkInterfaces': [
