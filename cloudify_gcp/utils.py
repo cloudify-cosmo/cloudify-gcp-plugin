@@ -478,7 +478,8 @@ def get_gcp_config(node=None, requested_zone=None):
     else:
         # Validate the config contains what it should
         try:
-            gcp_config['project'] = gcp_config['auth']['project_id']
+            if 'project_id' in gcp_config['auth']:
+                gcp_config['project'] = gcp_config['auth']['project_id']
             for key in ('project', 'auth', 'zone'):
                 gcp_config[key]
         except Exception as e:
