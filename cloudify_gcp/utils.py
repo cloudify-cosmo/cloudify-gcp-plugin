@@ -419,17 +419,32 @@ def get_gcp_config(node=None, requested_zone=None):
                     'deprecated and will be removed in a future '
                     'version of the plugin. '
                     'Please use client_config instead.')
-            config = node.properties.get(config_key)
+            config = node.properties.get(config_key, {})
             if config:
                 return config
-        raise NonRecoverableError(
+        ctx.logger.warn(
             'No valid client configuration key was found in node or '
             'source node properties. Valid keys: [client_config]')
 
+    gcp_config = getattr(ctx.plugin, 'properties', {})
     gcp_config_from_properties = _get_gcp_config_from_properties()
+
     if gcp_config_from_properties:
-        gcp_config = gcp_config_from_properties
-    else:
+        gcp_config.update(gcp_config_from_properties)
+
+    # plugin properties
+    if 'auth' not in gcp_config:
+        raise NonRecoverableError(
+            'The auth parameter is required and was not provided in the '
+            'client_config.')
+    if 'value' in gcp_config['auth']:
+        value = get_gcp_config_dict(gcp_config['auth'].get('value', {}))
+        gcp_config['auth'].update(value)
+        gcp_config['auth'].pop('value')
+        if 'project_id' in gcp_config['auth']:
+            gcp_config['project'] = gcp_config['auth']['project_id']
+
+    if not gcp_config:
         try:
             with open(expanduser(constants.GCP_DEFAULT_CONFIG_PATH)) as f:
                 gcp_config = yaml.load(f)
@@ -452,7 +467,6 @@ def get_gcp_config(node=None, requested_zone=None):
         except Exception as e:
             raise NonRecoverableError("invalid gcp_config provided: {}"
                                       .format(e))
-
     if gcp_config['auth'].get('private_key'):
         gcp_config['auth']['private_key'] = gcp_config['auth'][
             'private_key'].replace('\\n', '\n')
@@ -468,6 +482,8 @@ def get_gcp_config(node=None, requested_zone=None):
     else:
         # Validate the config contains what it should
         try:
+            if 'project_id' in gcp_config['auth']:
+                gcp_config['project'] = gcp_config['auth']['project_id']
             for key in ('project', 'auth', 'zone'):
                 gcp_config[key]
         except Exception as e:

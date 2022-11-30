@@ -4,6 +4,19 @@ plugins:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
     package_version: '1.8.9'
+    properties_description: |
+      Manage GCP resources.
+      Credentials documentation:
+    properties:
+      auth:
+        type: string
+        description: 'gcp_credentials'
+        display_label: Auth
+      zone:
+        type: string
+        description: A GCP zone such as `us-west1-a`.
+        display_label: Zone
+
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -331,16 +344,6 @@ node_types:
               default: { get_property: [SELF, additional_settings]}
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.disk.delete
-      cloudify.interfaces.operation:
-        resize:
-          implementation: gcp_plugin.cloudify_gcp.compute.disk.resize
-          inputs:
-            name:
-              default: { get_attribute: [ SELF, name ] }
-            zone:
-              default: { get_attribute: [ SELF, zone ] }
-            size_gb:
-              default: { get_attribute: [ SELF, size ] }
 
   cloudify.gcp.nodes.Volume:
     derived_from: cloudify.nodes.gcp.Volume
@@ -2514,9 +2517,12 @@ workflows:
 #      This is restricted to provided credentials and region.
 #      Install new deployments for them.
     mapping: gcp_plugin.cloudify_gcp.workflows.discover.discover_and_deploy
+    availability_rules:
+      node_instances_active: ['all', 'partial']
+      node_types_required: ['cloudify.nodes.gcp.Gcp']
     parameters:
       node_id:
-        type: string
+        type: node_id
         description: >
           The node_id. Not required.
         default: ''
@@ -2529,8 +2535,10 @@ workflows:
           - projects.zones.clusters
       blueprint_id:
         description: The ID of the blueprint that should be used to deploy the new resources. Default is current blueprint.
-        type: string
+        type: blueprint_id
         default: 'existing-gke-cluster'
+
+
 
 blueprint_labels:
   obj-type:
