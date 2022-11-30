@@ -1,4 +1,6 @@
-1.8.9: RD 5835 define credentials in gcp plugin yaml 1 5.
+1.8.9: 
+  - RD-6451 - add resize operation for disk.
+  - RD 5835 define credentials in gcp plugin yaml 1 5.
 1.8.8: RD-6214 - add resize operation for instance (set_machine_type).
 1.8.7: Fix issues from deprecate.
 1.8.6: Deprecate old node types.
