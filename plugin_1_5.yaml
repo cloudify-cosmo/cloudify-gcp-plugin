@@ -232,6 +232,13 @@ node_types:
           inputs:
             name:
               default: { get_attribute: [SELF, name]}
+        stop:
+          implementation: gcp_plugin.cloudify_gcp.compute.instance.stop
+          inputs:
+            name:
+              default: { get_attribute: [ SELF, name ] }
+            zone:
+              default: { get_attribute: [ SELF, zone ] }
         delete:
           implementation: gcp_plugin.cloudify_gcp.compute.instance.delete
           inputs:
