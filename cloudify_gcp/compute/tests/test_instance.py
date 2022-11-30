@@ -134,12 +134,12 @@ class TestGCPInstance(TestGCP):
                 project='not really a project',
                 zone='zone'
                 )
-
         self.assertEqual(
                 {
                     'zone': 'zone',
                     'startup_script': {'type': 'string'},
                     'name': 'name',
+                    'machine_type': 'instance_type',
                     'resource_id': 'name',
                     '_operation': mock_build().instances().insert().execute(),
                 },
@@ -172,6 +172,8 @@ class TestGCPInstance(TestGCP):
                     'you pass': 'the test',
                     'zone': 'zone',
                     'resource_id': 'name',
+                    'name': 'name',
+                    'machine_type': 'instance_type'
                     },
                 self.ctxmock.instance.runtime_properties
                 )
@@ -527,11 +529,26 @@ class TestGCPInstance(TestGCP):
     def test_start(self, mock_getitem, mock_build, *args):
         self.ctxmock.node.properties['external_ip'] = False
         self.ctxmock.instance.runtime_properties['name'] = 'name'
-        instance.start()
-
+        instance.start('name')
         self.assertEqual(
                 self.ctxmock.instance.runtime_properties['ip'],
                 'a')
+
+    def test_resize(self, mock_build, *args):
+        instance.resize('foo', 'bar', 'baz')
+        mock_build().instances().stop.assert_called_with(
+            project='not really a project',
+            instance='foo',
+            zone='bar')
+        mock_build().instances().setMachineType.assert_called_with(
+            project='not really a project',
+            instance='foo',
+            zone='bar',
+            body={'machineType': 'bar/machineTypes/baz'})
+        mock_build().instances().start.assert_called_with(
+            project='not really a project',
+            instance='foo',
+            zone='bar')
 
     @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
         'networkInterfaces': [
@@ -543,7 +560,7 @@ class TestGCPInstance(TestGCP):
     def test_start_with_external_ip(self, mock_getitem, mock_build, *args):
         self.ctxmock.node.properties['external_ip'] = True
         self.ctxmock.instance.runtime_properties['name'] = 'name'
-        instance.start()
+        instance.start('name')
 
         self.assertEqual(
                 self.ctxmock.instance.runtime_properties[

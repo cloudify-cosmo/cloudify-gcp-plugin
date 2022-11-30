@@ -92,6 +92,57 @@ class Instance(GoogleCloudPlatform):
         self.subnetwork = subnetwork
         self.can_ip_forward = can_ip_forward
 
+    @utils.sync_operation
+    @check_response
+    def set_machine_type(self, name, zone, machine_type):
+        """
+        Set machine type GCP instance.
+        Zone operation.
+
+        :return: REST response with operation responsible for the instance
+        set machine type process and its status
+        """
+        self.logger.info('Set machine type instance {0}'.format(self.name))
+        full_machine_type = "{0}/machineTypes/{1}".format(
+            zone, machine_type)
+        return self.discovery.instances().setMachineType(
+            project=self.project,
+            zone=basename(zone),
+            instance=name,
+            body={'machineType': full_machine_type}).execute()
+
+    @utils.sync_operation
+    @check_response
+    def stop(self):
+        """
+        Stop GCP instance.
+        Zone operation.
+
+        :return: REST response with operation responsible for the instance
+        stop process and its status
+        """
+        self.logger.info('Stop instance {0}'.format(self.name))
+        return self.discovery.instances().stop(
+            project=self.project,
+            zone=basename(self.zone),
+            instance=self.name).execute()
+
+    @utils.sync_operation
+    @check_response
+    def start(self):
+        """
+        Start GCP instance.
+        Zone operation.
+
+        :return: REST response with operation responsible for the instance
+        Start process and its status
+        """
+        self.logger.info('Start instance {0}'.format(self.name))
+        return self.discovery.instances().start(
+            project=self.project,
+            zone=basename(self.zone),
+            instance=self.name).execute()
+
     @utils.async_operation(get=True)
     @check_response
     def create(self):
@@ -422,23 +473,32 @@ def create(instance_type,
 
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = instance.name
     ctx.instance.runtime_properties[constants.NAME] = instance.name
+    ctx.instance.runtime_properties[constants.MACHINE_TYPE] = \
+        instance.machine_type
     utils.create(instance)
 
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
-def start(**kwargs):
+def start(name, **kwargs):
+    ctx.logger.info('Start operation')
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
-    instance = Instance(gcp_config,
-                        ctx.logger,
-                        name=props[constants.NAME],
-                        zone=basename(props['zone']),
-                        )
 
-    utils.resource_started(ctx, instance)
+    if not name:
+        name = props.get(constants.NAME)
 
-    set_ip(instance)
+    if name:
+        instance = Instance(gcp_config,
+                            ctx.logger,
+                            name=name,
+                            zone=basename(props['zone']),
+                            )
+
+        utils.resource_started(ctx, instance)
+        set_ip(instance)
+
+        instance.start()
 
 
 @operation(resumable=True)
@@ -459,6 +519,52 @@ def delete(name, zone, **kwargs):
                             zone=zone,
                             )
         utils.delete_if_not_external(instance)
+
+
+@operation(resumable=True)
+@utils.throw_cloudify_exceptions
+def stop(name, zone, **kwargs):
+    ctx.logger.info('Stop operation')
+    gcp_config = utils.get_gcp_config()
+    props = ctx.instance.runtime_properties
+
+    if not zone:
+        zone = props.get('zone')
+    if not name:
+        name = props.get(constants.NAME)
+
+    if name:
+        instance = Instance(gcp_config,
+                            ctx.logger,
+                            name=name,
+                            zone=zone,
+                            )
+        instance.stop()
+
+
+@operation(resumable=True)
+@utils.throw_cloudify_exceptions
+def resize(name, zone, machine_type, **kwargs):
+    ctx.logger.info('Resize operation')
+    gcp_config = utils.get_gcp_config()
+    props = ctx.instance.runtime_properties
+
+    if not zone:
+        zone = props.get('zone')
+    if not name:
+        name = props.get(constants.NAME)
+
+    if name:
+        instance = Instance(gcp_config,
+                            ctx.logger,
+                            name=name,
+                            zone=zone,
+                            )
+        instance.stop()
+        instance.set_machine_type(name, zone, machine_type)
+        instance.start()
+        ctx.instance.runtime_properties[constants.MACHINE_TYPE] = machine_type
+        instance.machine_type = machine_type
 
 
 @operation(resumable=True)
