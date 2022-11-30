@@ -433,6 +433,10 @@ def get_gcp_config(node=None, requested_zone=None):
         gcp_config.update(gcp_config_from_properties)
 
     # plugin properties
+    if 'auth' not in gcp_config:
+        raise NonRecoverableError(
+            'The auth parameter is required and was not provided in the '
+            'client_config.')
     if 'value' in gcp_config['auth']:
         value = get_gcp_config_dict(gcp_config['auth'].get('value', {}))
         gcp_config['auth'].update(value)
