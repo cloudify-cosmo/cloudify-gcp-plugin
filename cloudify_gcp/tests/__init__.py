@@ -41,6 +41,7 @@ def ctx_mock():
         }
     ctx.instance.runtime_properties = DirtyTrackingDict()
     ctx.instance.relationships = []
+    ctx.plugin.properties = {}
     return ctx
 
 

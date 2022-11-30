@@ -3,6 +3,7 @@ from mock import patch, call, MagicMock
 
 from ..._compat import PY2
 from .. import resources, discover
+from cloudify.state import current_ctx
 
 
 @patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
@@ -53,6 +54,8 @@ class GCPeWorkflowTests(TestCase):
         node_instances = [node_instance]
         node.instances = node_instances
         mock_ctx.get_node.return_value = node
+        mock_ctx.plugin = MagicMock(properties={})
+        current_ctx.set(mock_ctx)
         params = {
             'node_id': 'foo',
             'resource_types': ['bar', 'baz'],
@@ -66,6 +69,8 @@ class GCPeWorkflowTests(TestCase):
         mock_rest_client = self.get_mock_rest_client()
         get_rest_client.return_value = mock_rest_client
         mock_ctx = MagicMock()
+        mock_ctx.plugin = MagicMock(properties={})
+        current_ctx.set(mock_ctx)
         params = {
             'group_id': 'foo',
             'blueprint_id': 'bar',
@@ -87,6 +92,8 @@ class GCPeWorkflowTests(TestCase):
         mock_ctx = MagicMock()
         mock_ctx.deployment = MagicMock(id='foo')
         mock_ctx.blueprint = MagicMock(id='bar')
+        mock_ctx.plugin = MagicMock(properties={})
+        current_ctx.set(mock_ctx)
         params = {
             'node_id': 'foo',
             'resource_types': ['bar', 'baz'],
@@ -155,6 +162,8 @@ class GCPeWorkflowTests(TestCase):
         node.instances = node_instances
         mock_ctx.get_node.return_value = node
         mock_ctx.logger = MagicMock()
+        mock_ctx.plugin = MagicMock(properties={})
+        current_ctx.set(mock_ctx)
         params = {
             'node': node,
             'zones': ['region1', 'region2'],
@@ -176,6 +185,8 @@ class GCPeWorkflowTests(TestCase):
             }
         )
         mock_ctx.instance = MagicMock(runtime_properties={'resources': {}})
+        mock_ctx.plugin = MagicMock(properties={})
+        current_ctx.set(mock_ctx)
         params = {
             'resource_config': {'resource_types': [
                 'projects.zones.clusters']},
