@@ -4,6 +4,19 @@ plugins:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
     package_version: '1.8.9'
+    properties_description: |
+      Manage GCP resources.
+      Credentials documentation:
+    properties:
+      auth:
+        type: string
+        description: 'gcp_credentials'
+        display_label: Auth
+      zone:
+        type: string
+        description: A GCP zone such as `us-west1-a`.
+        display_label: Zone
+
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
