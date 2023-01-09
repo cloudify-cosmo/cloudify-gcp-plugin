@@ -112,15 +112,6 @@ class GoogleCloudApi(object):
         try:
             credentials = self.get_credentials(scope)
             http = httplib2.Http()
-            scoped_credentials = credentials.with_scopes(self.scope)
-            ctx.logger.info(' **** scoped_credentials: {}'.format(scoped_credentials))
-            auth_req = google.auth.transport.requests.Request()
-            ctx.logger.info(' **** auth_req: {}'.format(auth_req))
-            ctx.logger.info(' **** credentials: {}'.format(credentials))
-
-            scoped_credentials.refresh(auth_req)
-            token = scoped_credentials.token
-
             # credentials.authorize(http)
             return build(discovery, api_version, http=http)
         except IOError as e:
@@ -172,6 +163,7 @@ class GoogleCloudPlatform(GoogleCloudApi):
                                                                       scopes=scope)
         ctx.logger.info('*** creds: {}'.format(type(storage_credentials)))
         scoped_credentials = storage_credentials.with_scopes(self.scope)
+
         auth_req = google.auth.transport.requests.Request()
         scoped_credentials.refresh(auth_req)
         token = scoped_credentials.token
