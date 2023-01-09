@@ -168,11 +168,15 @@ class GoogleCloudPlatform(GoogleCloudApi):
         ctx.logger.info('*** self.auth: {}'.format(self.auth))
         ctx.logger.info('*** type auth: {}'.format(type(self.auth)))
 
-        creds = service_account.Credentials.from_service_account_info(self.auth,
+        storage_credentials = service_account.Credentials.from_service_account_info(self.auth,
                                                                       scopes=scope)
-        ctx.logger.info('*** creds: {}'.format(type(creds)))
+        ctx.logger.info('*** creds: {}'.format(type(storage_credentials)))
+        scoped_credentials = storage_credentials.with_scopes(self.scope)
+        auth_req = google.auth.transport.requests.Request()
+        scoped_credentials.refresh(auth_req)
+        token = scoped_credentials.token
 
-        return creds
+        return storage_credentials
 
     def get_common_instance_metadata(self):
         """
