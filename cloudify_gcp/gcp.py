@@ -159,14 +159,16 @@ class GoogleCloudPlatform(GoogleCloudApi):
         ctx.logger.info('*** self.auth: {}'.format(self.auth))
         ctx.logger.info('*** type auth: {}'.format(type(self.auth)))
 
-        storage_credentials = service_account.Credentials.from_service_account_info(self.auth,
-                                                                      scopes=scope)
+        storage_credentials = service_account.Credentials.\
+            from_service_account_info(self.auth, scopes=scope.split('/')[-1])
         ctx.logger.info('*** creds: {}'.format(type(storage_credentials)))
         scoped_credentials = storage_credentials.with_scopes(self.scope)
 
         auth_req = google.auth.transport.requests.Request()
+        ctx.logger.info('*** auth_req: {}'.format(type(auth_req)))
+
         scoped_credentials.refresh(auth_req)
-        token = scoped_credentials.token
+        # token = scoped_credentials.token
 
         return storage_credentials
 
