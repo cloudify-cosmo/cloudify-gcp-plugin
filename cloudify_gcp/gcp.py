@@ -15,13 +15,14 @@
 
 from functools import wraps
 from os.path import basename
-
+from cloudify import ctx
 import httplib2
 from Crypto.Random import atfork
 from httplib2 import ServerNotFoundError
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2 import service_account
+import google.auth.transport.requests
 
 from cloudify.exceptions import OperationRetry
 
@@ -103,11 +104,24 @@ class GoogleCloudApi(object):
         # Crypto.Random.atfork() must be called here because celery doesn't do
         # it
         atfork()
+        ctx.logger.info(' **** create_discovery ****')
+        ctx.logger.info(' **** discovery: {}'.format(discovery))
+        ctx.logger.info(' **** scope: {}'.format(scope))
+        ctx.logger.info(' **** api_version: {}'.format(api_version))
 
         try:
             credentials = self.get_credentials(scope)
             http = httplib2.Http()
-            credentials.authorize(http)
+            scoped_credentials = credentials.with_scopes(self.scope)
+            ctx.logger.info(' **** scoped_credentials: {}'.format(scoped_credentials))
+            auth_req = google.auth.transport.requests.Request()
+            ctx.logger.info(' **** auth_req: {}'.format(auth_req))
+            ctx.logger.info(' **** credentials: {}'.format(credentials))
+
+            scoped_credentials.refresh(auth_req)
+            token = scoped_credentials.token
+
+            # credentials.authorize(http)
             return build(discovery, api_version, http=http)
         except IOError as e:
             self.logger.error(str(e))
@@ -150,12 +164,15 @@ class GoogleCloudPlatform(GoogleCloudApi):
         # Crypto.Random.atfork() must be called here because celery doesn't do
         # it
         atfork()
-        if hasattr(self.auth, 'get'):
-            creds_func = ServiceAccountCredentials.from_json_keyfile_dict
-        else:
-            creds_func = ServiceAccountCredentials.from_json_keyfile_name
+        ctx.logger.info('*** scope: {}'.format(scope))
+        ctx.logger.info('*** self.auth: {}'.format(self.auth))
+        ctx.logger.info('*** type auth: {}'.format(type(self.auth)))
 
-        return creds_func(self.auth, scopes=scope)
+        creds = service_account.Credentials.from_service_account_info(self.auth,
+                                                                      scopes=scope)
+        ctx.logger.info('*** creds: {}'.format(type(creds)))
+
+        return creds
 
     def get_common_instance_metadata(self):
         """
