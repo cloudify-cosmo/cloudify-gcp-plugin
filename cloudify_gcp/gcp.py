@@ -103,9 +103,7 @@ class GoogleCloudApi(object):
         :raise: GCPError if there is a problem with service account JSON file:
         e.g. the file is not under the given path or it has wrong permissions
         """
-        # Crypto.Random.atfork() must be called here because celery doesn't do
-        # it
-        atfork()
+
         ctx.logger.info(' **** create_discovery ****')
         ctx.logger.info(' **** discovery: {}'.format(discovery))
         ctx.logger.info(' **** scope: {}'.format(scope))
@@ -113,12 +111,8 @@ class GoogleCloudApi(object):
 
         try:
             credentials = self.get_credentials(scope)
-            delegated_credentials = credentials.with_subject(
-                self.auth['client_email'])
+            return build(discovery, api_version, credentials=credentials)
 
-            http = httplib2.Http()
-            # credentials.authorize(http)
-            return build(discovery, api_version, http=http, credentials=delegated_credentials)
         except IOError as e:
             self.logger.error(str(e))
             raise GCPError(str(e))
@@ -157,21 +151,14 @@ class GoogleCloudPlatform(GoogleCloudApi):
         self.body = additional_settings if additional_settings else {}
 
     def get_credentials(self, scope):
-        # Crypto.Random.atfork() must be called here because celery doesn't do
-        # it
-        atfork()
 
-        storage_credentials = service_account.Credentials.\
+        credentials = service_account.Credentials.\
             from_service_account_info(self.auth)
 
-        # scoped_credentials = storage_credentials.with_scopes(scope)
-        # gc = gspread.Client(auth=scoped_credentials)
-        # client = gspread.authorize(storage_credentials)
+        scope_list = list("https://www.googleapis.com/auth/cloud-platform")
+        scope_list.append(scope)
 
-        # auth_req = google.auth.transport.requests.Request()
-        # scoped_credentials.refresh(auth_req)
-
-        return storage_credentials
+        return credentials
 
     def get_common_instance_metadata(self):
         """
