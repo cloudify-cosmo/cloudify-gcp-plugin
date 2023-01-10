@@ -1,3 +1,4 @@
 dnspython
 pyopenssl
 pycryptodome==3.9.8
+gspread

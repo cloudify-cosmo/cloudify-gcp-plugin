@@ -16,6 +16,8 @@
 from functools import wraps
 from os.path import basename
 from cloudify import ctx
+import gspread
+
 import httplib2
 from Crypto.Random import atfork
 from httplib2 import ServerNotFoundError
@@ -111,9 +113,12 @@ class GoogleCloudApi(object):
 
         try:
             credentials = self.get_credentials(scope)
+            delegated_credentials = credentials.with_subject(
+                self.auth['client_email'])
+
             http = httplib2.Http()
             # credentials.authorize(http)
-            return build(discovery, api_version, http=http)
+            return build(discovery, api_version, http=http, credentials=delegated_credentials)
         except IOError as e:
             self.logger.error(str(e))
             raise GCPError(str(e))
@@ -155,20 +160,16 @@ class GoogleCloudPlatform(GoogleCloudApi):
         # Crypto.Random.atfork() must be called here because celery doesn't do
         # it
         atfork()
-        ctx.logger.info('*** scope: {}'.format(scope))
-        ctx.logger.info('*** self.auth: {}'.format(self.auth))
-        ctx.logger.info('*** type auth: {}'.format(type(self.auth)))
 
         storage_credentials = service_account.Credentials.\
-            from_service_account_info(self.auth, scopes=scope.split('/')[-1])
-        ctx.logger.info('*** creds: {}'.format(type(storage_credentials)))
-        scoped_credentials = storage_credentials.with_scopes(self.scope)
+            from_service_account_info(self.auth)
 
-        auth_req = google.auth.transport.requests.Request()
-        ctx.logger.info('*** auth_req: {}'.format(type(auth_req)))
+        # scoped_credentials = storage_credentials.with_scopes(scope)
+        # gc = gspread.Client(auth=scoped_credentials)
+        # client = gspread.authorize(storage_credentials)
 
-        scoped_credentials.refresh(auth_req)
-        # token = scoped_credentials.token
+        # auth_req = google.auth.transport.requests.Request()
+        # scoped_credentials.refresh(auth_req)
 
         return storage_credentials
 
