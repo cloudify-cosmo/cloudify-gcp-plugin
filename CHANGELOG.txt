@@ -1,4 +1,5 @@
-1.8.9: 
+1.9.0: RD-6611 update google auth library in gcp
+1.8.9:
   - RD-6451 - add resize operation for disk.
   - RD 5835 define credentials in gcp plugin yaml 1 5.
 1.8.8: RD-6214 - add resize operation for instance (set_machine_type).

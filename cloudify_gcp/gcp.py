@@ -15,16 +15,11 @@
 
 from functools import wraps
 from os.path import basename
-from cloudify import ctx
-import gspread
 
-import httplib2
-from Crypto.Random import atfork
 from httplib2 import ServerNotFoundError
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-import google.auth.transport.requests
 
 from cloudify.exceptions import OperationRetry
 
@@ -103,14 +98,8 @@ class GoogleCloudApi(object):
         :raise: GCPError if there is a problem with service account JSON file:
         e.g. the file is not under the given path or it has wrong permissions
         """
-
-        ctx.logger.info(' **** create_discovery ****')
-        ctx.logger.info(' **** discovery: {}'.format(discovery))
-        ctx.logger.info(' **** scope: {}'.format(scope))
-        ctx.logger.info(' **** api_version: {}'.format(api_version))
-
         try:
-            credentials = self.get_credentials(scope)
+            credentials = self.get_credentials()
             return build(discovery, api_version, credentials=credentials)
 
         except IOError as e:
@@ -150,15 +139,9 @@ class GoogleCloudPlatform(GoogleCloudApi):
         self.name = name
         self.body = additional_settings if additional_settings else {}
 
-    def get_credentials(self, scope):
-
-        credentials = service_account.Credentials.\
+    def get_credentials(self, *_, **__):
+        return service_account.Credentials.\
             from_service_account_info(self.auth)
-
-        scope_list = list("https://www.googleapis.com/auth/cloud-platform")
-        scope_list.append(scope)
-
-        return credentials
 
     def get_common_instance_metadata(self):
         """

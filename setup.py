@@ -52,8 +52,7 @@ setup(
     license='LICENSE',
     zip_safe=False,
     install_requires=[
-        # "oauth2client==4.1.3",
-        "gspread",
+        "oauth2client==4.1.3",
         "google-auth==2.15.0",
         "google-api-python-client==1.7.11",
         "cloudify-common>=4.5.5",
