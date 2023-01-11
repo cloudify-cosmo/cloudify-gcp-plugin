@@ -24,7 +24,8 @@ from . import CloudResourcesBase
 
 class Project(CloudResourcesBase):
 
-    def __init__(self, config, logger, project_id=None, name=None):
+    def __init__(self, config, logger, name=None):
+        project_id = config['auth'].get('project_id', None)
         super(CloudResourcesBase, self).__init__(config, logger)
         self.project_id = utils.get_gcp_resource_name(project_id)
         self.name = name if name else self.project_id
@@ -49,9 +50,14 @@ class Project(CloudResourcesBase):
                 ctx.node.properties[constants.NAME]),
             'projectId': self.project_id
         }
-        self.logger.info('Project info: {}'.format(repr(project_body)))
-        return self.discovery.projects().create(
-            body=project_body).execute()
+
+        ctx.logger.info('*** discovery: {}'.format(self.discovery))
+        ctx.logger.info('*** discovery.projects: {}'.format(self.discovery.projects()))
+        ctx.logger.info('*** type of  discovery: {}'.format(type(self.discovery)))
+        ctx.logger.info('*** self.discovery.projects(): {}'.format(self.discovery.projects()))
+        ctx.logger.info('*** dir: {}'.format(dir(self.discovery.projects())))
+        # ctx.logger.info('*** vars: {}'.format(vars(self.discovery.projects())))
+        return self.discovery.projects().create(body=project_body).execute()
 
     @gcp.check_response
     def delete(self):
@@ -70,9 +76,10 @@ def create(**_):
     project = Project(
         gcp_config,
         ctx.logger,
-        ctx.node.properties['id'],
         ctx.node.properties[constants.NAME]
     )
+    ctx.logger.info(' project: {}'.format(type(project)))
+    ctx.logger.info(' type project: {}'.format(project))
     utils.create(project)
 
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = project.project_id

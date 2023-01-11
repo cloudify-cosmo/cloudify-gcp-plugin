@@ -13,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oauth2client import GOOGLE_TOKEN_URI
-from oauth2client.client import GoogleCredentials
-
 from .. import gcp
 from .. import constants
+
+from google.oauth2 import service_account
 
 
 class CloudResourcesBase(gcp.GoogleCloudApi):
@@ -36,20 +35,9 @@ class CloudResourcesBase(gcp.GoogleCloudApi):
             discovery,
             api_version)
 
-    def get_credentials(self, scope):
-        # check
-        # run: gcloud beta auth application-default login
-        # look to ~/.config/gcloud/application_default_credentials.json
-        credentials = GoogleCredentials(
-            access_token=None,
-            client_id=self.auth['client_id'],
-            client_secret=self.auth['client_secret'],
-            refresh_token=self.auth['refresh_token'],
-            token_expiry=None,
-            token_uri=GOOGLE_TOKEN_URI,
-            user_agent='Python client library'
-        )
-        return credentials
+    def get_credentials(self, *_, **__):
+        return service_account.Credentials.\
+            from_service_account_info(self.auth)
 
     def get(self):
         raise NotImplementedError()
