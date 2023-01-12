@@ -82,10 +82,9 @@ class GoogleCloudApi(object):
                                                 self.api_version)
         return self._discovery
 
-    def get_credentials(self, scope):
-        raise GCPError(
-            "Please implement {}: {}".format(__name__, repr(scope))
-        )
+    def get_credentials(self, *_, **__):
+        return service_account.Credentials.\
+            from_service_account_info(self.auth)
 
     def create_discovery(self, discovery, scope, api_version):
         """
