@@ -13,27 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .. import gcp
+from ..gcp import GoogleCloudPlatform
 from .. import constants
-
+from cloudify import ctx
 from google.oauth2 import service_account
 
 
-class CloudResourcesBase(gcp.GoogleCloudApi):
+class CloudResourcesBase(GoogleCloudPlatform):
 
     def __init__(self,
                  config,
                  logger,
-                 scope=constants.COMPUTE_SCOPE,
-                 discovery=constants.CLOUDRESOURCES_DISCOVERY,
-                 api_version=constants.API_V1):
+                 name):
 
         super(CloudResourcesBase, self).__init__(
             config,
             logger,
-            scope,
-            discovery,
-            api_version)
+            name=name,
+            scope=constants.COMPUTE_SCOPE,
+            discovery=constants.CLOUDRESOURCES_DISCOVERY,
+            api_version=constants.API_V1)
 
     def get_credentials(self, *_, **__):
         return service_account.Credentials.\

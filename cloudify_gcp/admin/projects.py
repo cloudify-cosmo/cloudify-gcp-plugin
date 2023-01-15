@@ -22,20 +22,14 @@ from .. import constants
 from . import CloudResourcesBase
 
 
-class Project(gcp.GoogleCloudApi):
+class Project(CloudResourcesBase):
 
-    def __init__(self, config, logger, project_id=None, name=None):
+    def __init__(self, config, logger, name=None):
+        super(Project, self).__init__(config, logger, name)
         project_id = config['auth'].get('project_id', None)
-
-        super(Project, self).__init__(
-            config,
-            logger,
-            scope=constants.COMPUTE_SCOPE,
-            discovery=constants.CLOUDRESOURCES_DISCOVERY,
-            api_version=constants.API_V1)
-
         self.project_id = utils.get_gcp_resource_name(project_id)
         self.name = name if name else self.project_id
+        ctx.logger.info('** Project: self.discovery: {}'.format(self.discovery))
 
     @gcp.check_response
     def get(self):
@@ -58,8 +52,7 @@ class Project(gcp.GoogleCloudApi):
             'projectId': self.project_id
         }
         self.logger.info('Project info: {}'.format(repr(project_body)))
-        return self.discovery.projects().create(
-            body=project_body).execute()
+        return self.discovery.projects().create(body=project_body).execute()
 
     @gcp.check_response
     def delete(self):
@@ -74,12 +67,13 @@ def create(**_):
         return
 
     gcp_config = utils.get_gcp_config()
-
+    ctx.logger.info('*** Project -> create **')
+    ctx.logger.info('*** ctx.node.properties: {}'.format(ctx.node.properties))
+    ctx.logger.info('*** gcp_config: {}'.format(gcp_config))
     project = Project(
-        gcp_config,
-        ctx.logger,
-        ctx.node.properties['id'],
-        ctx.node.properties[constants.NAME]
+        config=gcp_config,
+        logger=ctx.logger,
+        name=ctx.node.properties[constants.NAME]
     )
     utils.create(project)
 
