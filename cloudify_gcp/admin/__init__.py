@@ -16,7 +16,6 @@
 from google.oauth2 import service_account
 
 from .. import gcp
-
 from .. import constants
 
 
