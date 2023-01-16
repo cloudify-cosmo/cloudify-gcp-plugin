@@ -15,22 +15,20 @@
 
 from google.oauth2 import service_account
 
-from ..gcp import GoogleCloudPlatform
+from ..gcp import GoogleCloudApi
 
 from .. import constants
 
 
-class CloudResourcesBase(GoogleCloudPlatform):
+class CloudResourcesBase(GoogleCloudApi):
 
     def __init__(self,
                  config,
-                 logger,
-                 name):
+                 logger):
 
         super(CloudResourcesBase, self).__init__(
             config,
             logger,
-            name=name,
             scope=constants.COMPUTE_SCOPE,
             discovery=constants.CLOUDRESOURCES_DISCOVERY,
             api_version=constants.API_V1)

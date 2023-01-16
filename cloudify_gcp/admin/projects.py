@@ -30,7 +30,9 @@ class Project(CloudResourcesBase):
                  name=None,
                  project_id=None,
                  parent=None):
-        super(Project, self).__init__(config, logger, name)
+
+        super(Project, self).__init__(config, logger)
+
         self.project_id = project_id if project_id else name
         self.name = name if name else project_id
         self.parent = parent
@@ -93,9 +95,7 @@ def delete(**_):
         project = Project(
             config=gcp_config,
             logger=ctx.logger,
-            name=ctx.node.properties[constants.NAME],
-            project_id=ctx.node.properties.get('project_id', None),
-            parent=ctx.node.properties.get('parent', None)
+            project_id=props[constants.RESOURCE_ID]
         )
 
         utils.delete_if_not_external(project)
