@@ -70,7 +70,6 @@ class GoogleCloudApi(object):
         self.scope = scope
         self.__discovery = discovery
         self.api_version = api_version
-        ctx.logger.info('** self.__discovery: {}'.format(self.__discovery))
 
     @property
     def discovery(self):
