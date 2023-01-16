@@ -24,12 +24,16 @@ from . import CloudResourcesBase
 
 class Project(CloudResourcesBase):
 
-    def __init__(self, config, logger, name=None):
+    def __init__(self,
+                 config,
+                 logger,
+                 name=None,
+                 project_id=None,
+                 parent=None):
         super(Project, self).__init__(config, logger, name)
-        project_id = config['auth'].get('project_id', None)
-        self.project_id = utils.get_gcp_resource_name(project_id)
-        self.name = name if name else self.project_id
-        ctx.logger.info('** Project: self.discovery: {}'.format(self.discovery))
+        self.project_id = project_id if project_id else name
+        self.name = name if name else project_id
+        self.parent = parent
 
     @gcp.check_response
     def get(self):
@@ -47,9 +51,9 @@ class Project(CloudResourcesBase):
     @gcp.check_response
     def create(self):
         project_body = {
-            constants.NAME: utils.get_gcp_resource_name(
-                ctx.node.properties[constants.NAME]),
-            'projectId': self.project_id
+            'name': self.name,
+            'projectId': self.project_id,
+            'parent': self.parent
         }
         self.logger.info('Project info: {}'.format(repr(project_body)))
         return self.discovery.projects().create(body=project_body).execute()
@@ -67,13 +71,12 @@ def create(**_):
         return
 
     gcp_config = utils.get_gcp_config()
-    ctx.logger.info('*** Project -> create **')
-    ctx.logger.info('*** ctx.node.properties: {}'.format(ctx.node.properties))
-    ctx.logger.info('*** gcp_config: {}'.format(gcp_config))
     project = Project(
         config=gcp_config,
         logger=ctx.logger,
-        name=ctx.node.properties[constants.NAME]
+        name=ctx.node.properties[constants.NAME],
+        project_id=ctx.node.properties.get('project_id', None),
+        parent=ctx.node.properties.get('parent', None)
     )
     utils.create(project)
 
@@ -88,9 +91,11 @@ def delete(**_):
 
     if props.get(constants.RESOURCE_ID):
         project = Project(
-            gcp_config,
-            ctx.logger,
-            props[constants.RESOURCE_ID]
+            config=gcp_config,
+            logger=ctx.logger,
+            name=ctx.node.properties[constants.NAME],
+            project_id=ctx.node.properties.get('project_id', None),
+            parent=ctx.node.properties.get('parent', None)
         )
 
         utils.delete_if_not_external(project)

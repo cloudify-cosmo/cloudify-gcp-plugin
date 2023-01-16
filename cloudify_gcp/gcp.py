@@ -77,14 +77,8 @@ class GoogleCloudApi(object):
         """
         Lazily load the discovery so we don't make API calls during __init__
         """
-        ctx.logger.info('** discovery **')
-
         if hasattr(self, '_discovery'):
             return self._discovery
-        ctx.logger.info('** self.__discovery: {}'.format(self.__discovery))
-        ctx.logger.info('** self.scope: {}'.format(self.scope))
-        ctx.logger.info('** self.api_version: {}'.format(self.api_version))
-
         self._discovery = self.create_discovery(self.__discovery, self.scope,
                                                 self.api_version)
         return self._discovery
@@ -104,16 +98,9 @@ class GoogleCloudApi(object):
         :raise: GCPError if there is a problem with service account JSON file:
         e.g. the file is not under the given path or it has wrong permissions
         """
-        ctx.logger.info('** create_discovery **')
-
         try:
             credentials = self.get_credentials()
-            ctx.logger.info('** credentials: {}'.format(credentials))
-            ctx.logger.info('** self.api_version: {}'.format(self.api_version))
-            ctx.logger.info('** discovery: {}'.format(discovery))
-
             return build(discovery, api_version, credentials=credentials)
-
         except IOError as e:
             self.logger.error(str(e))
             raise GCPError(str(e))

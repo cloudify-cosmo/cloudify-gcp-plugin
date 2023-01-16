@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..gcp import GoogleCloudPlatform
-from .. import constants
-from cloudify import ctx
 from google.oauth2 import service_account
+
+from ..gcp import GoogleCloudPlatform
+
+from .. import constants
 
 
 class CloudResourcesBase(GoogleCloudPlatform):
