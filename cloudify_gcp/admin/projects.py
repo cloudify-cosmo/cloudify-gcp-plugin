@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
+
 from cloudify import ctx
 from cloudify.decorators import operation
+from cloudify.exceptions import OperationRetry
 
 from .. import gcp
 from .. import utils
@@ -58,11 +61,25 @@ class Project(CloudResourcesBase):
             'parent': self.parent
         }
         self.logger.info('Project info: {}'.format(repr(project_body)))
-        return self.discovery.projects().create(
+        result = self.discovery.projects().create(
             body=project_body).execute()
+
+        time.sleep(5)
+        resource_exists = self.get()
+        ctx.logger.info('resource_exists: {}'.format(resource_exists))
+        if resource_exists.get('lifecycleState') == 'ACTIVE':
+            return result
+        raise OperationRetry(
+            "Don't finish until we have lifecycleStatus == ACTIVE")
 
     @gcp.check_response
     def delete(self):
+        resource_exists = self.get()
+        ctx.logger.info('resource_exists: {}'.format(resource_exists))
+        if resource_exists.get('lifecycleState') != 'ACTIVE':
+            ctx.logger.info('The lifecycleState is not active, '
+                            'you must delete the project manually.'
+                            '{}'.format(resource_exists))
         return self.discovery.projects().delete(
             projectId=self.project_id).execute()
 
@@ -81,8 +98,8 @@ def create(**_):
         project_id=ctx.node.properties.get('project_id', None),
         parent=ctx.node.properties.get('parent', None)
     )
-    utils.create(project)
-
+    result = utils.create(project)
+    ctx.instance.runtime_properties['project_response'] = result
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = project.project_id
 
 
