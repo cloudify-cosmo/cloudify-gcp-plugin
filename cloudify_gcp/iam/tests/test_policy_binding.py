@@ -30,7 +30,8 @@ MERGED_POLICY = {'bindings': [{'baz': 'taco'}, {'foo': 'bar'}]}
 
 
 @patch('cloudify_gcp.utils.assure_resource_id_correct', return_value=True)
-@patch('cloudify_gcp.iam.policy_binding._JWTAccessCredentials')
+@patch('cloudify_gcp.gcp.service_account.Credentials.'
+       'from_service_account_info')
 @patch('cloudify_gcp.iam.policy_binding.build')
 class TestGCPPolicyBinding(TestGCP):
 

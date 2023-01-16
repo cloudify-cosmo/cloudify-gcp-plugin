@@ -24,7 +24,8 @@ from .. import stackdriver_group
 from ...tests import TestGCP
 
 
-@patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
+@patch('cloudify_gcp.gcp.service_account.Credentials.'
+       'from_service_account_info')
 @patch('cloudify_gcp.gcp.build')
 class TestGCPStackDriverGroup(TestGCP):
 

@@ -21,7 +21,8 @@ from ...tests import TestGCP
 
 
 @patch('cloudify_gcp.utils.assure_resource_id_correct', return_value=True)
-@patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
+@patch('cloudify_gcp.gcp.service_account.Credentials.'
+       'from_service_account_info')
 @patch('cloudify_gcp.gcp.build')
 class TestGCPSecurityGroup(TestGCP):
 

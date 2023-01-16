@@ -15,7 +15,6 @@
 
 from functools import wraps
 from os.path import basename
-from cloudify import ctx
 from httplib2 import ServerNotFoundError
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build

@@ -35,12 +35,17 @@ class TestProjectsWithCTX(TestGCP):
     def test_project_init(self):
         self._set_properties()
         config = self.ctxmock.node.properties["gcp_config"]
+        parent = {'type': 'organization', 'id': '840516624432'}
 
-        project_check = projects.Project(config, self.ctxmock.logger, "abc",
-                                         "project_id")
+        project_check = projects.Project(config,
+                                         self.ctxmock.logger,
+                                         "abc",
+                                         "project_id",
+                                         parent)
+
         self.assertEqual(project_check.config, config)
-        self.assertEqual(project_check.name, "project_id")
-        self.assertEqual(project_check.project_id, "abc")
+        self.assertEqual(project_check.name, "abc")
+        self.assertEqual(project_check.project_id, "project_id")
 
         project_check = projects.Project(config, self.ctxmock.logger, "abc")
         self.assertEqual(project_check.config, config)
