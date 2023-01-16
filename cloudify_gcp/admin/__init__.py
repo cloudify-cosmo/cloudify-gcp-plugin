@@ -15,12 +15,12 @@
 
 from google.oauth2 import service_account
 
-from ..gcp import GoogleCloudApi
+from .. import gcp
 
 from .. import constants
 
 
-class CloudResourcesBase(GoogleCloudApi):
+class CloudResourcesBase(gcp.GoogleCloudApi):
 
     def __init__(self,
                  config,

@@ -58,7 +58,8 @@ class Project(CloudResourcesBase):
             'parent': self.parent
         }
         self.logger.info('Project info: {}'.format(repr(project_body)))
-        return self.discovery.projects().create(body=project_body).execute()
+        return self.discovery.projects().create(
+            body=project_body).execute()
 
     @gcp.check_response
     def delete(self):
