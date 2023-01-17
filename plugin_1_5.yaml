@@ -3,7 +3,7 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: '1.8.9'
+    package_version: '1.9.0'
     properties_description: |
       Manage GCP resources.
       Credentials documentation:
@@ -70,6 +70,8 @@ node_types:
           Optional project id. By default it will be instance id.
         type: string
         default: ''
+      parent:
+        type: dict
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
