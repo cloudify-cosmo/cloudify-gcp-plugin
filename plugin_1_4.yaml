@@ -52,7 +52,7 @@ node_types:
           Optional project name. By default it will be instance id.
         type: string
         default: ''
-      id:
+      project_id:
         description: >
           Optional project id. By default it will be instance id.
         type: string
