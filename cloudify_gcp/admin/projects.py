@@ -13,11 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
-
 from cloudify import ctx
 from cloudify.decorators import operation
-from cloudify.exceptions import OperationRetry
 
 from .. import gcp
 from .. import utils
@@ -49,7 +46,6 @@ class Project(CloudResourcesBase):
         details retrieval
         """
         self.logger.info('Get instance {0} details'.format(self.name))
-
         return self.discovery.projects().get(
             projectId=self.project_id).execute()
 
@@ -61,25 +57,15 @@ class Project(CloudResourcesBase):
             'parent': self.parent
         }
         self.logger.info('Project info: {}'.format(repr(project_body)))
-        result = self.discovery.projects().create(
-            body=project_body).execute()
-
-        time.sleep(5)
-        resource_exists = self.get()
-        ctx.logger.info('resource_exists: {}'.format(resource_exists))
-        if resource_exists.get('lifecycleState') == 'ACTIVE':
-            return result
-        raise OperationRetry(
-            "Don't finish until we have lifecycleStatus == ACTIVE")
+        return self.discovery.projects().create(body=project_body).execute()
 
     @gcp.check_response
     def delete(self):
         resource_exists = self.get()
-        ctx.logger.info('resource_exists: {}'.format(resource_exists))
         if resource_exists.get('lifecycleState') != 'ACTIVE':
             ctx.logger.info('The lifecycleState is not active, '
                             'you must delete the project manually.'
-                            '{}'.format(resource_exists))
+                            '{}'.format(resource_exists.get('lifecycleState')))
         return self.discovery.projects().delete(
             projectId=self.project_id).execute()
 
