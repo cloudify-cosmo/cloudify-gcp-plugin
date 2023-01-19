@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
+
 from cloudify import ctx
 from cloudify.decorators import operation
+from cloudify.exceptions import OperationRetry, NonRecoverableError
 
 from .. import gcp
 from .. import utils
@@ -51,13 +54,20 @@ class Project(CloudResourcesBase):
 
     @gcp.check_response
     def create(self):
-        project_body = {
-            'name': self.name,
-            'projectId': self.project_id,
-            'parent': self.parent
-        }
-        self.logger.info('Project info: {}'.format(repr(project_body)))
-        return self.discovery.projects().create(body=project_body).execute()
+
+        try:
+            resource_exists = self.get()
+            return resource_exists
+        except Exception as e:
+            project_body = {
+                'name': self.name,
+                'projectId': self.project_id,
+                'parent': self.parent
+            }
+            self.logger.info('Project info: {}'.format(repr(project_body)))
+            result = self.discovery.projects().create(
+                body=project_body).execute()
+            return result
 
     @gcp.check_response
     def delete(self):
@@ -73,6 +83,7 @@ class Project(CloudResourcesBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(**_):
+
     if utils.resource_created(ctx, constants.RESOURCE_ID):
         return
 
@@ -84,9 +95,18 @@ def create(**_):
         project_id=ctx.node.properties.get('project_id', None),
         parent=ctx.node.properties.get('parent', None)
     )
-    result = utils.create(project)
-    ctx.instance.runtime_properties['project_response'] = result
+    utils.create(project)
+    resource_exists = get_info_form_project(project)
+    ctx.instance.runtime_properties['project_response'] = resource_exists
     ctx.instance.runtime_properties[constants.RESOURCE_ID] = project.project_id
+
+
+def get_info_form_project(project):
+    try:
+        return project.get()
+    except Exception as e:
+        raise OperationRetry("The project creation is not ready. {}".
+                             format(str(e)))
 
 
 @operation(resumable=True)
