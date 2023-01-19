@@ -39,7 +39,16 @@ class Project(CloudResourcesBase):
         self.name = name if name else project_id
         self.parent = parent
 
-    @gcp.check_response
+    @property
+    def project_body(self):
+        project_body = {
+            'name': self.name,
+            'projectId': self.project_id,
+            'parent': self.parent
+        }
+        self.logger.debug('Project info: {}'.format(repr(project_body)))
+        return project_body
+
     def get(self):
         """
         Get GCP project details.
@@ -48,33 +57,19 @@ class Project(CloudResourcesBase):
         details retrieval
         """
         self.logger.info('Get instance {0} details'.format(self.name))
-        return self.discovery.projects().get(
-            projectId=self.project_id).execute()
+        try:
+            return self.discovery.projects().get(
+                projectId=self.project_id).execute()
+        except Exception as e:
+            self.logger.debug(e)
 
     @gcp.check_response
     def create(self):
-
-        try:
-            resource_exists = self.get()
-            return resource_exists
-        except Exception:
-            project_body = {
-                'name': self.name,
-                'projectId': self.project_id,
-                'parent': self.parent
-            }
-            self.logger.info('Project info: {}'.format(repr(project_body)))
-            result = self.discovery.projects().create(
-                body=project_body).execute()
-            return result
+        return self.discovery.projects().create(
+            body=self.project_body).execute()
 
     @gcp.check_response
     def delete(self):
-        resource_exists = self.get()
-        if resource_exists.get('lifecycleState') != 'ACTIVE':
-            ctx.logger.info('The lifecycleState is not active, '
-                            'you must delete the project manually.'
-                            '{}'.format(resource_exists.get('lifecycleState')))
         return self.discovery.projects().delete(
             projectId=self.project_id).execute()
 
@@ -94,18 +89,21 @@ def create(**_):
         project_id=ctx.node.properties.get('project_id', None),
         parent=ctx.node.properties.get('parent', None)
     )
-    utils.create(project)
-    resource_exists = get_info_form_project(project)
-    ctx.instance.runtime_properties['project_response'] = resource_exists
-    ctx.instance.runtime_properties[constants.RESOURCE_ID] = project.project_id
+
+    resource_exists = project.get()
+    if not resource_exists:
+        utils.create(project)
+    elif resource_exists.get('lifecycleStatus') == 'ACTIVE':
+        return
+    raise OperationRetry('The project state is not ACTIVE yet.')
 
 
-def get_info_form_project(project):
-    try:
-        return project.get()
-    except Exception as e:
-        raise OperationRetry("The project creation is not ready. {}".
-                             format(str(e)))
+# def get_info_form_project(project):
+#     try:
+#         return project.get()
+#     except Exception as e:
+#         raise OperationRetry("The project creation is not ready. {}".
+#                              format(str(e)))
 
 
 @operation(resumable=True)
@@ -120,6 +118,10 @@ def delete(**_):
             logger=ctx.logger,
             project_id=props[constants.RESOURCE_ID]
         )
-
+        resource_exists = project.get()
+        if resource_exists.get('lifecycleState') != 'ACTIVE':
+            ctx.logger.info('The lifecycleState is not active, '
+                            'you must delete the project manually.'
+                            '{}'.format(resource_exists.get('lifecycleState')))
         utils.delete_if_not_external(project)
         ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
