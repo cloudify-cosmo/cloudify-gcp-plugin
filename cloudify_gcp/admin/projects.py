@@ -13,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
 
 from cloudify import ctx
 from cloudify.decorators import operation
-from cloudify.exceptions import OperationRetry, NonRecoverableError
+from cloudify.exceptions import OperationRetry
 
 from .. import gcp
 from .. import utils
@@ -58,7 +57,7 @@ class Project(CloudResourcesBase):
         try:
             resource_exists = self.get()
             return resource_exists
-        except Exception as e:
+        except Exception:
             project_body = {
                 'name': self.name,
                 'projectId': self.project_id,
