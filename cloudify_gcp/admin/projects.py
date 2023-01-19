@@ -49,6 +49,7 @@ class Project(CloudResourcesBase):
         self.logger.debug('Project info: {}'.format(repr(project_body)))
         return project_body
 
+    @gcp.check_response
     def get(self):
         """
         Get GCP project details.
