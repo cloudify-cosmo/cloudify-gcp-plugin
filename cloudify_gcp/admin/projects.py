@@ -95,6 +95,8 @@ def create(**_):
     if not resource_exists:
         utils.create(project)
     elif resource_exists.get('lifecycleState') == 'ACTIVE':
+        ctx.instance.runtime_properties[constants.RESOURCE_ID] = \
+            project.project_id
         return
     raise OperationRetry('The project state is not ACTIVE yet.')
 
@@ -102,19 +104,26 @@ def create(**_):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**_):
+
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
     if props.get(constants.RESOURCE_ID):
+
         project = Project(
             config=gcp_config,
             logger=ctx.logger,
             project_id=props[constants.RESOURCE_ID]
         )
+
         resource_exists = project.get()
-        if resource_exists.get('lifecycleState') != 'ACTIVE':
+
+        if resource_exists and resource_exists.get(
+                'lifecycleState') == 'DELETE_REQUESTED':
             ctx.logger.info('The lifecycleState is not active, '
-                            'you must delete the project manually.'
-                            '{}'.format(resource_exists.get('lifecycleState')))
-        utils.delete_if_not_external(project)
-        ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
+                            'you must delete the project manually. {}'
+                            .format(resource_exists.get('lifecycleState')))
+        elif resource_exists and resource_exists.get(
+                'lifecycleState') == 'ACTIVE':
+            if utils.delete_if_not_external(project):
+                raise OperationRetry('Waiting for resource to be deleted.')
