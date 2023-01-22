@@ -3,7 +3,7 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: '1.8.9'
+    package_version: '1.9.0'
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -52,11 +52,13 @@ node_types:
           Optional project name. By default it will be instance id.
         type: string
         default: ''
-      id:
+      project_id:
         description: >
           Optional project id. By default it will be instance id.
         type: string
         default: ''
+      parent:
+        type: dict
     interfaces:
       cloudify.interfaces.lifecycle:
         create:

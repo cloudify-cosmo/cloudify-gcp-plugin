@@ -53,7 +53,8 @@ setup(
     zip_safe=False,
     install_requires=[
         "oauth2client==4.1.3",
-        "google-api-python-client==1.7.11",
+        "google-auth==2.15.0",
+        "google-api-python-client==2.52.0.",
         "cloudify-common>=4.5.5",
         'cloudify-utilities-plugins-sdk>=0.0.61',
         "networkx==1.9.1",

@@ -16,11 +16,10 @@
 from copy import deepcopy
 
 from cloudify import ctx
-from Crypto.Random import atfork
 from cloudify.decorators import operation
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from oauth2client.service_account import _JWTAccessCredentials
+from google.oauth2 import service_account
 
 from .. import gcp
 from .. import utils
@@ -46,16 +45,9 @@ class PolicyBinding(gcp.GoogleCloudPlatform):
         self.resource = resource or config['project']
         self.new_policy = policy
 
-    def get_credentials(self, scope):
-        # check
-        # run: gcloud beta auth application-default login
-        # look to ~/.config/gcloud/application_default_credentials.json
-        atfork()
-        if hasattr(self.auth, 'get'):
-            creds_func = _JWTAccessCredentials.from_json_keyfile_dict
-        else:
-            creds_func = _JWTAccessCredentials.from_json_keyfile_name
-        return creds_func(self.auth, scopes=self.scope)
+    def get_credentials(self, *_, **__):
+        return service_account.Credentials. \
+            from_service_account_info(self.auth, always_use_jwt_access=True)
 
     def create_discovery(self, discovery, scope, api_version):
         """
@@ -68,9 +60,6 @@ class PolicyBinding(gcp.GoogleCloudPlatform):
         :raise: GCPError if there is a problem with service account JSON file:
         e.g. the file is not under the given path or it has wrong permissions
         """
-        # Crypto.Random.atfork() must be called here because celery doesn't do
-        # it
-        atfork()
         try:
             credentials = self.get_credentials(scope)
             return build(discovery, api_version, credentials=credentials)

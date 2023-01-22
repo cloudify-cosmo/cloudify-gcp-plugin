@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 from cloudify import ctx
 from cloudify.decorators import operation
+from cloudify.exceptions import OperationRetry
 
 from .. import gcp
 from .. import utils
@@ -24,10 +26,28 @@ from . import CloudResourcesBase
 
 class Project(CloudResourcesBase):
 
-    def __init__(self, config, logger, project_id=None, name=None):
-        super(CloudResourcesBase, self).__init__(config, logger)
-        self.project_id = utils.get_gcp_resource_name(project_id)
-        self.name = name if name else self.project_id
+    def __init__(self,
+                 config,
+                 logger,
+                 name=None,
+                 project_id=None,
+                 parent=None):
+
+        super(Project, self).__init__(config, logger)
+
+        self.project_id = project_id if project_id else name
+        self.name = name if name else project_id
+        self.parent = parent
+
+    @property
+    def project_body(self):
+        project_body = {
+            'name': self.name,
+            'projectId': self.project_id,
+            'parent': self.parent
+        }
+        self.logger.debug('Project info: {}'.format(repr(project_body)))
+        return project_body
 
     @gcp.check_response
     def get(self):
@@ -38,20 +58,16 @@ class Project(CloudResourcesBase):
         details retrieval
         """
         self.logger.info('Get instance {0} details'.format(self.name))
-
-        return self.discovery.projects().get(
-            projectId=self.project_id).execute()
+        try:
+            return self.discovery.projects().get(
+                projectId=self.project_id).execute()
+        except Exception as e:
+            self.logger.debug(e)
 
     @gcp.check_response
     def create(self):
-        project_body = {
-            constants.NAME: utils.get_gcp_resource_name(
-                ctx.node.properties[constants.NAME]),
-            'projectId': self.project_id
-        }
-        self.logger.info('Project info: {}'.format(repr(project_body)))
         return self.discovery.projects().create(
-            body=project_body).execute()
+            body=self.project_body).execute()
 
     @gcp.check_response
     def delete(self):
@@ -62,34 +78,52 @@ class Project(CloudResourcesBase):
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def create(**_):
+
     if utils.resource_created(ctx, constants.RESOURCE_ID):
         return
 
     gcp_config = utils.get_gcp_config()
-
     project = Project(
-        gcp_config,
-        ctx.logger,
-        ctx.node.properties['id'],
-        ctx.node.properties[constants.NAME]
+        config=gcp_config,
+        logger=ctx.logger,
+        name=ctx.node.properties[constants.NAME],
+        project_id=ctx.node.properties.get('project_id', None),
+        parent=ctx.node.properties.get('parent', None)
     )
-    utils.create(project)
 
-    ctx.instance.runtime_properties[constants.RESOURCE_ID] = project.project_id
+    resource_exists = project.get()
+    if not resource_exists:
+        utils.create(project)
+    elif resource_exists.get('lifecycleState') == 'ACTIVE':
+        ctx.instance.runtime_properties[constants.RESOURCE_ID] = \
+            project.project_id
+        return
+    raise OperationRetry('The project state is not ACTIVE yet.')
 
 
 @operation(resumable=True)
 @utils.throw_cloudify_exceptions
 def delete(**_):
+
     gcp_config = utils.get_gcp_config()
     props = ctx.instance.runtime_properties
 
     if props.get(constants.RESOURCE_ID):
+
         project = Project(
-            gcp_config,
-            ctx.logger,
-            props[constants.RESOURCE_ID]
+            config=gcp_config,
+            logger=ctx.logger,
+            project_id=props[constants.RESOURCE_ID]
         )
 
-        utils.delete_if_not_external(project)
-        ctx.instance.runtime_properties[constants.RESOURCE_ID] = None
+        resource_exists = project.get()
+
+        if resource_exists and resource_exists.get(
+                'lifecycleState') == 'DELETE_REQUESTED':
+            ctx.logger.info('The lifecycleState is not active, '
+                            'you must delete the project manually. {}'
+                            .format(resource_exists.get('lifecycleState')))
+        elif resource_exists and resource_exists.get(
+                'lifecycleState') == 'ACTIVE':
+            if utils.delete_if_not_external(project):
+                raise OperationRetry('Waiting for resource to be deleted.')

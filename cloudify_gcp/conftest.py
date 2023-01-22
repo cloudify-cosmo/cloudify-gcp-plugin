@@ -34,6 +34,7 @@ def ctx():
 @pytest.fixture(autouse=True)
 def patch_client():
     with patch(
-            'cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict'
+            'cloudify_gcp.gcp.service_account.Credentials.'
+            'from_service_account_info'
             ):
         yield

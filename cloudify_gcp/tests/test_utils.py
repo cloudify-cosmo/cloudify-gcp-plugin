@@ -155,7 +155,8 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(utils.is_object_deleted(obj))
 
 
-@patch('cloudify_gcp.gcp.ServiceAccountCredentials.from_json_keyfile_dict')
+@patch('cloudify_gcp.gcp.service_account.Credentials.'
+       'from_service_account_info')
 class TestUtilsWithCTX(TestGCP):
 
     @patch('cloudify_gcp.utils.assure_resource_id_correct')

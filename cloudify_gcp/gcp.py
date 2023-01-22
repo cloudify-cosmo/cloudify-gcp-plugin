@@ -15,13 +15,10 @@
 
 from functools import wraps
 from os.path import basename
-
-import httplib2
-from Crypto.Random import atfork
 from httplib2 import ServerNotFoundError
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2 import service_account
 
 from cloudify.exceptions import OperationRetry
 
@@ -41,7 +38,7 @@ def check_response(func):
                     'Warning: {0}. '
                     'If problem persists, error may be fatal.'.format(
                         e.message))
-        if 'error' in response:
+        if response and 'error' in response:
             self.logger.error('Response with error {0}'
                               .format(response['error']))
 
@@ -100,15 +97,9 @@ class GoogleCloudApi(object):
         :raise: GCPError if there is a problem with service account JSON file:
         e.g. the file is not under the given path or it has wrong permissions
         """
-        # Crypto.Random.atfork() must be called here because celery doesn't do
-        # it
-        atfork()
-
         try:
-            credentials = self.get_credentials(scope)
-            http = httplib2.Http()
-            credentials.authorize(http)
-            return build(discovery, api_version, http=http)
+            credentials = self.get_credentials()
+            return build(discovery, api_version, credentials=credentials)
         except IOError as e:
             self.logger.error(str(e))
             raise GCPError(str(e))
@@ -146,16 +137,9 @@ class GoogleCloudPlatform(GoogleCloudApi):
         self.name = name
         self.body = additional_settings if additional_settings else {}
 
-    def get_credentials(self, scope):
-        # Crypto.Random.atfork() must be called here because celery doesn't do
-        # it
-        atfork()
-        if hasattr(self.auth, 'get'):
-            creds_func = ServiceAccountCredentials.from_json_keyfile_dict
-        else:
-            creds_func = ServiceAccountCredentials.from_json_keyfile_name
-
-        return creds_func(self.auth, scopes=scope)
+    def get_credentials(self, *_, **__):
+        return service_account.Credentials.\
+            from_service_account_info(self.auth)
 
     def get_common_instance_metadata(self):
         """
