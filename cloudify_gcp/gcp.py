@@ -38,7 +38,7 @@ def check_response(func):
                     'Warning: {0}. '
                     'If problem persists, error may be fatal.'.format(
                         e.message))
-        if 'error' in response:
+        if response and 'error' in response:
             self.logger.error('Response with error {0}'
                               .format(response['error']))
 

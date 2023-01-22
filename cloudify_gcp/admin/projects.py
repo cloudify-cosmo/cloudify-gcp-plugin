@@ -94,17 +94,9 @@ def create(**_):
     resource_exists = project.get()
     if not resource_exists:
         utils.create(project)
-    elif resource_exists.get('lifecycleStatus') == 'ACTIVE':
+    elif resource_exists.get('lifecycleState') == 'ACTIVE':
         return
     raise OperationRetry('The project state is not ACTIVE yet.')
-
-
-# def get_info_form_project(project):
-#     try:
-#         return project.get()
-#     except Exception as e:
-#         raise OperationRetry("The project creation is not ready. {}".
-#                              format(str(e)))
 
 
 @operation(resumable=True)
