@@ -274,12 +274,16 @@ workflows:
             - wagonorb/arch64_wagon
             - wagonorb/rhel_wagon
       - virtual_machine_integration_tests_py3:
+          context: 
+            - slack-secrets
           requires:
             - wagonorb/build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
       - gke_integration_tests_py3:
+          context: 
+            - slack-secrets
           requires:
             - wagonorb/build_bundle
           filters:
@@ -322,6 +326,8 @@ workflows:
               - wagonorb/rhel_wagon
               - wagonorb/arch64_wagon
         - attach_disk_and_container_engine_test_py3:
+            context: 
+            - slack-secrets
             requires:
               - wagonorb/build_bundle
               - wagonorb/wagon
@@ -368,6 +374,8 @@ workflows:
             - wagonorb/rhel_wagon
             - wagonorb/arch64_wagon
       - http_balancer_and_https_balancer_test_py3:
+          context: 
+            - slack-secrets
           requires:
             - wagonorb/build_bundle
             - wagonorb/wagon
@@ -414,6 +422,8 @@ workflows:
             - wagonorb/rhel_wagon
             - wagonorb/arch64_wagon
       - ssl_balancer_and_tcp_balancer_test_py3:
+          context: 
+            - slack-secrets
           requires:
             - wagonorb/build_bundle
             - wagonorb/wagon
@@ -460,6 +470,8 @@ workflows:
             - wagonorb/rhel_wagon
             - wagonorb/arch64_wagon
       - gcp_example_network_test_py3:
+          context: 
+            - slack-secrets
           requires:
             - wagonorb/build_bundle
             - wagonorb/wagon
