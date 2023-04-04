@@ -1,6 +1,16 @@
 version: 2.1
 
+unittest-post-steps: &unittest-post-steps
+  post-steps:
+    - store_test_results:
+        path: /home/circleci/project/nosetests.xml
+    - store_artifacts:
+        path: /home/circleci/project/coverage.xml
+        prefix: tests
+    - slack/notify_failed
+
 orbs:
+  slack: cloudify/notify-slack@2
   node: cloudify/public-unittest-orb@volatile
   wagonorb: cloudify/wagon-bulder-orb@volatile
   releaseorb: cloudify/release-orb@volatile
@@ -34,40 +44,67 @@ commands:
 
   run_virtual_machine_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/virtual-machine/gcp.yaml --test-id=virtual-machine --on-failure=uninstall-force --timeout=1800
+      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/virtual-machine/gcp.yaml --test-id=virtual-machine --on-failure=uninstall-force --timeout=1800 | tee -a run_virtual_machine_test.log
+      - store_artifacts:
+          path: run_virtual_machine_test.log
+      - slack/notify_failed
 
   run_gke_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml --test-id=gcp-gke  -i resource_prefix=gcpresource-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml --test-id=gcp-gke  -i resource_prefix=gcpresource-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_gke_test.log
+      - store_artifacts:
+          path: run_gke_test.log
+      - slack/notify_failed
 
   # test blueprints
   run_attach_disk_test:
      steps:
-       - run: ecosystem-test local-blueprint-test  -b blueprints/attach-disk.yaml --test-id=gcp-attach-disk  -i zone=europe-west1-b -i region=europe-west1 -i prefix=gcp-attach-disk-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+        - run: ecosystem-test local-blueprint-test  -b blueprints/attach-disk.yaml --test-id=gcp-attach-disk  -i zone=europe-west1-b -i region=europe-west1 -i prefix=gcp-attach-disk-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_attach_disk_test.log
+        - store_artifacts:
+            path: run_attach_disk_test.log
+        - slack/notify_failed
 
   run_container_engine_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/container-engine.yaml --test-id=gcp-container-engine -i prefix=gcp-container-engine-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+      - run: ecosystem-test local-blueprint-test  -b blueprints/container-engine.yaml --test-id=gcp-container-engine -i prefix=gcp-container-engine-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_container_engine_test.log
+      - store_artifacts:
+          path: run_container_engine_test.log
+      - slack/notify_failed
 
   run_http_balancer_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/http-balancer.yaml --test-id=gcp-http-balancer -i prefix=gcp-http-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+      - run: ecosystem-test local-blueprint-test  -b blueprints/http-balancer.yaml --test-id=gcp-http-balancer -i prefix=gcp-http-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_http_balancer_test.log
+      - store_artifacts:
+          path: run_http_balancer_test.log
+      - slack/notify_failed
 
   run_https_balancer_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/https-balancer.yaml --test-id=gcp-https-balancer -i prefix=gcp-https-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+      - run: ecosystem-test local-blueprint-test  -b blueprints/https-balancer.yaml --test-id=gcp-https-balancer -i prefix=gcp-https-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_https_balancer_test.log
+      - store_artifacts:
+          path: run_https_balancer_test.log
+      - slack/notify_failed
 
   run_ssl_balancer_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/ssl-balancer.yaml --test-id=gcp-ssl-balancer -i prefix=gcp-ssl-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+      - run: ecosystem-test local-blueprint-test  -b blueprints/ssl-balancer.yaml --test-id=gcp-ssl-balancer -i prefix=gcp-ssl-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_ssl_balancer_test.log
+      - store_artifacts:
+          path: run_ssl_balancer_test.log
+      - slack/notify_failed
 
   run_tcp_balancer_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/tcp-balancer.yaml --test-id=gcp-tcp-balancer -i prefix=gcp-tcp-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+      - run: ecosystem-test local-blueprint-test  -b blueprints/tcp-balancer.yaml --test-id=gcp-tcp-balancer -i prefix=gcp-tcp-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_tcp_balancer_test.log
+      - store_artifacts:
+          path: run_tcp_balancer_test.log
+      - slack/notify_failed
 
   run_gcp_example_network_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/gcp-example-network/blueprint.yaml --test-id=gcp-example-network-test  -i resource_prefix=gcp-example-network-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000
+      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/gcp-example-network/blueprint.yaml --test-id=gcp-example-network-test  -i resource_prefix=gcp-example-network-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_gcp_example_network_test.log
+      - store_artifacts:
+          path: run_gcp_example_network_test.log
+      - slack/notify_failed
   # cloudify-community/blueprint-examples/gcp-example-network/blueprint.yaml
 
 jobs:
@@ -139,7 +176,10 @@ workflows:
   tests:
     jobs:
       - node/check_py3_compat_job
-      - node/unittests_job
+      - node/unittests_job:
+          context: 
+            - slack-secrets
+          <<: *unittest-post-steps
       - node/validate_version_job
       - node/validate_documentation_job
       - wagonorb/wagon:
@@ -201,7 +241,10 @@ workflows:
               - master
     jobs:
       - node/check_py3_compat_job
-      - node/unittests_job
+      - node/unittests_job:
+          context: 
+            - slack-secrets
+          <<: *unittest-post-steps
       - node/validate_version_job
       - wagonorb/wagon:
           filters:
@@ -245,7 +288,10 @@ workflows:
                 - master
       jobs:
         - node/check_py3_compat_job
-        - node/unittests_job
+        - node/unittests_job:
+            context: 
+              - slack-secrets
+            <<: *unittest-post-steps
         - node/validate_version_job
         - wagonorb/rhel_wagon:
             filters:
@@ -279,7 +325,10 @@ workflows:
                 - master
     jobs:
       - node/check_py3_compat_job
-      - node/unittests_job
+      - node/unittests_job:
+          context: 
+            - slack-secrets
+          <<: *unittest-post-steps
       - node/validate_version_job
       - wagonorb/rhel_wagon:
           filters:
@@ -313,7 +362,10 @@ workflows:
                 - master
     jobs:
       - node/check_py3_compat_job
-      - node/unittests_job
+      - node/unittests_job:
+          context: 
+            - slack-secrets
+          <<: *unittest-post-steps
       - node/validate_version_job
       - wagonorb/rhel_wagon:
           filters:
@@ -347,7 +399,10 @@ workflows:
                 - master
     jobs:
       - node/check_py3_compat_job
-      - node/unittests_job
+      - node/unittests_job:
+          context: 
+            - slack-secrets
+          <<: *unittest-post-steps
       - node/validate_version_job
       - wagonorb/rhel_wagon:
           filters:
