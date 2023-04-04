@@ -10,11 +10,11 @@ unittest-post-steps: &unittest-post-steps
     - slack/notify_failed
 
 orbs:
-  node: cloudify/public-unittest-orb@1 #orb version
-  wagonorb: cloudify/wagon-bulder-orb@2 #orb version
-  releaseorb: cloudify/release-orb@1 #orb version
-  managerorb: cloudify/manager-orb@2
   slack: cloudify/notify-slack@2
+  node: cloudify/public-unittest-orb@volatile
+  wagonorb: cloudify/wagon-bulder-orb@volatile
+  releaseorb: cloudify/release-orb@volatile
+  managerorb: cloudify/manager-orb@volatile
 
 checkout:
   post:
@@ -196,24 +196,19 @@ workflows:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
 
-      - wagonorb/build_bundle:
-          filters:
-            branches:
-              only: /master/
+      - virtual_machine_integration_tests_py3:
           requires:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
             - wagonorb/rhel_wagon
-
-      - virtual_machine_integration_tests_py3:
-          requires:
-            - wagonorb/build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
       - gke_integration_tests_py3:
           requires:
-            - wagonorb/build_bundle
+            - wagonorb/wagon
+            - wagonorb/arch64_wagon
+            - wagonorb/rhel_wagon
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
@@ -266,23 +261,19 @@ workflows:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
 
-      - wagonorb/build_bundle:
-          filters:
-            branches:
-              only: /master/
+      - virtual_machine_integration_tests_py3:
           requires:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
             - wagonorb/rhel_wagon
-      - virtual_machine_integration_tests_py3:
-          requires:
-            - wagonorb/build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
       - gke_integration_tests_py3:
           requires:
-            - wagonorb/build_bundle
+            - wagonorb/wagon
+            - wagonorb/arch64_wagon
+            - wagonorb/rhel_wagon
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
@@ -314,17 +305,8 @@ workflows:
             filters:
               branches:
                 only: /([0-9\.]*\-build|master|dev)/
-        - wagonorb/build_bundle:
-            filters:
-              branches:
-                only: /master/
-            requires:
-              - wagonorb/wagon
-              - wagonorb/rhel_wagon
-              - wagonorb/arch64_wagon
         - attach_disk_and_container_engine_test_py3:
             requires:
-              - wagonorb/build_bundle
               - wagonorb/wagon
               - wagonorb/rhel_wagon
               - wagonorb/arch64_wagon
@@ -360,17 +342,8 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - wagonorb/build_bundle:
-          filters:
-            branches:
-              only: /master/
-          requires:
-            - wagonorb/wagon
-            - wagonorb/rhel_wagon
-            - wagonorb/arch64_wagon
       - http_balancer_and_https_balancer_test_py3:
           requires:
-            - wagonorb/build_bundle
             - wagonorb/wagon
             - wagonorb/rhel_wagon
             - wagonorb/arch64_wagon
@@ -406,17 +379,8 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - wagonorb/build_bundle:
-          filters:
-            branches:
-              only: /master/
-          requires:
-            - wagonorb/wagon
-            - wagonorb/rhel_wagon
-            - wagonorb/arch64_wagon
       - ssl_balancer_and_tcp_balancer_test_py3:
           requires:
-            - wagonorb/build_bundle
             - wagonorb/wagon
             - wagonorb/rhel_wagon
             - wagonorb/arch64_wagon
@@ -452,17 +416,8 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - wagonorb/build_bundle:
-          filters:
-            branches:
-              only: /master/
-          requires:
-            - wagonorb/wagon
-            - wagonorb/rhel_wagon
-            - wagonorb/arch64_wagon
       - gcp_example_network_test_py3:
           requires:
-            - wagonorb/build_bundle
             - wagonorb/wagon
             - wagonorb/rhel_wagon
             - wagonorb/arch64_wagon
