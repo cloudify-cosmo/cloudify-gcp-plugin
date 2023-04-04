@@ -14,6 +14,7 @@ orbs:
   wagonorb: cloudify/wagon-bulder-orb@2 #orb version
   releaseorb: cloudify/release-orb@1 #orb version
   managerorb: cloudify/manager-orb@2
+  slack: cloudify/notify-slack@2
 
 checkout:
   post:
@@ -298,8 +299,8 @@ workflows:
         - node/check_py3_compat_job
         - node/unittests_job:
             context: 
-            - slack-secrets
-          <<: *unittest-post-steps
+              - slack-secrets
+            <<: *unittest-post-steps
         - node/validate_version_job
         - wagonorb/rhel_wagon:
             filters:
