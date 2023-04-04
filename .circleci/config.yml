@@ -112,7 +112,6 @@ jobs:
     executor: cloudify-machine-py3
     environment:
       CLOUDIFY_SSL_TRUST_ALL: true
-    
     steps:
       - checkout
       - managerorb/create_manager_container_latest
@@ -198,8 +197,6 @@ workflows:
               only: /([0-9\.]*\-build|master|dev)/
 
       - virtual_machine_integration_tests_py3:
-          context: 
-            - slack-secrets
           requires:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
