@@ -175,6 +175,8 @@ workflows:
               only: /([0-9\.]*\-build|master|dev)/
 
       - virtual_machine_integration_tests_py3:
+          context: 
+            - slack-secrets
           requires:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
@@ -183,6 +185,8 @@ workflows:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
       - gke_integration_tests_py3:
+          context: 
+            - slack-secrets
           requires:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
