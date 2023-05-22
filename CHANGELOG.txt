@@ -1,3 +1,4 @@
+1.9.2: Use DSL 1.5 plugin yaml.
 1.9.1: add __version__.py file in cloudify_gcp folder.
 1.9.0: RD-6611 update google auth library in gcp
 1.8.9:
