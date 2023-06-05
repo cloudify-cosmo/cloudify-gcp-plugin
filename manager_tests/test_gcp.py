@@ -9,13 +9,13 @@ GCLOUD_COMPUTE_COMMAND = 'gcloud compute {0} describe {1}'
 
 CFY_GCP_COMPUTE_RESOURCE = {
     'nodecellar.nodes.MonitoredServer': 'instances',
-    'cloudify.gcp.nodes.Instance': 'instances',
-    'cloudify.gcp.nodes.FirewallRule': 'firewall-rules',
-    'cloudify.gcp.nodes.SubNetwork': 'networks subnets',
-    'cloudify.gcp.nodes.Network': 'networks',
+    'cloudify.nodes.gcp.Instance': 'instances',
+    'cloudify.nodes.gcp.FirewallRule': 'firewall-rules',
+    'cloudify.nodes.gcp.SubNetwork': 'networks subnets',
+    'cloudify.nodes.gcp.Network': 'networks',
 }
 
-CFY_NODES_PATTERNS = ['cloudify.gcp.nodes', 'nodecellar.nodes']
+CFY_NODES_PATTERNS = ['cloudify.nodes.gcp', 'nodecellar.nodes']
 
 DIAMOND_WAGON = 'https://github.com/cloudify-cosmo/' \
                 'cloudify-diamond-plugin/releases/' \
@@ -30,7 +30,7 @@ class TestGCP(EcosystemTestBase):
 
     @property
     def node_type_prefix(self):
-        return 'cloudify.gcp.nodes'
+        return 'cloudify.nodes.gcp'
 
     @property
     def plugin_mapping(self):

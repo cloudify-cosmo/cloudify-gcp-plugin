@@ -619,9 +619,11 @@ def add_external_ip(instance_name, zone, **kwargs):
         if not ip_address:
             raise GCPError('{} is set, but ip_address is not set'
                            .format(constants.USE_EXTERNAL_RESOURCE))
-    elif ip_node.type == 'cloudify.gcp.nodes.Address':
+    elif ip_node.type in ['cloudify.gcp.nodes.Address', 
+                          'cloudify.nodes.gcp.Address']:
         ip_address = ctx.target.instance.runtime_properties['address']
-    elif ip_node.type != 'cloudify.gcp.nodes.ExternalIP':
+    elif ip_node.type not in ['cloudify.gcp.nodes.ExternalIP', 
+                              'cloudify.nodes.gcp.ExternalIP']:
         raise NonRecoverableError(
                 'Incorrect node type ({}) used as Instance external IP'.format(
                     ip_node.type,
@@ -738,7 +740,7 @@ def get_ssh_keys():
 def validate_contained_in_network(**kwargs):
     rels = utils.get_relationships(
             ctx,
-            filter_relationships='cloudify.gcp.relationships.'
+            filter_relationships='cloudify.relationships.gcp.'
                                  'instance_contained_in_network',
             filter_resource_types=[
                 'cloudify.nodes.gcp.Network',
