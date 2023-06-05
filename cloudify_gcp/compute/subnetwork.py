@@ -133,8 +133,9 @@ def create(name, region, subnet, **kwargs):
     name = utils.get_final_resource_name(name)
     network = utils.get_relationships(
             ctx,
-            filter_relationships='cloudify.relationships.gcp'
-                                 '.contained_in_network'
+            filter_relationships=[
+                'cloudify.relationships.gcp.contained_in_network',
+                'cloudify.gcp.relationships.contained_in_network']
             )[0].target.instance
 
     subnetwork = SubNetwork(
