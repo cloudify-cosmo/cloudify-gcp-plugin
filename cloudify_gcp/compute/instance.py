@@ -740,8 +740,9 @@ def get_ssh_keys():
 def validate_contained_in_network(**kwargs):
     rels = utils.get_relationships(
             ctx,
-            filter_relationships='cloudify.relationships.gcp.'
-                                 'instance_contained_in_network',
+            filter_relationships=[
+                'cloudify.relationships.gcp.instance_contained_in_network',
+                'cloudify.gcp.relationships.instance_contained_in_network'],
             filter_resource_types=[
                 'cloudify.nodes.gcp.Network',
                 'cloudify.nodes.gcp.SubNetwork',

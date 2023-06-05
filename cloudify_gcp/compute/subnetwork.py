@@ -180,7 +180,9 @@ def creation_validation(**kwargs):
 
     rels = utils.get_relationships(
             ctx,
-            filter_relationships=[rel_type])
+            filter_relationships=[
+                'cloudify.relationships.gcp.contained_in_network',
+                'cloudify.gcp.relationships.contained_in_network'])
 
     if len(rels) != 1:
         raise NonRecoverableError(
