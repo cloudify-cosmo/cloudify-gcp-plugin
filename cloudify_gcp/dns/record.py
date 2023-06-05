@@ -111,7 +111,7 @@ def create(type, name, resources, ttl, **kwargs):
             ctx,
             filter_relationships=[
                 'cloudify.relationships.gcp.dns_record_contained_in_zone',
-                'cloudify.gcp.relationships.dns_record_contained_in_zone',],
+                'cloudify.gcp.relationships.dns_record_contained_in_zone'],
             )[0].target.instance
 
     dns_zone = DNSZone(
