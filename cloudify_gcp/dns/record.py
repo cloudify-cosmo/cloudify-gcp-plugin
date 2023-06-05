@@ -57,18 +57,23 @@ def creation_validation(*args, **kwargs):
     rel_types = [rel.type for rel in rels]
 
     if (
+            'cloudify.relationships.gcp.'
+            'dns_record_contained_in_zone') not in rel_types or (
             'cloudify.gcp.relationships.'
-            'dns_record_contained_in_zone') not in rel_types:
+            'dns_record_contained_in_zone'
+            ) not in rel_types:
         raise NonRecoverableError('record must be contained in a zone')
 
     for rel in utils.get_relationships(
             rels,
             filter_relationships=[
+                'cloudify.relationships.gcp.dns_record_connected_to_instance',
                 'cloudify.gcp.relationships.dns_record_connected_to_instance']
             ):
         instance_rels = utils.get_relationships(
             rel.target.instance.relationships,
             filter_relationships=[
+                'cloudify.relationships.gcp.instance_connected_to_ip',
                 'cloudify.gcp.relationships.instance_connected_to_ip',
                 ],
             )
@@ -104,8 +109,9 @@ def create(type, name, resources, ttl, **kwargs):
 
     zone = utils.get_relationships(
             ctx,
-            filter_relationships='cloudify.gcp.relationships.'
-                                 'dns_record_contained_in_zone',
+            filter_relationships=[
+                'cloudify.relationships.gcp.dns_record_contained_in_zone',
+                'cloudify.gcp.relationships.dns_record_contained_in_zone'],
             )[0].target.instance
 
     dns_zone = DNSZone(
@@ -129,7 +135,9 @@ def create(type, name, resources, ttl, **kwargs):
     rels = utils.get_relationships(
             ctx,
             filter_relationships=[
+                'cloudify.relationships.gcp.dns_record_connected_to_instance',
                 'cloudify.gcp.relationships.dns_record_connected_to_instance',
+                'cloudify.relationships.gcp.dns_record_connected_to_ip',
                 'cloudify.gcp.relationships.dns_record_connected_to_ip'
                 ],
             )
@@ -165,8 +173,10 @@ def delete(**_):
 
         zone = utils.get_relationships(
                 ctx,
-                filter_relationships='cloudify.gcp.relationships.'
-                                     'dns_record_contained_in_zone',
+                filter_relationships=[
+                    'cloudify.relationships.gcp.dns_record_contained_in_zone',
+                    'cloudify.gcp.relationships.dns_record_contained_in_zone'
+                    ],
                 )[0].target.instance
         dns_zone = DNSZone(
                 gcp_config,

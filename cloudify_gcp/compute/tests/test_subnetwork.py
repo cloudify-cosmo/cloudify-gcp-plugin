@@ -33,8 +33,8 @@ class TestGCPSubNetwork(TestGCP):
 
     def test_create(self, mock_build, *args):
         rel = Mock()
-        rel.type = 'cloudify.gcp.relationships.contained_in_network'
-        rel.target.node.type = 'cloudify.gcp.nodes.Network'
+        rel.type = 'cloudify.relationships.gcp.contained_in_network'
+        rel.target.node.type = 'cloudify.nodes.gcp.Network'
         rel.target.node.properties = {
                 'auto_subnets': False,
                 }
@@ -71,13 +71,13 @@ class TestGCPSubNetwork(TestGCP):
         with self.assertRaises(NonRecoverableError) as e:
             subnetwork.creation_validation()
         self.assertIn(
-                'cloudify.gcp.relationships.contained_in_network',
+                'cloudify.relationships.gcp.contained_in_network',
                 str(e.exception))
 
     def test_create_auto_validate(self, mock_build, *args):
         rel = Mock()
-        rel.type = 'cloudify.gcp.relationships.contained_in_network'
-        rel.target.node.type = 'cloudify.gcp.nodes.Network'
+        rel.type = 'cloudify.relationships.gcp.contained_in_network'
+        rel.target.node.type = 'cloudify.nodes.gcp.Network'
         rel.target.node.properties = {
                 'auto_subnets': True,
                 }

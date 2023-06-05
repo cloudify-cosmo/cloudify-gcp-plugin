@@ -696,7 +696,7 @@ def get_net_and_subnet(ctx):
         else:
             raise NonRecoverableError(
                 'Unsupported target type for '
-                "'cloudify.gcp.relationships.instance_contained_in_network")
+                "'cloudify.relationships.gcp.instance_contained_in_network")
     else:
         config = get_gcp_config()
         network = config['network']

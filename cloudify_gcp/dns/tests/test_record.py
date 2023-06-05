@@ -30,7 +30,7 @@ class TestGCPRecord(TestGCP):
         super(TestGCPRecord, self).setUp()
 
         rel = Mock()
-        rel.type = 'cloudify.gcp.relationships.dns_record_contained_in_zone'
+        rel.type = 'cloudify.relationships.gcp.dns_record_contained_in_zone'
         rel.target.instance.runtime_properties = {
                 'kind': 'dns#managedZone',
                 'name': 'target instance',
@@ -74,7 +74,7 @@ class TestGCPRecord(TestGCP):
                 ]
 
         rel = Mock()
-        rel.type = ('cloudify.gcp.relationships.'
+        rel.type = ('cloudify.relationships.gcp.'
                     'dns_record_connected_to_instance')
         rel.target.instance.runtime_properties = {
                 'kind': 'compute#instance',
@@ -86,7 +86,7 @@ class TestGCPRecord(TestGCP):
         # be connected to an external IP, so we need to mock its relationships
         # too
         rel_rel = Mock()
-        rel_rel.type = 'cloudify.gcp.relationships.instance_connected_to_ip'
+        rel_rel.type = 'cloudify.relationships.gcp.instance_connected_to_ip'
         rel.target.instance.relationships = [rel_rel]
         self.ctxmock.instance.relationships.append(rel)
 

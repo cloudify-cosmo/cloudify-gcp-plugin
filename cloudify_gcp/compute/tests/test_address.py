@@ -36,9 +36,9 @@ def patch_zones():
 @patch('cloudify_gcp.gcp.build')
 @pytest.mark.parametrize(
     'region, node_type, section', [
-        ('region', 'cloudify.gcp.nodes.Address', 'addresses'),
-        (None, 'cloudify.gcp.nodes.Address', 'addresses'),
-        (None, 'cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
+        ('region', 'cloudify.nodes.gcp.Address', 'addresses'),
+        (None, 'cloudify.nodes.gcp.Address', 'addresses'),
+        (None, 'cloudify.nodes.gcp.GlobalAddress', 'globalAddresses'),
     ],
 )
 def test_create(mock_build, region, node_type, section, ctx):
@@ -68,8 +68,8 @@ def test_create(mock_build, region, node_type, section, ctx):
 @patch('cloudify_gcp.gcp.build')
 @pytest.mark.parametrize(
     'node_type, section', [
-        ('cloudify.gcp.nodes.Address', 'addresses'),
-        ('cloudify.gcp.nodes.GlobalAddress', 'globalAddresses'),
+        ('cloudify.nodes.gcp.Address', 'addresses'),
+        ('cloudify.nodes.gcp.GlobalAddress', 'globalAddresses'),
     ],
 )
 def test_delete(mock_build, node_type, section, ctx):

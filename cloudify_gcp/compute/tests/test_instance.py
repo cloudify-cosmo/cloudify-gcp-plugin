@@ -607,7 +607,7 @@ class TestGCPInstance(TestGCP):
     @patch('cloudify_gcp.utils.get_item_from_gcp_response', return_value={
                 'networkInterfaces': [{'accessConfigs': [{'natIP': '🕷'}]}]})
     def test_add_external_ip(self, mock_getitem, mock_build, *args):
-        self.ctxmock.target.node.type = 'cloudify.gcp.nodes.Address'
+        self.ctxmock.target.node.type = 'cloudify.nodes.gcp.Address'
         self.ctxmock.target.node.properties = {
                 'use_external_resource': False,
                 }

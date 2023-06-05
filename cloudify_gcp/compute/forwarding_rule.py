@@ -141,7 +141,7 @@ def creation_validation(**kwargs):
             raise NonRecoverableError(
                     'Must supply a target proxy, '
                     'either using the `target_proxy` property '
-                    'or the `cloudify.gcp.relationships.'
+                    'or the `cloudify.relationships.gcp.'
                     'forwarding_rule_connected_to_target_proxy` relationship.')
 
 
@@ -159,8 +159,11 @@ def create(name, region, scheme, ports, network, subnet, backend_service,
     if not target_proxy and scheme.lower() != 'internal':
         rel = utils.get_relationships(
                 ctx,
-                filter_relationships='cloudify.gcp.relationships.'
-                'forwarding_rule_connected_to_target_proxy')[0]
+                filter_relationships=[
+                    'cloudify.relationships.gcp.'
+                    'forwarding_rule_connected_to_target_proxy',
+                    'cloudify.gcp.relationships.'
+                    'forwarding_rule_connected_to_target_proxy'])[0]
         target_proxy = rel.target.instance.runtime_properties['selfLink']
 
     forwarding_rule = ForwardingRule(
