@@ -179,7 +179,7 @@ workflows:
       - node/check_py3_compat_job
       - node/unittests_job:
           context: 
-            - slack-secrets
+            - plugins-inputs
           <<: *unittest-post-steps
       - node/validate_version_job
       - node/validate_documentation_job
@@ -199,7 +199,7 @@ workflows:
 
       - virtual_machine_integration_tests_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           requires:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
@@ -209,7 +209,7 @@ workflows:
               only: /([0-9\.]*\-build|master|dev)/
       - gke_integration_tests_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           requires:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
@@ -218,6 +218,8 @@ workflows:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
       - releaseorb/release:
+          context: 
+            - plugins-inputs
           filters:
             branches:
               only: /master/
@@ -229,6 +231,8 @@ workflows:
             - virtual_machine_integration_tests_py3
             - gke_integration_tests_py3
       - releaseorb/merge_docs_job:
+          context: 
+            - plugins-inputs
           filters:
             branches:
               only: /master/
@@ -248,7 +252,7 @@ workflows:
       - node/check_py3_compat_job
       - node/unittests_job:
           context: 
-            - slack-secrets
+            - plugins-inputs
           <<: *unittest-post-steps
       - node/validate_version_job
       - wagonorb/wagon:
@@ -268,7 +272,7 @@ workflows:
 
       - virtual_machine_integration_tests_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           requires:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
@@ -279,7 +283,7 @@ workflows:
 
       - gke_integration_tests_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           requires:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
@@ -300,7 +304,7 @@ workflows:
         - node/check_py3_compat_job
         - node/unittests_job:
             context: 
-              - slack-secrets
+            - plugins-inputs
             <<: *unittest-post-steps
         - node/validate_version_job
         - wagonorb/rhel_wagon:
@@ -317,7 +321,7 @@ workflows:
                 only: /([0-9\.]*\-build|master|dev)/
         - attach_disk_and_container_engine_test_py3:
             context: 
-              - slack-secrets
+            - plugins-inputs
             requires:
               - wagonorb/wagon
               - wagonorb/rhel_wagon
@@ -339,7 +343,7 @@ workflows:
       - node/check_py3_compat_job
       - node/unittests_job:
           context: 
-            - slack-secrets
+            - plugins-inputs
           <<: *unittest-post-steps
       - node/validate_version_job
       - wagonorb/rhel_wagon:
@@ -356,7 +360,7 @@ workflows:
               only: /([0-9\.]*\-build|master|dev)/
       - http_balancer_and_https_balancer_test_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           requires:
             - wagonorb/wagon
             - wagonorb/rhel_wagon
@@ -378,7 +382,7 @@ workflows:
       - node/check_py3_compat_job
       - node/unittests_job:
           context: 
-            - slack-secrets
+            - plugins-inputs
           <<: *unittest-post-steps
       - node/validate_version_job
       - wagonorb/rhel_wagon:
@@ -395,7 +399,7 @@ workflows:
               only: /([0-9\.]*\-build|master|dev)/
       - ssl_balancer_and_tcp_balancer_test_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           requires:
             - wagonorb/wagon
             - wagonorb/rhel_wagon
@@ -417,7 +421,7 @@ workflows:
       - node/check_py3_compat_job
       - node/unittests_job:
           context: 
-            - slack-secrets
+            - plugins-inputs
           <<: *unittest-post-steps
       - node/validate_version_job
       - wagonorb/rhel_wagon:
@@ -434,7 +438,7 @@ workflows:
               only: /([0-9\.]*\-build|master|dev)/
       - gcp_example_network_test_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           requires:
             - wagonorb/wagon
             - wagonorb/rhel_wagon
