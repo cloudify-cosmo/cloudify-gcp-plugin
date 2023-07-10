@@ -41,6 +41,7 @@ commands:
       - run: ecosystem-test upload-plugin -PN utilities
       - run: ecosystem-test upload-plugin -PN ansible
       - run: ecosystem-test upload-plugin -PN kubernetes
+      - run: ecosystem-test upload-plugin -PN gcp
 
   run_virtual_machine_test:
     steps:
