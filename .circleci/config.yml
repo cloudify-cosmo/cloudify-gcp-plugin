@@ -37,11 +37,10 @@ executors:
 commands:
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -s region=us-east1 -s zone=us-east1-b -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key --yum-package python-netaddr --yum-package git  -p $(find ~/project/workspace/build/ -name *centos-Core*x86_64.wgn)  ~/project/plugin.yaml
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -s region=us-east1 -s zone=us-east1-b -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key --yum-package python-netaddr --yum-package git  -p $(find ~/project/workspace/build/ -name *manylinux-py311-none-linux_x86_64.wgn*)  ~/project/plugin.yaml
       - run: ecosystem-test upload-plugin -PN utilities
       - run: ecosystem-test upload-plugin -PN ansible
       - run: ecosystem-test upload-plugin -PN kubernetes
-      - run: ecosystem-test upload-plugin -PN gcp
 
   run_virtual_machine_test:
     steps:
@@ -197,7 +196,10 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-
+      - wagonorb/wagon_311:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - virtual_machine_integration_tests_py3:
           context: 
             - plugins-inputs
@@ -205,6 +207,7 @@ workflows:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
             - wagonorb/rhel_wagon
+            - wagonorb/wagon_311
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
@@ -215,6 +218,7 @@ workflows:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
             - wagonorb/rhel_wagon
+            - wagonorb/wagon_311
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
@@ -229,6 +233,7 @@ workflows:
             - wagonorb/arch64_wagon
             - wagonorb/wagon
             - wagonorb/rhel_wagon
+            - wagonorb/wagon_311
             - virtual_machine_integration_tests_py3
             - gke_integration_tests_py3
       - releaseorb/merge_docs_job:
@@ -270,6 +275,10 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
+      - wagonorb/wagon_311:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
 
       - virtual_machine_integration_tests_py3:
           context: 
@@ -278,6 +287,7 @@ workflows:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
             - wagonorb/rhel_wagon
+            - wagonorb/wagon_311
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
@@ -289,47 +299,54 @@ workflows:
             - wagonorb/wagon
             - wagonorb/arch64_wagon
             - wagonorb/rhel_wagon
+            - wagonorb/wagon_311
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
 
   run_test_only_on_sunday:
-      triggers:
-      - schedule:
-          cron: "0 3 * * 0"
+    triggers:
+    - schedule:
+        cron: "0 3 * * 0"
+        filters:
+          branches:
+            only:
+              - master
+    jobs:
+      - node/check_py3_compat_job
+      - node/unittests_job:
+          context: 
+          - plugins-inputs
+          <<: *unittest-post-steps
+      - node/validate_version_job
+      - wagonorb/rhel_wagon:
           filters:
             branches:
-              only:
-                - master
-      jobs:
-        - node/check_py3_compat_job
-        - node/unittests_job:
-            context: 
-            - plugins-inputs
-            <<: *unittest-post-steps
-        - node/validate_version_job
-        - wagonorb/rhel_wagon:
-            filters:
-              branches:
-                only: /([0-9\.]*\-build|master|dev)/
-        - wagonorb/wagon:
-            filters:
-              branches:
-                only: /([0-9\.]*\-build|master|dev)/
-        - wagonorb/arch64_wagon:
-            filters:
-              branches:
-                only: /([0-9\.]*\-build|master|dev)/
-        - attach_disk_and_container_engine_test_py3:
-            context: 
-            - plugins-inputs
-            requires:
-              - wagonorb/wagon
-              - wagonorb/rhel_wagon
-              - wagonorb/arch64_wagon
-            filters:
-              branches:
-                only: /([0-9\.]*\-build|master|dev)/
+              only: /([0-9\.]*\-build|master|dev)/
+      - wagonorb/wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - wagonorb/arch64_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - wagonorb/wagon_311:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+
+      - attach_disk_and_container_engine_test_py3:
+          context: 
+          - plugins-inputs
+          requires:
+            - wagonorb/wagon
+            - wagonorb/rhel_wagon
+            - wagonorb/arch64_wagon
+            - wagonorb/wagon_311
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
 
 
   run_test_only_on_monday:
@@ -359,6 +376,10 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
+      - wagonorb/wagon_311:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - http_balancer_and_https_balancer_test_py3:
           context: 
             - plugins-inputs
@@ -366,6 +387,7 @@ workflows:
             - wagonorb/wagon
             - wagonorb/rhel_wagon
             - wagonorb/arch64_wagon
+            - wagonorb/wagon_311
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
@@ -398,6 +420,10 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
+      - wagonorb/wagon_311:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - ssl_balancer_and_tcp_balancer_test_py3:
           context: 
             - plugins-inputs
@@ -405,6 +431,7 @@ workflows:
             - wagonorb/wagon
             - wagonorb/rhel_wagon
             - wagonorb/arch64_wagon
+            - wagonorb/wagon_311
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
@@ -444,6 +471,7 @@ workflows:
             - wagonorb/wagon
             - wagonorb/rhel_wagon
             - wagonorb/arch64_wagon
+            - wagonorb/wagon_311
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
