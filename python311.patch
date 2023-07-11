@@ -8,4 +8,3 @@ index 0149077..e574d05 100644
          "google-auth==2.15.0",
 -        "google-api-python-client==2.52.0.",
 +        "google-api-python-client==2.92.0",
-         "cloudify-common>=4.5.5",
