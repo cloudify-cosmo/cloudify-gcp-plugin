@@ -1951,10 +1951,6 @@ workflows:
       blueprint_id:
         type: string
         default: existing-gke-cluster
-resource_tags:
-  tenant: { get_sys: [tenant, name] }
-  deployment_id: { get_sys: [deployment, id] }
-  owner: { get_sys: [deployment, owner] }
 blueprint_labels:
   obj-type:
     values:
