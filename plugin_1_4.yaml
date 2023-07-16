@@ -2,7 +2,17 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: 1.9.3
+    package_version: 1.9.4
+    properties_description: Manage Azure resources.
+    properties:
+      auth:
+        display_label: GCP Auth dict.
+        type: string
+        description: A JSON GCP auth dict.
+      zone:
+        display_label: GCP Zone
+        type: string
+        description: A GCP zone name, such as europe-west1-b.
 dsl_definitions:
   use_external_resource_desc: >
     Indicate whether the resource exists or if Cloudify should create the resource, true if you are bringing an existing resource, false if you want cloudify to create it.
@@ -57,12 +67,8 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.admin.projects.delete
   cloudify.gcp.project:
     derived_from: cloudify.nodes.gcp.project
-    properties: {}
-    interfaces: {}
   cloudify.gcp.nodes.project:
     derived_from: cloudify.nodes.gcp.project
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.PolicyBinding:
     derived_from: cloudify.nodes.Root
     properties:
@@ -97,8 +103,6 @@ node_types:
               default: { get_property: [SELF, policy] }
   cloudify.gcp.nodes.PolicyBinding:
     derived_from: cloudify.nodes.gcp.PolicyBinding
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Instance:
     derived_from: cloudify.nodes.Compute
     properties:
@@ -227,8 +231,6 @@ node_types:
               default: e2-standard-2
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.gcp.Instance
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.InstanceGroup:
     derived_from: cloudify.nodes.Root
     properties:
@@ -264,8 +266,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.instance_group.delete
   cloudify.gcp.nodes.InstanceGroup:
     derived_from: cloudify.nodes.gcp.InstanceGroup
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Volume:
     derived_from: cloudify.nodes.Volume
     properties:
@@ -325,8 +325,6 @@ node_types:
               default: { get_attribute: [SELF, size] }
   cloudify.gcp.nodes.Volume:
     derived_from: cloudify.nodes.gcp.Volume
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Snapshot:
     derived_from: cloudify.nodes.Root
     properties:
@@ -349,8 +347,6 @@ node_types:
           inputs: {}
   cloudify.gcp.nodes.Snapshot:
     derived_from: cloudify.nodes.gcp.Snapshot
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Network:
     derived_from: cloudify.nodes.Network
     properties:
@@ -388,8 +384,6 @@ node_types:
               default: { get_property: [SELF, name] }
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.gcp.Network
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.SubNetwork:
     derived_from: cloudify.nodes.Subnet
     properties:
@@ -429,8 +423,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.subnetwork.creation_validation
   cloudify.gcp.nodes.SubNetwork:
     derived_from: cloudify.nodes.gcp.SubNetwork
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.VPCNetworkPeering:
     derived_from: cloudify.nodes.Network
     properties:
@@ -474,8 +466,6 @@ node_types:
               default: { get_property: [SELF, peerNetwork] }
   cloudify.gcp.nodes.VPCNetworkPeering:
     derived_from: cloudify.nodes.gcp.VPCNetworkPeering
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Route:
     derived_from: cloudify.nodes.Router
     properties:
@@ -528,8 +518,6 @@ node_types:
               default: { get_attribute: [SELF, name] }
   cloudify.gcp.nodes.Route:
     derived_from: cloudify.nodes.gcp.Route
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.FirewallRule:
     derived_from: cloudify.nodes.Root
     properties:
@@ -584,8 +572,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.firewall.delete
   cloudify.gcp.nodes.FirewallRule:
     derived_from: cloudify.nodes.gcp.FirewallRule
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.SecurityGroup:
     derived_from: cloudify.nodes.SecurityGroup
     properties:
@@ -617,8 +603,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.security_group.creation_validation
   cloudify.gcp.nodes.SecurityGroup:
     derived_from: cloudify.nodes.gcp.SecurityGroup
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Access:
     derived_from: cloudify.nodes.Root
     properties:
@@ -630,11 +614,8 @@ node_types:
       interface:
         description: >
           Interface for rule
-    interfaces: {}
   cloudify.gcp.nodes.Access:
     derived_from: cloudify.nodes.gcp.Access
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.KeyPair:
     derived_from: cloudify.nodes.Root
     properties:
@@ -677,8 +658,6 @@ node_types:
               default: { get_property: [SELF, private_key_path] }
   cloudify.gcp.nodes.KeyPair:
     derived_from: cloudify.nodes.gcp.KeyPair
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.ExternalIP:
     derived_from: cloudify.nodes.VirtualIP
     properties:
@@ -691,11 +670,8 @@ node_types:
           Address of this external IP. This should be address of already existing, unattached static IP. It will be used only if "use_external_resource" is set to true.
         type: string
         default: ''
-    interfaces: {}
   cloudify.gcp.nodes.ExternalIP:
     derived_from: cloudify.nodes.gcp.ExternalIP
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.GlobalAddress:
     derived_from: cloudify.nodes.VirtualIP
     properties:
@@ -725,16 +701,10 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.address.delete
   cloudify.gcp.nodes.GlobalAddress:
     derived_from: cloudify.nodes.gcp.GlobalAddress
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.StaticIP:
     derived_from: cloudify.nodes.gcp.GlobalAddress
-    properties: {}
-    interfaces: {}
   cloudify.gcp.nodes.StaticIP:
     derived_from: cloudify.nodes.gcp.StaticIP
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Address:
     derived_from: cloudify.nodes.gcp.GlobalAddress
     properties:
@@ -757,8 +727,6 @@ node_types:
               default: { get_property: [SELF, region] }
   cloudify.gcp.nodes.Address:
     derived_from: cloudify.nodes.gcp.Address
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Image:
     derived_from: cloudify.nodes.Root
     properties:
@@ -797,8 +765,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.image.delete
   cloudify.gcp.nodes.Image:
     derived_from: cloudify.nodes.gcp.Image
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.HealthCheck:
     derived_from: cloudify.nodes.Root
     properties:
@@ -844,8 +810,6 @@ node_types:
               default: { get_property: [SELF, health_check_type] }
   cloudify.gcp.nodes.HealthCheck:
     derived_from: cloudify.nodes.gcp.HealthCheck
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.BackendService:
     derived_from: cloudify.nodes.Root
     properties:
@@ -888,8 +852,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.backend_service.delete
   cloudify.gcp.nodes.BackendService:
     derived_from: cloudify.nodes.gcp.BackendService
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.RegionBackendService:
     derived_from: cloudify.nodes.Root
     properties:
@@ -939,8 +901,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.region_backend_service.delete
   cloudify.gcp.nodes.RegionBackendService:
     derived_from: cloudify.nodes.gcp.RegionBackendService
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.UrlMap:
     derived_from: cloudify.nodes.Root
     properties:
@@ -977,8 +937,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.url_map.delete
   cloudify.gcp.nodes.UrlMap:
     derived_from: cloudify.nodes.gcp.UrlMap
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.TargetProxy:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1034,8 +992,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.target_proxy.delete
   cloudify.gcp.nodes.TargetProxy:
     derived_from: cloudify.nodes.gcp.TargetProxy
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.SslCertificate:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1081,8 +1037,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.ssl_certificate.delete
   cloudify.gcp.nodes.SslCertificate:
     derived_from: cloudify.nodes.gcp.SslCertificate
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.ForwardingRule:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1174,8 +1128,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.creation_validation
   cloudify.gcp.nodes.ForwardingRule:
     derived_from: cloudify.nodes.gcp.ForwardingRule
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.GlobalForwardingRule:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1229,8 +1181,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.global_forwarding_rule.creation_validation
   cloudify.gcp.nodes.GlobalForwardingRule:
     derived_from: cloudify.nodes.gcp.GlobalForwardingRule
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.DNSZone:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1267,8 +1217,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.dns.dns.delete
   cloudify.gcp.nodes.DNSZone:
     derived_from: cloudify.nodes.gcp.DNSZone
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.DNSRecord:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1314,48 +1262,34 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.dns.record.delete
   cloudify.gcp.nodes.DNSRecord:
     derived_from: cloudify.nodes.gcp.DNSRecord
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.DNSAAAARecord:
     derived_from: cloudify.nodes.gcp.DNSRecord
     properties:
       type:
         default: AAAA
-    interfaces: {}
   cloudify.gcp.nodes.DNSAAAARecord:
     derived_from: cloudify.nodes.gcp.DNSAAAARecord
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.DNSMXRecord:
     derived_from: cloudify.nodes.gcp.DNSRecord
     properties:
       type:
         default: MX
-    interfaces: {}
   cloudify.gcp.nodes.DNSMXRecord:
     derived_from: cloudify.nodes.gcp.DNSMXRecord
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.DNSNSRecord:
     derived_from: cloudify.nodes.gcp.DNSRecord
     properties:
       type:
         default: NS
-    interfaces: {}
   cloudify.gcp.nodes.DNSNSRecord:
     derived_from: cloudify.nodes.gcp.DNSNSRecord
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.DNSTXTRecord:
     derived_from: cloudify.nodes.gcp.DNSRecord
     properties:
       type:
         default: TXT
-    interfaces: {}
   cloudify.gcp.nodes.DNSTXTRecord:
     derived_from: cloudify.nodes.gcp.DNSTXTRecord
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.KubernetesCluster:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1389,8 +1323,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.container_engine.cluster.delete
   cloudify.gcp.nodes.KubernetesCluster:
     derived_from: cloudify.nodes.gcp.KubernetesCluster
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.KubernetesNodePool:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1431,8 +1363,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.container_engine.node_pool.delete
   cloudify.gcp.nodes.KubernetesNodePool:
     derived_from: cloudify.nodes.gcp.KubernetesNodePool
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.KubernetesClusterMonitoring:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1469,8 +1399,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.container_engine.monitoring.unset_monitoring_service
   cloudify.gcp.nodes.KubernetesClusterMonitoring:
     derived_from: cloudify.nodes.gcp.KubernetesClusterMonitoring
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.KubernetesClusterlegacyAbac:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1507,8 +1435,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.container_engine.legacy_abac.disable_legacy_abac
   cloudify.gcp.nodes.KubernetesClusterlegacyAbac:
     derived_from: cloudify.nodes.gcp.KubernetesClusterlegacyAbac
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.KubernetesClusterNetworkPolicy:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1553,8 +1479,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.container_engine.network_policy.disable_network_policy_addon
   cloudify.gcp.nodes.KubernetesClusterNetworkPolicy:
     derived_from: cloudify.nodes.gcp.KubernetesClusterNetworkPolicy
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Topic:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1578,8 +1502,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.pubsub.topic.delete
   cloudify.gcp.nodes.Topic:
     derived_from: cloudify.nodes.gcp.Topic
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.TopicPolicy:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1607,8 +1529,6 @@ node_types:
               default: { get_property: [SELF, topic] }
   cloudify.gcp.nodes.TopicPolicy:
     derived_from: cloudify.nodes.gcp.TopicPolicy
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.TopicMessage:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1637,8 +1557,6 @@ node_types:
               default: { get_property: [SELF, messages] }
   cloudify.gcp.nodes.TopicMessage:
     derived_from: cloudify.nodes.gcp.TopicMessage
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Subscription:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1680,8 +1598,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.pubsub.subscription.delete
   cloudify.gcp.nodes.Subscription:
     derived_from: cloudify.nodes.gcp.Subscription
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.SubscriptionPolicy:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1709,8 +1625,6 @@ node_types:
               default: { get_property: [SELF, subscription] }
   cloudify.gcp.nodes.SubscriptionPolicy:
     derived_from: cloudify.nodes.gcp.SubscriptionPolicy
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Acknowledge:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1739,8 +1653,6 @@ node_types:
               default: { get_property: [SELF, ack_ids] }
   cloudify.gcp.nodes.Acknowledge:
     derived_from: cloudify.nodes.gcp.Acknowledge
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.PullRequest:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1776,8 +1688,6 @@ node_types:
               default: { get_property: [SELF, max_messages] }
   cloudify.gcp.nodes.PullRequest:
     derived_from: cloudify.nodes.gcp.PullRequest
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.StackDriverGroup:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1838,8 +1748,6 @@ node_types:
               default: { get_property: [SELF, is_cluster] }
   cloudify.gcp.nodes.StackDriverGroup:
     derived_from: cloudify.nodes.gcp.StackDriverGroup
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.StackDriverTimeSeries:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1864,8 +1772,6 @@ node_types:
               default: { get_property: [SELF, time_series] }
   cloudify.gcp.nodes.StackDriverTimeSeries:
     derived_from: cloudify.nodes.gcp.StackDriverTimeSeries
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.StackDriverUpTimeCheckConfig:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1892,8 +1798,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.monitoring.stackdriver_uptimecheck.delete
   cloudify.gcp.nodes.StackDriverUpTimeCheckConfig:
     derived_from: cloudify.nodes.gcp.StackDriverUpTimeCheckConfig
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.LoggingSink:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1943,8 +1847,6 @@ node_types:
               default: { get_property: [SELF, sink_type] }
   cloudify.gcp.nodes.LoggingSink:
     derived_from: cloudify.nodes.gcp.LoggingSink
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.LoggingExclusion:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1994,8 +1896,6 @@ node_types:
               default: { get_property: [SELF, exclusion_type] }
   cloudify.gcp.nodes.LoggingExclusion:
     derived_from: cloudify.nodes.gcp.LoggingExclusion
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Logging.BillingAccounts.sinks:
     derived_from: cloudify.nodes.gcp.LoggingSink
     properties:
@@ -2004,11 +1904,8 @@ node_types:
           Sink type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
         type: string
         default: BillingAccount
-    interfaces: {}
   cloudify.gcp.nodes.Logging.BillingAccounts.sinks:
     derived_from: cloudify.nodes.gcp.Logging.BillingAccounts.sinks
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Logging.Folders.sinks:
     derived_from: cloudify.nodes.gcp.LoggingSink
     properties:
@@ -2017,11 +1914,8 @@ node_types:
           Sink type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
         type: string
         default: Folder
-    interfaces: {}
   cloudify.gcp.nodes.Logging.Folders.sinks:
     derived_from: cloudify.nodes.gcp.Logging.Folders.sinks
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Logging.Organizations.sinks:
     derived_from: cloudify.nodes.gcp.LoggingSink
     properties:
@@ -2030,11 +1924,8 @@ node_types:
           Sink type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
         type: string
         default: Organization
-    interfaces: {}
   cloudify.gcp.nodes.Logging.Organizations.sinks:
     derived_from: cloudify.nodes.gcp.Logging.Organizations.sinks
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Logging.Projects.sinks:
     derived_from: cloudify.nodes.gcp.LoggingSink
     properties:
@@ -2043,11 +1934,8 @@ node_types:
           Sink type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
         type: string
         default: Project
-    interfaces: {}
   cloudify.gcp.nodes.Logging.Projects.sinks:
     derived_from: cloudify.nodes.gcp.Logging.Projects.sinks
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Logging.BillingAccounts.exclusions:
     derived_from: cloudify.nodes.gcp.LoggingExclusion
     properties:
@@ -2056,11 +1944,8 @@ node_types:
           Logging Exclusion type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
         type: string
         default: BillingAccount
-    interfaces: {}
   cloudify.gcp.nodes.Logging.BillingAccounts.exclusions:
     derived_from: cloudify.nodes.gcp.Logging.BillingAccounts.exclusions
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Logging.Folders.exclusions:
     derived_from: cloudify.nodes.gcp.LoggingExclusion
     properties:
@@ -2069,11 +1954,8 @@ node_types:
           Logging Exclusion type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
         type: string
         default: Folder
-    interfaces: {}
   cloudify.gcp.nodes.Logging.Folders.exclusions:
     derived_from: cloudify.nodes.gcp.Logging.Folders.exclusions
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Logging.Organizations.exclusions:
     derived_from: cloudify.nodes.gcp.LoggingExclusion
     properties:
@@ -2082,19 +1964,12 @@ node_types:
           Logging Exclusion type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
         type: string
         default: Organization
-    interfaces: {}
   cloudify.gcp.nodes.Logging.Organizations.exclusions:
     derived_from: cloudify.nodes.gcp.Logging.Organizations.exclusions
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Logging.Organizatios.exclusions:
     derived_from: cloudify.nodes.gcp.Logging.Organizations.exclusions
-    properties: {}
-    interfaces: {}
   cloudify.gcp.nodes.Logging.Organizatios.exclusions:
     derived_from: cloudify.nodes.gcp.Logging.Organizatios.exclusions
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Logging.Projects.exclusions:
     derived_from: cloudify.nodes.gcp.LoggingExclusion
     properties:
@@ -2103,11 +1978,8 @@ node_types:
           Logging Exclusion type, options are ['BillingAccount', 'Folder', 'Organization', 'Project']
         type: string
         default: Project
-    interfaces: {}
   cloudify.gcp.nodes.Logging.Projects.exclusions:
     derived_from: cloudify.nodes.gcp.Logging.Projects.exclusions
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Logging.Projects.metrics:
     derived_from: cloudify.nodes.Root
     properties:
@@ -2141,8 +2013,6 @@ node_types:
               default: { get_property: [SELF, log_metric] }
   cloudify.gcp.nodes.Logging.Projects.metrics:
     derived_from: cloudify.nodes.gcp.Logging.Projects.metrics
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.IAM.Role:
     derived_from: cloudify.nodes.Root
     properties:
@@ -2196,8 +2066,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.iam.role.delete
   cloudify.gcp.nodes.IAM.Role:
     derived_from: cloudify.nodes.gcp.IAM.Role
-    properties: {}
-    interfaces: {}
   cloudify.nodes.gcp.Gcp:
     derived_from: cloudify.nodes.Root
     properties:
@@ -2231,8 +2099,6 @@ node_types:
               default: { get_property: [SELF, zones] }
   cloudify.gcp.nodes.Gcp:
     derived_from: cloudify.nodes.gcp.Gcp
-    properties: {}
-    interfaces: {}
 relationships:
   cloudify.relationships.gcp.instance_connected_to_security_group:
     derived_from: cloudify.relationships.connected_to

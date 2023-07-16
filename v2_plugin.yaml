@@ -2,7 +2,17 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: 1.9.3
+    package_version: 1.9.4
+    properties_description: Manage Azure resources.
+    properties:
+      auth:
+        display_label: GCP Auth dict.
+        type: string
+        description: A JSON GCP auth dict.
+      zone:
+        display_label: GCP Zone
+        type: string
+        description: A GCP zone name, such as europe-west1-b.
 dsl_definitions:
   use_external_resource_desc: >
     Indicate whether the resource exists or if Cloudify should create the resource, true if you are bringing an existing resource, false if you want cloudify to create it.
@@ -45,12 +55,8 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.admin.projects.delete
   cloudify.gcp.project:
     derived_from: cloudify.nodes.gcp.project
-
-
   cloudify.gcp.nodes.project:
     derived_from: cloudify.nodes.gcp.project
-
-
   cloudify.nodes.gcp.PolicyBinding:
     derived_from: cloudify.nodes.Root
     properties:
@@ -82,8 +88,6 @@ node_types:
               default: { get_property: [SELF, policy] }
   cloudify.gcp.nodes.PolicyBinding:
     derived_from: cloudify.nodes.gcp.PolicyBinding
-
-
   cloudify.nodes.gcp.Instance:
     derived_from: cloudify.nodes.Compute
     properties:
@@ -181,8 +185,6 @@ node_types:
               default: e2-standard-2
   cloudify.gcp.nodes.Instance:
     derived_from: cloudify.nodes.gcp.Instance
-
-
   cloudify.nodes.gcp.InstanceGroup:
     derived_from: cloudify.nodes.Root
     properties:
@@ -212,8 +214,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.instance_group.delete
   cloudify.gcp.nodes.InstanceGroup:
     derived_from: cloudify.nodes.gcp.InstanceGroup
-
-
   cloudify.nodes.gcp.Volume:
     derived_from: cloudify.nodes.Volume
     properties:
@@ -263,8 +263,6 @@ node_types:
               default: { get_attribute: [SELF, size] }
   cloudify.gcp.nodes.Volume:
     derived_from: cloudify.nodes.gcp.Volume
-
-
   cloudify.nodes.gcp.Snapshot:
     derived_from: cloudify.nodes.Root
     properties:
@@ -285,8 +283,6 @@ node_types:
           inputs: {}
   cloudify.gcp.nodes.Snapshot:
     derived_from: cloudify.nodes.gcp.Snapshot
-
-
   cloudify.nodes.gcp.Network:
     derived_from: cloudify.nodes.Network
     properties:
@@ -318,8 +314,6 @@ node_types:
               default: { get_property: [SELF, name] }
   cloudify.gcp.nodes.Network:
     derived_from: cloudify.nodes.gcp.Network
-
-
   cloudify.nodes.gcp.SubNetwork:
     derived_from: cloudify.nodes.Subnet
     properties:
@@ -353,8 +347,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.subnetwork.creation_validation
   cloudify.gcp.nodes.SubNetwork:
     derived_from: cloudify.nodes.gcp.SubNetwork
-
-
   cloudify.nodes.gcp.VPCNetworkPeering:
     derived_from: cloudify.nodes.Network
     properties:
@@ -392,8 +384,6 @@ node_types:
               default: { get_property: [SELF, peerNetwork] }
   cloudify.gcp.nodes.VPCNetworkPeering:
     derived_from: cloudify.nodes.gcp.VPCNetworkPeering
-
-
   cloudify.nodes.gcp.Route:
     derived_from: cloudify.nodes.Router
     properties:
@@ -434,8 +424,6 @@ node_types:
               default: { get_attribute: [SELF, name] }
   cloudify.gcp.nodes.Route:
     derived_from: cloudify.nodes.gcp.Route
-
-
   cloudify.nodes.gcp.FirewallRule:
     derived_from: cloudify.nodes.Root
     properties:
@@ -470,8 +458,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.firewall.delete
   cloudify.gcp.nodes.FirewallRule:
     derived_from: cloudify.nodes.gcp.FirewallRule
-
-
   cloudify.nodes.gcp.SecurityGroup:
     derived_from: cloudify.nodes.SecurityGroup
     properties:
@@ -499,8 +485,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.security_group.creation_validation
   cloudify.gcp.nodes.SecurityGroup:
     derived_from: cloudify.nodes.gcp.SecurityGroup
-
-
   cloudify.nodes.gcp.Access:
     derived_from: cloudify.nodes.Root
     properties:
@@ -508,11 +492,8 @@ node_types:
       client_config: *id004
       name: {}
       interface: {}
-
   cloudify.gcp.nodes.Access:
     derived_from: cloudify.nodes.gcp.Access
-
-
   cloudify.nodes.gcp.KeyPair:
     derived_from: cloudify.nodes.Root
     properties:
@@ -549,8 +530,6 @@ node_types:
               default: { get_property: [SELF, private_key_path] }
   cloudify.gcp.nodes.KeyPair:
     derived_from: cloudify.nodes.gcp.KeyPair
-
-
   cloudify.nodes.gcp.ExternalIP:
     derived_from: cloudify.nodes.VirtualIP
     properties:
@@ -561,11 +540,8 @@ node_types:
       ip_address:
         type: string
         default: ''
-
   cloudify.gcp.nodes.ExternalIP:
     derived_from: cloudify.nodes.gcp.ExternalIP
-
-
   cloudify.nodes.gcp.GlobalAddress:
     derived_from: cloudify.nodes.VirtualIP
     properties:
@@ -591,16 +567,10 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.address.delete
   cloudify.gcp.nodes.GlobalAddress:
     derived_from: cloudify.nodes.gcp.GlobalAddress
-
-
   cloudify.nodes.gcp.StaticIP:
     derived_from: cloudify.nodes.gcp.GlobalAddress
-
-
   cloudify.gcp.nodes.StaticIP:
     derived_from: cloudify.nodes.gcp.StaticIP
-
-
   cloudify.nodes.gcp.Address:
     derived_from: cloudify.nodes.gcp.GlobalAddress
     properties:
@@ -621,8 +591,6 @@ node_types:
               default: { get_property: [SELF, region] }
   cloudify.gcp.nodes.Address:
     derived_from: cloudify.nodes.gcp.Address
-
-
   cloudify.nodes.gcp.Image:
     derived_from: cloudify.nodes.Root
     properties:
@@ -653,8 +621,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.image.delete
   cloudify.gcp.nodes.Image:
     derived_from: cloudify.nodes.gcp.Image
-
-
   cloudify.nodes.gcp.HealthCheck:
     derived_from: cloudify.nodes.Root
     properties:
@@ -692,8 +658,6 @@ node_types:
               default: { get_property: [SELF, health_check_type] }
   cloudify.gcp.nodes.HealthCheck:
     derived_from: cloudify.nodes.gcp.HealthCheck
-
-
   cloudify.nodes.gcp.BackendService:
     derived_from: cloudify.nodes.Root
     properties:
@@ -728,8 +692,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.backend_service.delete
   cloudify.gcp.nodes.BackendService:
     derived_from: cloudify.nodes.gcp.BackendService
-
-
   cloudify.nodes.gcp.RegionBackendService:
     derived_from: cloudify.nodes.Root
     properties:
@@ -769,8 +731,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.region_backend_service.delete
   cloudify.gcp.nodes.RegionBackendService:
     derived_from: cloudify.nodes.gcp.RegionBackendService
-
-
   cloudify.nodes.gcp.UrlMap:
     derived_from: cloudify.nodes.Root
     properties:
@@ -801,8 +761,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.url_map.delete
   cloudify.gcp.nodes.UrlMap:
     derived_from: cloudify.nodes.gcp.UrlMap
-
-
   cloudify.nodes.gcp.TargetProxy:
     derived_from: cloudify.nodes.Root
     properties:
@@ -847,8 +805,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.target_proxy.delete
   cloudify.gcp.nodes.TargetProxy:
     derived_from: cloudify.nodes.gcp.TargetProxy
-
-
   cloudify.nodes.gcp.SslCertificate:
     derived_from: cloudify.nodes.Root
     properties:
@@ -882,8 +838,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.ssl_certificate.delete
   cloudify.gcp.nodes.SslCertificate:
     derived_from: cloudify.nodes.gcp.SslCertificate
-
-
   cloudify.nodes.gcp.ForwardingRule:
     derived_from: cloudify.nodes.Root
     properties:
@@ -953,8 +907,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.forwarding_rule.creation_validation
   cloudify.gcp.nodes.ForwardingRule:
     derived_from: cloudify.nodes.gcp.ForwardingRule
-
-
   cloudify.nodes.gcp.GlobalForwardingRule:
     derived_from: cloudify.nodes.Root
     properties:
@@ -998,8 +950,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.compute.global_forwarding_rule.creation_validation
   cloudify.gcp.nodes.GlobalForwardingRule:
     derived_from: cloudify.nodes.gcp.GlobalForwardingRule
-
-
   cloudify.nodes.gcp.DNSZone:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1030,8 +980,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.dns.dns.delete
   cloudify.gcp.nodes.DNSZone:
     derived_from: cloudify.nodes.gcp.DNSZone
-
-
   cloudify.nodes.gcp.DNSRecord:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1065,8 +1013,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.dns.record.delete
   cloudify.gcp.nodes.DNSRecord:
     derived_from: cloudify.nodes.gcp.DNSRecord
-
-
   cloudify.nodes.gcp.DNSAAAARecord:
     derived_from: cloudify.nodes.gcp.DNSRecord
     properties:
@@ -1673,7 +1619,6 @@ node_types:
       exclusion_type:
         type: string
         default: Project
-
   cloudify.gcp.nodes.Logging.Projects.exclusions:
     derived_from: cloudify.nodes.gcp.Logging.Projects.exclusions
   cloudify.nodes.gcp.Logging.Projects.metrics:
@@ -1748,8 +1693,6 @@ node_types:
           implementation: gcp_plugin.cloudify_gcp.iam.role.delete
   cloudify.gcp.nodes.IAM.Role:
     derived_from: cloudify.nodes.gcp.IAM.Role
-
-
   cloudify.nodes.gcp.Gcp:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1991,6 +1934,12 @@ relationships:
 workflows:
   discover_and_deploy:
     mapping: gcp_plugin.cloudify_gcp.workflows.discover.discover_and_deploy
+    availability_rules:
+      node_instances_active:
+        - all
+        - partial
+      node_types_required:
+        - cloudify.nodes.gcp.Gcp
     parameters:
       node_id:
         type: string
@@ -2002,11 +1951,15 @@ workflows:
       blueprint_id:
         type: string
         default: existing-gke-cluster
+resource_tags:
+  tenant: { get_sys: [tenant, name] }
+  deployment_id: { get_sys: [deployment, id] }
+  owner: { get_sys: [deployment, owner] }
 blueprint_labels:
   obj-type:
     values:
-      - gcp
+      - gcp_plugin
 labels:
   obj-type:
     values:
-      - gcp
+      - gcp_plugin
