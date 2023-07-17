@@ -3,16 +3,6 @@ plugins:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
     package_version: 1.9.4
-    properties_description: Manage Azure resources.
-    properties:
-      auth:
-        display_label: GCP Auth dict.
-        type: string
-        description: A JSON GCP auth dict.
-      zone:
-        display_label: GCP Zone
-        type: string
-        description: A GCP zone name, such as europe-west1-b.
 dsl_definitions:
   use_external_resource_desc: >
     Indicate whether the resource exists or if Cloudify should create the resource, true if you are bringing an existing resource, false if you want cloudify to create it.
