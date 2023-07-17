@@ -37,7 +37,7 @@ executors:
 commands:
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -s region=us-east1 -s zone=us-east1-b -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key --yum-package python-netaddr --yum-package git  -p $(find ~/project/workspace/build/ -name *manylinux-py311-none-linux_x86_64.wgn*)  ~/project/plugin_1_5.yaml
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -s region=us-east1 -s zone=us-east1-b -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key --yum-package python-netaddr --yum-package git  -p $(find ~/project/workspace/build/ -name *manylinux-py311-none-linux_x86_64.wgn*)  ~/project/plugin_1_4.yaml
       - run: ecosystem-test upload-plugin -PN utilities
       - run: ecosystem-test upload-plugin -PN ansible
       - run: ecosystem-test upload-plugin -PN kubernetes
