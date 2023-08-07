@@ -35,23 +35,47 @@ executors:
        image: ubuntu-2004:202201-02
 
 commands:
+
+  setup_manager:
+    steps:
+      - run: |
+          if [[ -z "${CLOUDIFY_HOST}" ]]; then
+              exit 1
+          fi
+      - run: |
+          if [[ -z "${CLOUDIFY_TENANT}" ]]; then
+              exit 1
+          fi
+      - run: |
+          if [[ -z "${CLOUDIFY_TOKEN}" ]]; then
+              exit 1
+          fi
+      - run: |
+          response=$(curl --write-out '%{http_code}' --silent --insecure --header "Tenant: ${CLOUDIFY_TENANT}" --header "Authentication-Token: ${CLOUDIFY_TOKEN}" https://$CLOUDIFY_HOST/api/v3.1/status --output /dev/null)
+          if [[ $response != 200 ]]; then
+              echo "Failed to get manager status";
+              exit 1
+          fi
+      - run: pip3 install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/refs/heads/master.zip
+      - run: git submodule update --init --recursive --remote
+
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -s region=us-east1 -s zone=us-east1-b -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key --yum-package python-netaddr --yum-package git  -p $(find ~/project/workspace/build/ -name *manylinux-py311-none-linux_x86_64.wgn*)  ~/project/plugin_1_4.yaml
-      - run: ecosystem-test upload-plugin -PN utilities
-      - run: ecosystem-test upload-plugin -PN ansible
-      - run: ecosystem-test upload-plugin -PN kubernetes
+      - run: ecosystem-test prepare-remote-test-manager -es gcp_credentials=$gcp_credentials -s region=us-east1 -s zone=us-east1-b -es ssl_cert=$ssl_cert -es ssl_key=$ssl_key -p $(find ~/project/workspace/build/ -name *manylinux-py311-none-linux_x86_64.wgn*)  ~/project/plugin_1_4.yaml
+      - run: ecosystem-test remote-upload-plugin -PN utilities
+      - run: ecosystem-test remote-upload-plugin -PN ansible
+      - run: ecosystem-test remote-upload-plugin -PN kubernetes
 
   run_virtual_machine_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/virtual-machine/gcp.yaml --test-id=virtual-machine --on-failure=uninstall-force --timeout=1800 | tee -a run_virtual_machine_test.log
+      - run: ecosystem-test remote-blueprint-test  -b examples/blueprint-examples/virtual-machine/gcp.yaml --test-id=virtual-machine-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=1800 | tee -a run_virtual_machine_test.log
       - store_artifacts:
           path: run_virtual_machine_test.log
       - slack/notify_failed
 
   run_gke_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml --test-id=gcp-gke  -i resource_prefix=gcpresource-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_gke_test.log
+      - run: ecosystem-test remote-blueprint-test  -b examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml --test-id=gcp-gke-$CIRCLE_BUILD_NUM  -i resource_prefix=gcpresource-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_gke_test.log
       - store_artifacts:
           path: run_gke_test.log
       - slack/notify_failed
@@ -59,49 +83,49 @@ commands:
   # test blueprints
   run_attach_disk_test:
      steps:
-        - run: ecosystem-test local-blueprint-test  -b blueprints/attach-disk.yaml --test-id=gcp-attach-disk  -i zone=europe-west1-b -i region=europe-west1 -i prefix=gcp-attach-disk-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_attach_disk_test.log
+        - run: ecosystem-test remote-blueprint-test  -b blueprints/attach-disk.yaml --test-id=gcp-attach-disk-$CIRCLE_BUILD_NUM  -i zone=europe-west1-b -i region=europe-west1 -i prefix=gcp-attach-disk-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_attach_disk_test.log
         - store_artifacts:
             path: run_attach_disk_test.log
         - slack/notify_failed
 
   run_container_engine_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/container-engine.yaml --test-id=gcp-container-engine -i prefix=gcp-container-engine-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_container_engine_test.log
+      - run: ecosystem-test remote-blueprint-test  -b blueprints/container-engine.yaml --test-id=gcp-container-engine-$CIRCLE_BUILD_NUM -i prefix=gcp-container-engine-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_container_engine_test.log
       - store_artifacts:
           path: run_container_engine_test.log
       - slack/notify_failed
 
   run_http_balancer_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/http-balancer.yaml --test-id=gcp-http-balancer -i prefix=gcp-http-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_http_balancer_test.log
+      - run: ecosystem-test remote-blueprint-test  -b blueprints/http-balancer.yaml --test-id=gcp-http-balancer-$CIRCLE_BUILD_NUM -i prefix=gcp-http-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_http_balancer_test.log
       - store_artifacts:
           path: run_http_balancer_test.log
       - slack/notify_failed
 
   run_https_balancer_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/https-balancer.yaml --test-id=gcp-https-balancer -i prefix=gcp-https-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_https_balancer_test.log
+      - run: ecosystem-test remote-blueprint-test  -b blueprints/https-balancer.yaml --test-id=gcp-https-balancer-$CIRCLE_BUILD_NUM -i prefix=gcp-https-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_https_balancer_test.log
       - store_artifacts:
           path: run_https_balancer_test.log
       - slack/notify_failed
 
   run_ssl_balancer_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/ssl-balancer.yaml --test-id=gcp-ssl-balancer -i prefix=gcp-ssl-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_ssl_balancer_test.log
+      - run: ecosystem-test remote-blueprint-test  -b blueprints/ssl-balancer.yaml --test-id=gcp-ssl-balancer-$CIRCLE_BUILD_NUM -i prefix=gcp-ssl-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_ssl_balancer_test.log
       - store_artifacts:
           path: run_ssl_balancer_test.log
       - slack/notify_failed
 
   run_tcp_balancer_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b blueprints/tcp-balancer.yaml --test-id=gcp-tcp-balancer -i prefix=gcp-tcp-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_tcp_balancer_test.log
+      - run: ecosystem-test remote-blueprint-test  -b blueprints/tcp-balancer.yaml --test-id=gcp-tcp-balancer-$CIRCLE_BUILD_NUM -i prefix=gcp-tcp-balancer-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_tcp_balancer_test.log
       - store_artifacts:
           path: run_tcp_balancer_test.log
       - slack/notify_failed
 
   run_gcp_example_network_test:
     steps:
-      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/gcp-example-network/blueprint.yaml --test-id=gcp-example-network-test  -i resource_prefix=gcp-example-network-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_gcp_example_network_test.log
+      - run: ecosystem-test remote-blueprint-test  -b examples/blueprint-examples/gcp-example-network/blueprint.yaml --test-id=gcp-example-network-test-$CIRCLE_BUILD_NUM  -i resource_prefix=gcp-example-network-test-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_gcp_example_network_test.log
       - store_artifacts:
           path: run_gcp_example_network_test.log
       - slack/notify_failed
