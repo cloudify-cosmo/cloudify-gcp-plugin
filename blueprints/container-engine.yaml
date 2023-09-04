@@ -36,7 +36,7 @@ node_templates:
   k8s_cluster:
     type: cloudify.gcp.nodes.KubernetesCluster
     properties:
-      name: demo-eaas
+      name: { concat: [ { get_input: prefix }, demo-eaas ] }
       gcp_config: *gcp_config
 
   k8s_node_pool:
