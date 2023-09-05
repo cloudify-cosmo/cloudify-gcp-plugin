@@ -2,8 +2,7 @@ flake8
 dnspython
 mock
 pyopenssl
-pytest==4.6.3
+pytest
 testfixtures
 pytest-cov
 nose
-rsa==4.5
