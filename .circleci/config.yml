@@ -75,7 +75,10 @@ commands:
 
   run_gke_test:
     steps:
-      - run: ecosystem-test remote-blueprint-test  -b examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml --test-id=gcp-gke-$CIRCLE_BUILD_NUM  -i resource_prefix=gcpresource-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_gke_test.log
+      - run: 
+          name: run_gke_test
+          no_output_timeout: 90m
+          command: ecosystem-test remote-blueprint-test  -b examples/blueprint-examples/kubernetes/gcp-gke/blueprint.yaml --test-id=gcp-gke-$CIRCLE_BUILD_NUM  -i resource_prefix=gcpresource-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=3000 | tee -a run_gke_test.log
       - store_artifacts:
           path: run_gke_test.log
       - slack/notify_failed
