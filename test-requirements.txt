@@ -1,4 +1,3 @@
-flake8
 dnspython
 mock
 pyopenssl
@@ -6,3 +5,4 @@ pytest
 testfixtures
 pytest-cov
 nose
+pylint
