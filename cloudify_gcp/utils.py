@@ -179,8 +179,24 @@ def create_resource(func):
 
 @create_resource
 def create(resource):
-    return resource.create()
-
+    result = resource.create()
+    limit_loop = 10
+    while limit_loop:
+        try:
+            created = resource.get()
+            if created:
+                break
+        except HttpError as e:
+            if e.resp.status == http_client.NOT_FOUND:
+                ctx.logger.info('Waiting for the resource to exist.')
+                time.sleep(3)
+                limit_loop -= 1
+            else:
+                raise e
+        except Exception as error:
+            ctx.logger.error('Error Message {0}'.format(error))
+            break
+    return result
 
 def runtime_properties_cleanup(ctx):
     # cleanup runtime properties
