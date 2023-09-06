@@ -1,4 +1,3 @@
-dnspython
 mock
 pyopenssl
 pytest

@@ -1,5 +1,0 @@
-pyrsistent==0.16.1
-networkx==1.9.1
-cloudify>=6.4
-cryptography==3.3.2
-
