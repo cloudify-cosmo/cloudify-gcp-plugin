@@ -5,4 +5,4 @@ pytest
 testfixtures
 pytest-cov
 nose
-pylint
+flake8
