@@ -179,7 +179,23 @@ def create_resource(func):
 
 @create_resource
 def create(resource):
-    return resource.create()
+    result = resource.create()
+    while True:
+        try:
+            created = resource.get()
+            if created:
+                break
+        except HttpError as e:
+            if e.resp.status == http_client.NOT_FOUND:
+                ctx.logger.info('Waiting for the resource to exist.')
+                time.sleep(3)
+            else:
+                raise e
+        except Exception as error:
+            ctx.logger.error('Error Message {0}'.format(error))
+            break
+
+    return result
 
 
 def runtime_properties_cleanup(ctx):
@@ -406,6 +422,7 @@ def get_node(_ctx, target=False):
         return _ctx.node
 
 
+# flake8: noqa: C901
 def get_gcp_config(node=None, requested_zone=None):
 
     node = node or get_node(ctx)
