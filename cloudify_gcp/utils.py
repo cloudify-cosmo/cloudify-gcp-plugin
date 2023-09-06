@@ -422,6 +422,7 @@ def get_node(_ctx, target=False):
         return _ctx.node
 
 
+# flake8: noqa: C901
 def get_gcp_config(node=None, requested_zone=None):
 
     node = node or get_node(ctx)
