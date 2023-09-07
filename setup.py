@@ -21,8 +21,9 @@ from setuptools import setup
 
 def get_version():
     current_dir = pathlib.Path(__file__).parent.resolve()
-    with open(os.path.join(current_dir,'cloudify_gcp/__version__.py'),
-              'r') as outfile:
+    with open(os.path.join(
+            current_dir,
+            'cloudify_gcp/__version__.py'), 'r') as outfile:
         var = outfile.read()
         return re.search(r'\d+.\d+.\d+', var).group()
 
@@ -47,10 +48,9 @@ setup(
     install_requires=[
         "oauth2client==4.1.3",
         "google-auth==2.15.0",
-        "google-api-python-client==2.52.0.",
-        "cloudify-common>=4.5.5",
-        'cloudify-utilities-plugins-sdk>=0.0.61',
-        "networkx==1.9.1",
+        "google-api-python-client>=2.52.0",
+        "cloudify-common>=6.3.1",
+        'cloudify-utilities-plugins-sdk>=0.0.124',
         "pycryptodome>=3.9.8,<3.10",
         "jsonschema==3.0.0",
         'httplib2>=0.18.0'

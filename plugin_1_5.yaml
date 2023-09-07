@@ -3,7 +3,7 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: 1.9.4
+    package_version: 1.9.5
     properties_description: Manage Azure resources.
     properties:
       auth:
