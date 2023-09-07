@@ -142,7 +142,9 @@ jobs:
     
     steps:
       - checkout
-      - managerorb/create_manager_container_latest
+      - attach_workspace:
+          at: workspace
+      - setup_manager
       - prepare_test_manager
       - run_virtual_machine_test
 
@@ -152,7 +154,9 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - managerorb/create_manager_container_latest
+      - attach_workspace:
+          at: workspace
+      - setup_manager
       - prepare_test_manager
       - run_gke_test
 
@@ -162,7 +166,9 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - managerorb/create_manager_container_latest
+      - attach_workspace:
+          at: workspace
+      - setup_manager
       - prepare_test_manager
       - run_attach_disk_test
       - run_container_engine_test
@@ -173,7 +179,9 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - managerorb/create_manager_container_latest
+      - attach_workspace:
+          at: workspace
+      - setup_manager
       - prepare_test_manager
       - run_http_balancer_test
       - run_https_balancer_test
@@ -184,7 +192,9 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - managerorb/create_manager_container_latest
+      - attach_workspace:
+          at: workspace
+      - setup_manager
       - prepare_test_manager
       - run_ssl_balancer_test
       - run_tcp_balancer_test
@@ -195,7 +205,9 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - managerorb/create_manager_container_latest
+      - attach_workspace:
+          at: workspace
+      - setup_manager
       - prepare_test_manager
       - run_gcp_example_network_test
 
