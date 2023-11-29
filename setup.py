@@ -41,7 +41,7 @@ install_requires = [
 if sys.version_info.major == 3 and sys.version_info.minor == 6:
     install_requires += [
         'google-api-python-client>=2.52.0',
-        'cloudify-common>=6.3.1',
+        'cloudify-common>=6.3.1,<7.0',
         'cloudify-utilities-plugins-sdk>=0.0.124',
     ]
     packages = [
