@@ -1,4 +1,5 @@
-1.9.5: 
+1.9.6: Change requirements.
+1.9.5:
   - add remote manager & unique id to tests.
   - Support waiting until the resource is ready.
 1.9.4: updated circleci to use context for env variables.

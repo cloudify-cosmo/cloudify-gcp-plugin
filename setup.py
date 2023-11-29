@@ -15,8 +15,9 @@
 
 import os
 import re
+import sys
 import pathlib
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def get_version():
@@ -28,11 +29,22 @@ def get_version():
         return re.search(r'\d+.\d+.\d+', var).group()
 
 
-setup(
-    name='cloudify-gcp-plugin',
-    version=get_version(),
-    description='Plugin for Google Cloud Platform',
-    packages=[
+install_requires = [
+    'oauth2client==4.1.3',
+    'google-auth==2.15.0',
+    'pycryptodome>=3.9.8,<3.10',
+    'jsonschema==3.0.0',
+    'httplib2>=0.18.0'
+]
+
+
+if sys.version_info.major == 3 and sys.version_info.minor == 6:
+    install_requires += [
+        'google-api-python-client>=2.52.0',
+        'cloudify-common>=6.3.1',
+        'cloudify-utilities-plugins-sdk>=0.0.124',
+    ]
+    packages = [
         'cloudify_gcp.admin',
         'cloudify_gcp',
         'cloudify_gcp.compute',
@@ -42,17 +54,22 @@ setup(
         'cloudify_gcp.dns',
         'cloudify_gcp.iam',
         'cloudify_gcp.workflows',
-    ],
+    ]
+else:
+    install_requires += [
+        'google-api-python-client>=2.92.0',
+        'fusion-common',
+        'cloudify-utilities-plugins-sdk',
+    ]
+    packages = find_packages(exclude=['tests*'])
+
+
+setup(
+    name='cloudify-gcp-plugin',
+    version=get_version(),
+    description='Plugin for Google Cloud Platform',
+    packages=packages,
     license='LICENSE',
     zip_safe=False,
-    install_requires=[
-        "oauth2client==4.1.3",
-        "google-auth==2.15.0",
-        "google-api-python-client>=2.52.0",
-        "cloudify-common>=6.3.1",
-        'cloudify-utilities-plugins-sdk>=0.0.124',
-        "pycryptodome>=3.9.8,<3.10",
-        "jsonschema==3.0.0",
-        'httplib2>=0.18.0'
-    ],
+    install_requires=install_requires,
 )
