@@ -6,5 +6,4 @@ then
 def get_doc(*args):
     return ''
 EOF
-    git apply python311.patch
 fi
