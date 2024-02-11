@@ -2,7 +2,7 @@ plugins:
   gcp_plugin:
     executor: central_deployment_agent
     package_name: cloudify-gcp-plugin
-    package_version: 1.9.6
+    package_version: 1.9.7
 dsl_definitions:
   use_external_resource_desc: >
     Indicate whether the resource exists or if Cloudify should create the resource, true if you are bringing an existing resource, false if you want cloudify to create it.

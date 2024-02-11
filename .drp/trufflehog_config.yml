@@ -1,0 +1,15 @@
+---
+project_exclusion_list:
+  exclusion_folders:
+    - .drp
+    - .github
+    - examples
+    - blueprints
+    - cloudify_gcp/tests/
+  #   - test
+  #   - jenkins
+  #   - buildroot
+  #   - buildroot
+  exclusion_file_paths:
+    - Makefile
+  #   - package/tpm2-tools/tpm2-tools.hash
