@@ -32,7 +32,6 @@ def get_version():
 install_requires = [
     'oauth2client==4.1.3',
     'google-auth==2.15.0',
-    'pycryptodome>=3.9.8,<3.10',
     'jsonschema==3.0.0',
     'httplib2>=0.18.0'
 ]

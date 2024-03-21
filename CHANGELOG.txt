@@ -1,3 +1,4 @@
+1.9.8: blackduck.
 1.9.7: added .drp folder for trufflehog.
 1.9.6: Change requirements.
 1.9.5:
